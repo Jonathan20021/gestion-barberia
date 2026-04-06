@@ -66,6 +66,7 @@ $safeColumnExists = function ($tableName, $columnName) use ($db) {
 
 $supportsTrialDates = $safeColumnExists('licenses', 'trial_end_date');
 $supportsActivatedAt = $safeColumnExists('licenses', 'activated_at');
+$supportsMaxLocationsOverride = $safeColumnExists('licenses', 'max_locations_override');
 
 // Procesar acciones POST
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -77,6 +78,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $billingCycle = isset($_POST['billing_cycle']) ? $_POST['billing_cycle'] : 'monthly';
             $startDate    = isset($_POST['start_date']) ? $_POST['start_date'] : date('Y-m-d');
             $price        = !empty($_POST['price']) ? floatval($_POST['price']) : LICENSE_TYPES[$type]['price'];
+            $maxLocationsRaw = isset($_POST['max_locations_override']) ? trim((string) $_POST['max_locations_override']) : '';
+            $maxLocationsOverride = null;
+            if ($maxLocationsRaw !== '') {
+                $maxLocationsOverride = intval($maxLocationsRaw);
+                if ($maxLocationsOverride === 0 || $maxLocationsOverride < -1) {
+                    throw new Exception('El máximo de sucursales debe ser -1 (ilimitado) o un número mayor o igual a 1.');
+                }
+            }
             $barbershopId = !empty($_POST['barbershop_id']) ? intval($_POST['barbershop_id']) : null;
             $trialDays    = defined('TRIAL_DAYS_DEFAULT') ? intval(TRIAL_DAYS_DEFAULT) : 15;
             if ($trialDays <= 0) {
@@ -90,16 +99,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $licenseKey = bin2hex(random_bytes(16));
 
             if ($supportsTrialDates) {
-                $db->query(
-                    "INSERT INTO licenses (license_key, type, status, price, billing_cycle, start_date, end_date, trial_days, trial_start_date, trial_end_date) VALUES (?, ?, 'trial', ?, ?, ?, ?, ?, ?, ?)",
-                    [$licenseKey, $type, $price, $billingCycle, $startDate, $endDate, $trialDays, $startDate, $trialEndDate]
-                );
+                if ($supportsMaxLocationsOverride) {
+                    $db->query(
+                        "INSERT INTO licenses (license_key, type, status, price, billing_cycle, start_date, end_date, trial_days, trial_start_date, trial_end_date, max_locations_override) VALUES (?, ?, 'trial', ?, ?, ?, ?, ?, ?, ?, ?)",
+                        [$licenseKey, $type, $price, $billingCycle, $startDate, $endDate, $trialDays, $startDate, $trialEndDate, $maxLocationsOverride]
+                    );
+                } else {
+                    $db->query(
+                        "INSERT INTO licenses (license_key, type, status, price, billing_cycle, start_date, end_date, trial_days, trial_start_date, trial_end_date) VALUES (?, ?, 'trial', ?, ?, ?, ?, ?, ?, ?)",
+                        [$licenseKey, $type, $price, $billingCycle, $startDate, $endDate, $trialDays, $startDate, $trialEndDate]
+                    );
+                }
                 $_SESSION['success'] = 'Licencia creada exitosamente en modo prueba por ' . $trialDays . ' días';
             } else {
-                $db->query(
-                    "INSERT INTO licenses (license_key, type, status, price, billing_cycle, start_date, end_date) VALUES (?, ?, 'active', ?, ?, ?, ?)",
-                    [$licenseKey, $type, $price, $billingCycle, $startDate, $endDate]
-                );
+                if ($supportsMaxLocationsOverride) {
+                    $db->query(
+                        "INSERT INTO licenses (license_key, type, status, price, billing_cycle, start_date, end_date, max_locations_override) VALUES (?, ?, 'active', ?, ?, ?, ?, ?)",
+                        [$licenseKey, $type, $price, $billingCycle, $startDate, $endDate, $maxLocationsOverride]
+                    );
+                } else {
+                    $db->query(
+                        "INSERT INTO licenses (license_key, type, status, price, billing_cycle, start_date, end_date) VALUES (?, ?, 'active', ?, ?, ?, ?)",
+                        [$licenseKey, $type, $price, $billingCycle, $startDate, $endDate]
+                    );
+                }
                 $_SESSION['success'] = 'Licencia creada exitosamente como plan activo.';
             }
 
@@ -120,6 +143,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $endDate      = isset($_POST['end_date']) ? $_POST['end_date'] : date('Y-m-d');
             $price        = floatval($_POST['price']);
             $status       = isset($_POST['status']) ? $_POST['status'] : 'active';
+            $maxLocationsRaw = isset($_POST['max_locations_override']) ? trim((string) $_POST['max_locations_override']) : '';
+            $maxLocationsOverride = null;
+            if ($maxLocationsRaw !== '') {
+                $maxLocationsOverride = intval($maxLocationsRaw);
+                if ($maxLocationsOverride === 0 || $maxLocationsOverride < -1) {
+                    throw new Exception('El máximo de sucursales debe ser -1 (ilimitado) o un número mayor o igual a 1.');
+                }
+            }
             $trialEndDate = !empty($_POST['trial_end_date']) ? $_POST['trial_end_date'] : null;
             $barbershopId = !empty($_POST['barbershop_id']) ? intval($_POST['barbershop_id']) : null;
             $assignedBarbershop = $db->fetch("SELECT id FROM barbershops WHERE license_id = ?", [$licenseId]);
@@ -129,30 +160,59 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
 
             if ($supportsTrialDates && $supportsActivatedAt) {
-                $db->query(
-                    "UPDATE licenses
-                     SET type = ?,
-                         billing_cycle = ?,
-                         start_date = ?,
-                         end_date = ?,
-                         price = ?,
-                         status = ?,
-                         trial_end_date = ?,
-                         activated_at = CASE
-                             WHEN ? = 'active' AND (activated_at IS NULL OR activated_at = '0000-00-00 00:00:00') THEN NOW()
-                             ELSE activated_at
-                         END
-                     WHERE id = ?",
-                    [$type, $billingCycle, $startDate, $endDate, $price, $status, $trialEndDate, $status, $licenseId]
-                );
+                if ($supportsMaxLocationsOverride) {
+                    $db->query(
+                        "UPDATE licenses
+                         SET type = ?,
+                             billing_cycle = ?,
+                             start_date = ?,
+                             end_date = ?,
+                             price = ?,
+                             status = ?,
+                             trial_end_date = ?,
+                             max_locations_override = ?,
+                             activated_at = CASE
+                                 WHEN ? = 'active' AND (activated_at IS NULL OR activated_at = '0000-00-00 00:00:00') THEN NOW()
+                                 ELSE activated_at
+                             END
+                         WHERE id = ?",
+                        [$type, $billingCycle, $startDate, $endDate, $price, $status, $trialEndDate, $maxLocationsOverride, $status, $licenseId]
+                    );
+                } else {
+                    $db->query(
+                        "UPDATE licenses
+                         SET type = ?,
+                             billing_cycle = ?,
+                             start_date = ?,
+                             end_date = ?,
+                             price = ?,
+                             status = ?,
+                             trial_end_date = ?,
+                             activated_at = CASE
+                                 WHEN ? = 'active' AND (activated_at IS NULL OR activated_at = '0000-00-00 00:00:00') THEN NOW()
+                                 ELSE activated_at
+                             END
+                         WHERE id = ?",
+                        [$type, $billingCycle, $startDate, $endDate, $price, $status, $trialEndDate, $status, $licenseId]
+                    );
+                }
             } else {
                 $safeStatus = $status === 'trial' ? 'active' : $status;
-                $db->query(
-                    "UPDATE licenses
-                     SET type = ?, billing_cycle = ?, start_date = ?, end_date = ?, price = ?, status = ?
-                     WHERE id = ?",
-                    [$type, $billingCycle, $startDate, $endDate, $price, $safeStatus, $licenseId]
-                );
+                if ($supportsMaxLocationsOverride) {
+                    $db->query(
+                        "UPDATE licenses
+                         SET type = ?, billing_cycle = ?, start_date = ?, end_date = ?, price = ?, status = ?, max_locations_override = ?
+                         WHERE id = ?",
+                        [$type, $billingCycle, $startDate, $endDate, $price, $safeStatus, $maxLocationsOverride, $licenseId]
+                    );
+                } else {
+                    $db->query(
+                        "UPDATE licenses
+                         SET type = ?, billing_cycle = ?, start_date = ?, end_date = ?, price = ?, status = ?
+                         WHERE id = ?",
+                        [$type, $billingCycle, $startDate, $endDate, $price, $safeStatus, $licenseId]
+                    );
+                }
             }
 
             if ($barbershopId && !$assignedBarbershop) {
@@ -551,6 +611,13 @@ include BASE_PATH . '/includes/header.php';
                                 <p class="text-sm font-bold" x-text="'RD$' + parseFloat(activeLicense?.price||0).toLocaleString('es-DO',{minimumFractionDigits:2})"></p>
                             </div>
                             <div>
+                                <p class="text-xs text-gray-500">Máx. sucursales</p>
+                                <p class="text-sm font-bold"
+                                   x-text="activeLicense?.max_locations_override === null || activeLicense?.max_locations_override === ''
+                                       ? 'Según plan'
+                                       : (parseInt(activeLicense?.max_locations_override) < 0 ? 'Ilimitadas' : activeLicense?.max_locations_override)"></p>
+                            </div>
+                            <div>
                                 <p class="text-xs text-gray-500">Ciclo</p>
                                 <p class="text-sm font-bold capitalize" x-text="activeLicense?.billing_cycle"></p>
                             </div>
@@ -669,6 +736,13 @@ include BASE_PATH . '/includes/header.php';
                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500" required>
                         </div>
                         <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Máx. sucursales</label>
+                            <input type="number" name="max_locations_override" min="-1" step="1" :value="activeLicense?.max_locations_override"
+                                   placeholder="Vacío = usar límite del plan"
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500">
+                            <p class="text-xs text-gray-500 mt-1">Usa -1 para ilimitadas.</p>
+                        </div>
+                        <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">Fecha Inicio *</label>
                             <input type="date" name="start_date" :value="activeLicense?.start_date"
                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500" required>
@@ -781,6 +855,13 @@ include BASE_PATH . '/includes/header.php';
                             <input type="number" name="price" step="0.01" min="0"
                                    placeholder="Dejar vacío para usar precio del plan"
                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Máx. sucursales</label>
+                            <input type="number" name="max_locations_override" min="-1" step="1"
+                                   placeholder="Vacío = usar límite del plan"
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500">
+                            <p class="text-xs text-gray-500 mt-1">Usa -1 para ilimitadas.</p>
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">Fecha de Inicio *</label>

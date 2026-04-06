@@ -428,17 +428,29 @@ function canCreateAppointmentForBarbershop($barbershopId, &$message = null, $dat
  */
 function canAddBarbershopToLicense($licenseId, &$message = null) {
     $db = Database::getInstance();
-    $license = $db->fetch(
-        "SELECT id, type FROM licenses WHERE id = ? LIMIT 1",
-        [$licenseId]
-    );
+    try {
+        $license = $db->fetch(
+            "SELECT id, type, max_locations_override FROM licenses WHERE id = ? LIMIT 1",
+            [$licenseId]
+        );
+    } catch (Exception $e) {
+        // Fallback para ambientes que aun no aplican la migracion de override.
+        $license = $db->fetch(
+            "SELECT id, type FROM licenses WHERE id = ? LIMIT 1",
+            [$licenseId]
+        );
+        if ($license && !isset($license['max_locations_override'])) {
+            $license['max_locations_override'] = null;
+        }
+    }
 
     if (!$license || !isset(LICENSE_TYPES[$license['type']])) {
         $message = 'Licencia no válida.';
         return false;
     }
 
-    $max = intval(LICENSE_TYPES[$license['type']]['max_locations'] ?? 1);
+    $maxDefault = intval(LICENSE_TYPES[$license['type']]['max_locations'] ?? 1);
+    $max = $license['max_locations_override'] !== null ? intval($license['max_locations_override']) : $maxDefault;
     if ($max < 0) {
         return true;
     }

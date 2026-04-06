@@ -17,6 +17,50 @@ $licenses = $db->fetchAll("
     ORDER BY type ASC
 ");
 
+$supportsMaxLocationsOverride = true;
+try {
+    $db->query("SELECT max_locations_override FROM licenses LIMIT 1");
+} catch (Exception $e) {
+    $supportsMaxLocationsOverride = false;
+}
+
+if ($supportsMaxLocationsOverride) {
+    $licenses = $db->fetchAll("
+        SELECT id, type, status, end_date, max_locations_override
+        FROM licenses
+        WHERE status IN ('active', 'trial')
+        ORDER BY type ASC
+    ");
+}
+
+$licenseUsageRows = $db->fetchAll("
+    SELECT license_id, COUNT(*) AS total
+    FROM barbershops
+    WHERE license_id IS NOT NULL
+    GROUP BY license_id
+");
+
+$licenseUsageMap = [];
+foreach ($licenseUsageRows as $row) {
+    $licenseUsageMap[intval($row['license_id'])] = intval($row['total']);
+}
+
+foreach ($licenses as $idx => $license) {
+    $licenseId = intval($license['id']);
+    $licenseType = $license['type'];
+    $defaultMaxLocations = intval(LICENSE_TYPES[$licenseType]['max_locations'] ?? 1);
+    $maxLocations = $defaultMaxLocations;
+    if ($supportsMaxLocationsOverride && array_key_exists('max_locations_override', $license) && $license['max_locations_override'] !== null) {
+        $maxLocations = intval($license['max_locations_override']);
+    }
+    $usedLocations = intval($licenseUsageMap[$licenseId] ?? 0);
+
+    $licenses[$idx]['max_locations'] = $maxLocations;
+    $licenses[$idx]['used_locations'] = $usedLocations;
+    $licenses[$idx]['has_capacity'] = $maxLocations < 0 || $usedLocations < $maxLocations;
+    $licenses[$idx]['remaining_locations'] = $maxLocations < 0 ? -1 : max(0, $maxLocations - $usedLocations);
+}
+
 // Obtener todos los owners disponibles
 $owners = $db->fetchAll("
     SELECT id, full_name, email
@@ -332,11 +376,18 @@ include BASE_PATH . '/includes/header.php';
                             <select name="license_id" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent" required>
                                 <option value="">Seleccionar licencia...</option>
                                 <?php foreach ($licenses as $license): ?>
-                                <option value="<?php echo $license['id']; ?>">
+                                <option value="<?php echo $license['id']; ?>" <?php echo $license['has_capacity'] ? '' : 'disabled'; ?>>
                                     <?php echo ucfirst($license['type']); ?> - Vence: <?php echo date('d/m/Y', strtotime($license['end_date'])); ?>
+                                    <?php if ($license['max_locations'] < 0): ?>
+                                        (Sucursales ilimitadas)
+                                    <?php else: ?>
+                                        (<?php echo $license['remaining_locations']; ?> de <?php echo $license['max_locations']; ?> disponible/s)
+                                    <?php endif; ?>
+                                    <?php echo $license['has_capacity'] ? '' : ' - SIN CUPO'; ?>
                                 </option>
                                 <?php endforeach; ?>
                             </select>
+                            <p class="text-xs text-gray-500 mt-1">Las licencias sin cupo aparecen deshabilitadas.</p>
                         </div>
                         
                         <div>

@@ -36,6 +36,7 @@ CREATE TABLE licenses (
     trial_start_date DATE NULL,
     trial_end_date DATE NULL,
     activated_at DATETIME NULL,
+    max_locations_override INT NULL,
     start_date DATE NOT NULL,
     end_date DATE NOT NULL,
     auto_renew BOOLEAN DEFAULT TRUE,

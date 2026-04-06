@@ -65,11 +65,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if ($commissionRate > 100) {
             $commissionRate = 100;
         }
+        $slug = generateUniqueBarberSlug($db, $barbershopId, $fullName);
         
         $db->execute("
-            INSERT INTO barbers (user_id, barbershop_id, specialty, experience_years, commission_rate, status, created_at)
-            VALUES (?, ?, ?, ?, ?, 'active', NOW())
-        ", [$userId, $barbershopId, $specialty, $experience, $commissionRate]);
+            INSERT INTO barbers (user_id, barbershop_id, slug, specialty, experience_years, commission_rate, status, created_at)
+            VALUES (?, ?, ?, ?, ?, ?, 'active', NOW())
+        ", [$userId, $barbershopId, $slug, $specialty, $experience, $commissionRate]);
         
         setFlash('success', 'Barbero creado correctamente');
         redirect($_SERVER['PHP_SELF']);

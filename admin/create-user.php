@@ -34,6 +34,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $role = $_POST['role'] ?? '';
         $status = $_POST['status'] ?? 'active';
         $licenseId = $_POST['license_id'] ?? null;
+        $barbershopId = !empty($_POST['barbershop_id']) ? (int) $_POST['barbershop_id'] : null;
         
         // Validaciones
         if (empty($fullName)) {
@@ -54,6 +55,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         
         if (!in_array($role, ['superadmin', 'owner', 'barber', 'client'])) {
             throw new Exception('Rol no válido');
+        }
+
+        if ($role === 'owner' && $barbershopId && empty($licenseId)) {
+            throw new Exception('Debes seleccionar una licencia al asignar una barbería a un owner');
+        }
+
+        if ($role === 'owner' && $barbershopId) {
+            $selectedBarbershop = $db->fetch("SELECT id, owner_id FROM barbershops WHERE id = ?", [$barbershopId]);
+            if (!$selectedBarbershop) {
+                throw new Exception('La barbería seleccionada no existe');
+            }
+            if (!empty($selectedBarbershop['owner_id'])) {
+                throw new Exception('La barbería seleccionada ya tiene un owner asignado');
+            }
         }
         
         // Verificar email único
@@ -80,21 +95,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $userId = $db->lastInsertId();
         
         // Si es owner y se seleccionó una barbería, asignarla
-        if ($role === 'owner' && !empty($_POST['barbershop_id'])) {
-            $barbershopId = $_POST['barbershop_id'];
+        if ($role === 'owner' && $barbershopId) {
             $db->query(
                 "UPDATE barbershops SET owner_id = ?, license_id = ? WHERE id = ?",
-                [$userId, !empty($licenseId) ? $licenseId : null, $barbershopId]
+                [$userId, $licenseId, $barbershopId]
             );
         }
         
         // Si es barber y se seleccionó una barbería, crear registro
-        if ($role === 'barber' && !empty($_POST['barbershop_id'])) {
-            $barbershopId = $_POST['barbershop_id'];
+        if ($role === 'barber' && $barbershopId) {
+            $slug = generateUniqueBarberSlug($db, $barbershopId, $fullName);
             $db->query("
-                INSERT INTO barbers (user_id, barbershop_id, full_name, phone, status, rating, total_reviews, created_at)
-                VALUES (?, ?, ?, ?, 'active', 5.0, 0, NOW())
-            ", [$userId, $barbershopId, $fullName, $phone]);
+                INSERT INTO barbers (user_id, barbershop_id, slug, status, rating, total_reviews, created_at)
+                VALUES (?, ?, ?, 'active', 5.0, 0, NOW())
+            ", [$userId, $barbershopId, $slug]);
         }
         
         $_SESSION['success'] = 'Usuario creado exitosamente';
@@ -234,7 +248,7 @@ include BASE_PATH . '/includes/header.php';
                         <div x-show="role === 'owner'">
                             <label class="block text-sm font-medium text-gray-700 mb-2">Licencia</label>
                             <select name="license_id" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
-                                <option value="">Sin licencia</option>
+                                <option value="">Seleccionar licencia</option>
                                 <?php foreach ($licenses as $license): ?>
                                 <option value="<?php echo $license['id']; ?>">
                                     <?php echo ucfirst($license['type']); ?>

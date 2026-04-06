@@ -73,8 +73,7 @@ if (isset($_POST['assign_barber'])) {
             throw new Exception('Este barbero ya está asignado a esta barbería');
         }
         
-        // Generar slug
-        $slug = strtolower(str_replace(' ', '-', $user['full_name'])) . '-' . rand(100, 999);
+        $slug = generateUniqueBarberSlug($db, $shopId, $user['full_name']);
         
         // Procesar upload de foto
         $photo = null;

@@ -45,6 +45,13 @@ $barbershops = $db->fetchAll("
     ORDER BY business_name ASC
 ");
 
+$currentBarbershop = null;
+if ($user['role'] === 'owner') {
+    $currentBarbershop = $db->fetch("SELECT id, license_id FROM barbershops WHERE owner_id = ?", [$userId]);
+} elseif ($user['role'] === 'barber') {
+    $currentBarbershop = $db->fetch("SELECT barbershop_id AS id, slug FROM barbers WHERE user_id = ?", [$userId]);
+}
+
 // Procesar formulario
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     try {
@@ -55,6 +62,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $status = $_POST['status'] ?? 'active';
         $licenseId = $_POST['license_id'] ?? null;
         $newPassword = trim($_POST['new_password'] ?? '');
+        $barbershopId = !empty($_POST['barbershop_id']) ? (int) $_POST['barbershop_id'] : null;
         
         // Validaciones
         if (empty($fullName)) {
@@ -67,6 +75,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         
         if (!in_array($role, ['superadmin', 'owner', 'barber', 'client'])) {
             throw new Exception('Rol no válido');
+        }
+
+        if ($role === 'owner' && $barbershopId && empty($licenseId)) {
+            throw new Exception('Debes seleccionar una licencia al asignar una barbería a un owner');
+        }
+
+        $currentOwnerBarbershop = $db->fetch("SELECT id, owner_id, license_id FROM barbershops WHERE owner_id = ?", [$userId]);
+        $currentBarberRecord = $db->fetch("SELECT id, barbershop_id, slug FROM barbers WHERE user_id = ?", [$userId]);
+
+        if ($user['role'] === 'owner' && $role !== 'owner' && $currentOwnerBarbershop) {
+            throw new Exception('Reasigna primero la barbería del owner antes de cambiarle el rol');
+        }
+
+        if ($role === 'owner' && $currentOwnerBarbershop && $barbershopId && (int) $currentOwnerBarbershop['id'] !== $barbershopId) {
+            throw new Exception('No puedes mover este owner a otra barbería desde esta pantalla sin reasignar antes la barbería actual');
+        }
+
+        if ($role === 'owner' && $barbershopId) {
+            $selectedBarbershop = $db->fetch("SELECT id, owner_id FROM barbershops WHERE id = ?", [$barbershopId]);
+            if (!$selectedBarbershop) {
+                throw new Exception('La barbería seleccionada no existe');
+            }
+            if (!empty($selectedBarbershop['owner_id']) && (int) $selectedBarbershop['owner_id'] !== (int) $userId) {
+                throw new Exception('La barbería seleccionada ya tiene otro owner asignado');
+            }
         }
         
         // Verificar email único (excepto el propio usuario)
@@ -104,44 +137,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $query = "UPDATE users SET " . implode(', ', $setClause) . " WHERE id = ?";
         $db->query($query, $values);
         
-        // Si cambió el rol, actualizar asociaciones
-        if ($role !== $user['role']) {
-            // Si antes era owner, liberar la barbería
-            if ($user['role'] === 'owner') {
-                $db->query("UPDATE barbershops SET owner_id = NULL WHERE owner_id = ?", [$userId]);
-            }
-            
-            // Si antes era barber, eliminar de tabla barbers
-            if ($user['role'] === 'barber') {
-                $db->query("DELETE FROM barbers WHERE user_id = ?", [$userId]);
-            }
+        if ($role !== 'barber' && $user['role'] === 'barber' && $currentBarberRecord) {
+            $db->query("DELETE FROM barbers WHERE user_id = ?", [$userId]);
         }
         
         // Si es owner y se seleccionó una barbería, asignarla
-        if ($role === 'owner' && !empty($_POST['barbershop_id'])) {
-            $barbershopId = $_POST['barbershop_id'];
+        if ($role === 'owner' && $barbershopId) {
             $db->query(
                 "UPDATE barbershops SET owner_id = ?, license_id = ? WHERE id = ?",
-                [$userId, !empty($licenseId) ? $licenseId : null, $barbershopId]
+                [$userId, $licenseId, $barbershopId]
             );
         }
         
         // Si es barber y se seleccionó una barbería, crear/actualizar registro
-        if ($role === 'barber' && !empty($_POST['barbershop_id'])) {
-            $barbershopId = $_POST['barbershop_id'];
-            
-            // Verificar si ya existe
-            $existingBarber = $db->fetch("SELECT id FROM barbers WHERE user_id = ?", [$userId]);
-            
-            if ($existingBarber) {
-                // Actualizar barbershop_id
-                $db->query("UPDATE barbers SET barbershop_id = ? WHERE user_id = ?", [$barbershopId, $userId]);
+        if ($role === 'barber' && $barbershopId) {
+            if ($currentBarberRecord) {
+                $slug = generateUniqueBarberSlug($db, $barbershopId, $fullName, (int) $currentBarberRecord['id']);
+                $db->query("UPDATE barbers SET barbershop_id = ?, slug = ? WHERE user_id = ?", [$barbershopId, $slug, $userId]);
             } else {
-                // Crear nuevo registro de barber
+                $slug = generateUniqueBarberSlug($db, $barbershopId, $fullName);
                 $db->query("
-                    INSERT INTO barbers (user_id, barbershop_id, full_name, phone, status, rating, total_reviews)
-                    VALUES (?, ?, ?, ?, 'active', 5.0, 0)
-                ", [$userId, $barbershopId, $fullName, $phone]);
+                    INSERT INTO barbers (user_id, barbershop_id, slug, status, rating, total_reviews)
+                    VALUES (?, ?, ?, 'active', 5.0, 0)
+                ", [$userId, $barbershopId, $slug]);
             }
         }
         
@@ -281,7 +299,7 @@ include BASE_PATH . '/includes/header.php';
                         <div x-show="role === 'owner'">
                             <label class="block text-sm font-medium text-gray-700 mb-2">Licencia</label>
                             <select name="license_id" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
-                                <option value="">Sin licencia</option>
+                                <option value="">Seleccionar licencia</option>
                                 <?php foreach ($licenses as $license): ?>
                                 <option value="<?php echo $license['id']; ?>" <?php echo (($currentBarbershop['license_id'] ?? null) == $license['id']) ? 'selected' : ''; ?>>
                                     <?php echo ucfirst($license['type']); ?>
@@ -298,16 +316,7 @@ include BASE_PATH . '/includes/header.php';
                             </label>
                             <select name="barbershop_id" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
                                 <option value="">Ninguna</option>
-                                <?php 
-                                // Obtener barbería actual del usuario
-                                $currentBarbershop = null;
-                                if ($user['role'] === 'owner') {
-                                    $currentBarbershop = $db->fetch("SELECT id, license_id FROM barbershops WHERE owner_id = ?", [$userId]);
-                                } elseif ($user['role'] === 'barber') {
-                                    $currentBarbershop = $db->fetch("SELECT barbershop_id as id FROM barbers WHERE user_id = ?", [$userId]);
-                                }
-                                
-                                foreach ($barbershops as $shop): 
+                                <?php foreach ($barbershops as $shop): 
                                     $selected = $currentBarbershop && $currentBarbershop['id'] == $shop['id'];
                                 ?>
                                 <option value="<?php echo $shop['id']; ?>" <?php echo $selected ? 'selected' : ''; ?>>

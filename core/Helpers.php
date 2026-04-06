@@ -72,6 +72,34 @@ function generateSlug($text) {
     return trim($text, '-');
 }
 
+function generateUniqueBarberSlug($db, $barbershopId, $fullName, $excludeBarberId = null) {
+    $baseSlug = generateSlug($fullName);
+    if ($baseSlug === '') {
+        $baseSlug = 'barber';
+    }
+
+    $slug = $baseSlug;
+    $counter = 2;
+
+    while (true) {
+        $params = [$barbershopId, $slug];
+        $query = "SELECT id FROM barbers WHERE barbershop_id = ? AND slug = ?";
+
+        if ($excludeBarberId !== null) {
+            $query .= " AND id != ?";
+            $params[] = $excludeBarberId;
+        }
+
+        $existingBarber = $db->fetch($query, $params);
+        if (!$existingBarber) {
+            return $slug;
+        }
+
+        $slug = $baseSlug . '-' . $counter;
+        $counter++;
+    }
+}
+
 /**
  * Generar código único
  */

@@ -44,12 +44,12 @@ $supportsActivatedAt = $safeColumnExists('licenses', 'activated_at');
 // Procesar acciones POST
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     try {
-        $action = $_POST['action'] ?? '';
+        $action = isset($_POST['action']) ? $_POST['action'] : '';
 
         if ($action === 'create') {
-            $type         = $_POST['type'] ?? 'basic';
-            $billingCycle = $_POST['billing_cycle'] ?? 'monthly';
-            $startDate    = $_POST['start_date'] ?? date('Y-m-d');
+            $type         = isset($_POST['type']) ? $_POST['type'] : 'basic';
+            $billingCycle = isset($_POST['billing_cycle']) ? $_POST['billing_cycle'] : 'monthly';
+            $startDate    = isset($_POST['start_date']) ? $_POST['start_date'] : date('Y-m-d');
             $price        = !empty($_POST['price']) ? floatval($_POST['price']) : LICENSE_TYPES[$type]['price'];
             $barbershopId = !empty($_POST['barbershop_id']) ? intval($_POST['barbershop_id']) : null;
             $trialDays    = defined('TRIAL_DAYS_DEFAULT') ? intval(TRIAL_DAYS_DEFAULT) : 15;
@@ -58,7 +58,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
 
             $months   = ['monthly' => 1, 'quarterly' => 3, 'yearly' => 12];
-            $endDate  = date('Y-m-d', strtotime($startDate . ' +' . ($months[$billingCycle] ?? 1) . ' months'));
+            $selectedMonths = isset($months[$billingCycle]) ? $months[$billingCycle] : 1;
+            $endDate  = date('Y-m-d', strtotime($startDate . ' +' . $selectedMonths . ' months'));
             $trialEndDate = date('Y-m-d', strtotime($startDate . ' +' . $trialDays . ' days'));
             $licenseKey = bin2hex(random_bytes(16));
 
@@ -87,12 +88,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         if ($action === 'edit') {
             $licenseId    = intval($_POST['license_id']);
-            $type         = $_POST['type'] ?? 'basic';
-            $billingCycle = $_POST['billing_cycle'] ?? 'monthly';
-            $startDate    = $_POST['start_date'] ?? date('Y-m-d');
-            $endDate      = $_POST['end_date'] ?? date('Y-m-d');
+            $type         = isset($_POST['type']) ? $_POST['type'] : 'basic';
+            $billingCycle = isset($_POST['billing_cycle']) ? $_POST['billing_cycle'] : 'monthly';
+            $startDate    = isset($_POST['start_date']) ? $_POST['start_date'] : date('Y-m-d');
+            $endDate      = isset($_POST['end_date']) ? $_POST['end_date'] : date('Y-m-d');
             $price        = floatval($_POST['price']);
-            $status       = $_POST['status'] ?? 'active';
+            $status       = isset($_POST['status']) ? $_POST['status'] : 'active';
             $trialEndDate = !empty($_POST['trial_end_date']) ? $_POST['trial_end_date'] : null;
             $barbershopId = !empty($_POST['barbershop_id']) ? intval($_POST['barbershop_id']) : null;
             $assignedBarbershop = $db->fetch("SELECT id FROM barbershops WHERE license_id = ?", [$licenseId]);
@@ -139,9 +140,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         if ($action === 'renovar') {
             $licenseId    = intval($_POST['license_id']);
-            $billingCycle = $_POST['billing_cycle'] ?? 'monthly';
+            $billingCycle = isset($_POST['billing_cycle']) ? $_POST['billing_cycle'] : 'monthly';
             $months       = ['monthly' => 1, 'quarterly' => 3, 'yearly' => 12];
-            $extra        = ($months[$billingCycle] ?? 1);
+            $extra        = isset($months[$billingCycle]) ? $months[$billingCycle] : 1;
 
             $lic = $db->fetch("SELECT end_date FROM licenses WHERE id = ?", [$licenseId]);
             $baseDate = (strtotime($lic['end_date']) > time()) ? $lic['end_date'] : date('Y-m-d');
@@ -160,7 +161,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         if ($action === 'toggle_status') {
             $licenseId = intval($_POST['license_id']);
-            $newStatus = $_POST['new_status'] ?? 'suspended';
+            $newStatus = isset($_POST['new_status']) ? $_POST['new_status'] : 'suspended';
             if ($supportsActivatedAt) {
                 $db->query(
                     "UPDATE licenses
@@ -181,7 +182,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         if ($action === 'activate_trial') {
-            $licenseId = intval($_POST['license_id'] ?? 0);
+            $licenseId = intval(isset($_POST['license_id']) ? $_POST['license_id'] : 0);
             if (!$supportsTrialDates) {
                 throw new Exception('La base de datos de este servidor no tiene soporte para licencias de prueba. Ejecuta la migración pendiente.');
             }
@@ -360,7 +361,7 @@ include BASE_PATH . '/includes/header.php';
                 </div>
                 <div class="bg-white rounded-lg shadow p-5 col-span-2 md:col-span-1">
                     <p class="text-xs text-gray-500 uppercase font-medium">Ingresos</p>
-                    <p class="text-2xl font-bold text-indigo-600"><?php echo formatPrice($statsRow['ingresos_totales'] ?? 0); ?></p>
+                    <p class="text-2xl font-bold text-indigo-600"><?php echo formatPrice(isset($statsRow['ingresos_totales']) ? $statsRow['ingresos_totales'] : 0); ?></p>
                 </div>
             </div>
 
@@ -413,7 +414,7 @@ include BASE_PATH . '/includes/header.php';
                                 <td class="px-6 py-4">
                                     <?php if ($lic['business_name']): ?>
                                         <p class="text-sm font-medium text-gray-900"><?php echo htmlspecialchars($lic['business_name']); ?></p>
-                                        <p class="text-xs text-gray-500"><?php echo htmlspecialchars((string)($lic['owner_name'] ?? '')); ?></p>
+                                        <p class="text-xs text-gray-500"><?php echo htmlspecialchars((string)(isset($lic['owner_name']) ? $lic['owner_name'] : '')); ?></p>
                                     <?php else: ?>
                                         <span class="text-xs text-gray-400 italic">Sin asignar</span>
                                     <?php endif; ?>
@@ -546,7 +547,7 @@ include BASE_PATH . '/includes/header.php';
                             </div>
                             <div>
                                 <p class="text-xs text-gray-500">Citas registradas</p>
-                                <p class="text-sm font-bold" x-text="activeLicense?.total_appointments ?? 0"></p>
+                                <p class="text-sm font-bold" x-text="activeLicense && activeLicense.total_appointments ? activeLicense.total_appointments : 0"></p>
                             </div>
                         </div>
                     </div>
@@ -663,7 +664,7 @@ include BASE_PATH . '/includes/header.php';
                                 </template>
                                 <?php foreach ($freeBarbershops as $bs): ?>
                                 <option value="<?php echo $bs['id']; ?>">
-                                    <?php echo htmlspecialchars($bs['business_name']); ?> — <?php echo htmlspecialchars((string)($bs['owner_name'] ?? '')); ?>
+                                    <?php echo htmlspecialchars($bs['business_name']); ?> — <?php echo htmlspecialchars((string)(isset($bs['owner_name']) ? $bs['owner_name'] : '')); ?>
                                 </option>
                                 <?php endforeach; ?>
                             </select>
@@ -764,7 +765,7 @@ include BASE_PATH . '/includes/header.php';
                                 <option value="">— Sin asignar ahora —</option>
                                 <?php foreach ($freeBarbershops as $bs): ?>
                                 <option value="<?php echo $bs['id']; ?>">
-                                    <?php echo htmlspecialchars($bs['business_name']); ?> — <?php echo htmlspecialchars((string)($bs['owner_name'] ?? '')); ?>
+                                    <?php echo htmlspecialchars($bs['business_name']); ?> — <?php echo htmlspecialchars((string)(isset($bs['owner_name']) ? $bs['owner_name'] : '')); ?>
                                 </option>
                                 <?php endforeach; ?>
                             </select>

@@ -7,6 +7,11 @@ require_once BASE_PATH . '/core/Helpers.php';
 
 Auth::requireRole('superadmin');
 
+if (isset($_GET['debug']) && $_GET['debug'] === '1') {
+    error_reporting(E_ALL);
+    ini_set('display_errors', 1);
+}
+
 $db = Database::getInstance();
 $pageError = null;
 $licenses = [];
@@ -19,8 +24,22 @@ $statsRow = [
     'vencidas' => 0,
     'ingresos_totales' => 0,
 ];
-$supportsTrialDates = $db->columnExists('licenses', 'trial_end_date');
-$supportsActivatedAt = $db->columnExists('licenses', 'activated_at');
+
+$safeColumnExists = function ($tableName, $columnName) use ($db) {
+    try {
+        if (method_exists($db, 'columnExists')) {
+            return (bool) $db->columnExists($tableName, $columnName);
+        }
+
+        $db->query("SELECT `$columnName` FROM `$tableName` LIMIT 1");
+        return true;
+    } catch (Exception $e) {
+        return false;
+    }
+};
+
+$supportsTrialDates = $safeColumnExists('licenses', 'trial_end_date');
+$supportsActivatedAt = $safeColumnExists('licenses', 'activated_at');
 
 // Procesar acciones POST
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -184,7 +203,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             header('Location: licenses.php');
             exit;
         }
-    } catch (Throwable $e) {
+    } catch (Exception $e) {
         error_log('Licenses page error: ' . $e->getMessage());
         $_SESSION['error'] = ENVIRONMENT === 'development'
             ? $e->getMessage()
@@ -249,7 +268,7 @@ try {
             SUM(price) AS ingresos_totales
         FROM licenses
     ") ?: $statsRow;
-} catch (Throwable $e) {
+} catch (Exception $e) {
     error_log('Licenses page load error: ' . $e->getMessage());
     $pageError = ENVIRONMENT === 'development'
         ? $e->getMessage()

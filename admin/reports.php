@@ -7,6 +7,11 @@ require_once BASE_PATH . '/core/Helpers.php';
 
 Auth::requireRole('superadmin');
 
+if (isset($_GET['debug']) && $_GET['debug'] === '1') {
+    error_reporting(E_ALL);
+    ini_set('display_errors', 1);
+}
+
 $db = Database::getInstance();
 $pageError = null;
 
@@ -32,8 +37,21 @@ $expiringLicenses = [];
 $appointmentStats = [];
 
 try {
-    $hasClientsTable = $db->tableExists('clients');
-    $hasTransactionsTable = $db->tableExists('transactions');
+    $safeTableExists = function ($tableName) use ($db) {
+        try {
+            if (method_exists($db, 'tableExists')) {
+                return (bool) $db->tableExists($tableName);
+            }
+
+            $db->query("SELECT 1 FROM `$tableName` LIMIT 1");
+            return true;
+        } catch (Exception $e) {
+            return false;
+        }
+    };
+
+    $hasClientsTable = $safeTableExists('clients');
+    $hasTransactionsTable = $safeTableExists('transactions');
     $clientCountSelect = $hasClientsTable ? "(SELECT COUNT(*) FROM clients)" : "0";
     $revenueSelect = $hasTransactionsTable ? "(SELECT COALESCE(SUM(amount), 0) FROM transactions WHERE type = 'income')" : "0";
 
@@ -124,7 +142,7 @@ try {
         GROUP BY status
         ORDER BY total DESC
     ", [$startDate, $endDate, $startDate, $endDate]);
-} catch (Throwable $e) {
+} catch (Exception $e) {
     error_log('Reports page load error: ' . $e->getMessage());
     $pageError = ENVIRONMENT === 'development'
         ? $e->getMessage()

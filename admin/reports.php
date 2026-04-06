@@ -8,104 +8,128 @@ require_once BASE_PATH . '/core/Helpers.php';
 Auth::requireRole('superadmin');
 
 $db = Database::getInstance();
+$pageError = null;
 
 // Periodo de reporte (ultimos 30 dias por defecto)
 $startDate = input('start_date') ?: date('Y-m-d', strtotime('-30 days'));
 $endDate = input('end_date') ?: date('Y-m-d');
 
-// 1. Estadisticas generales del sistema
-$systemStats = $db->fetch("
-    SELECT 
-        (SELECT COUNT(*) FROM barbershops WHERE status = 'active') as active_barbershops,
-        (SELECT COUNT(*) FROM barbershops) as total_barbershops,
-        (SELECT COUNT(*) FROM users WHERE role = 'owner') as total_owners,
-        (SELECT COUNT(*) FROM users WHERE role = 'barber') as total_barbers,
-        (SELECT COUNT(*) FROM barbers WHERE status = 'active') as active_barbers,
-        (SELECT COUNT(*) FROM clients) as total_clients,
-        (SELECT COUNT(*) FROM appointments) as total_appointments,
-        (SELECT COUNT(*) FROM appointments WHERE status = 'completed') as completed_appointments,
-        (SELECT COALESCE(SUM(amount), 0) FROM transactions WHERE type = 'income') as total_revenue
-");
+$systemStats = [
+    'active_barbershops' => 0,
+    'total_barbershops' => 0,
+    'total_owners' => 0,
+    'total_barbers' => 0,
+    'active_barbers' => 0,
+    'total_clients' => 0,
+    'total_appointments' => 0,
+    'completed_appointments' => 0,
+    'total_revenue' => 0,
+];
+$growthData = [];
+$topBarbershops = [];
+$popularServices = [];
+$expiringLicenses = [];
+$appointmentStats = [];
 
-// 2. Crecimiento mensual (ultimos 6 meses)
-$growthData = $db->fetchAll("
-    SELECT 
-        DATE_FORMAT(created_at, '%Y-%m') as month,
-        COUNT(DISTINCT CASE WHEN role = 'owner' THEN id END) as new_owners,
-        COUNT(DISTINCT CASE WHEN role = 'barber' THEN id END) as new_barbers
-    FROM users
-    WHERE created_at >= DATE_SUB(CURRENT_DATE(), INTERVAL 6 MONTH)
-    GROUP BY DATE_FORMAT(created_at, '%Y-%m')
-    ORDER BY month DESC
-");
+try {
+    $hasClientsTable = $db->tableExists('clients');
+    $hasTransactionsTable = $db->tableExists('transactions');
+    $clientCountSelect = $hasClientsTable ? "(SELECT COUNT(*) FROM clients)" : "0";
+    $revenueSelect = $hasTransactionsTable ? "(SELECT COALESCE(SUM(amount), 0) FROM transactions WHERE type = 'income')" : "0";
 
-// 3. Top 10 barberias por ingresos
-$topBarbershops = $db->fetchAll("
-    SELECT 
-        bb.business_name,
-        bb.slug,
-        u.full_name as owner_name,
-        l.type as license_type,
-        COUNT(DISTINCT b.id) as barbers_count,
-        COUNT(DISTINCT a.id) as appointments_count,
-        COALESCE(SUM(CASE WHEN a.status = 'completed' THEN a.price ELSE 0 END), 0) as total_revenue
-    FROM barbershops bb
-    LEFT JOIN users u ON bb.owner_id = u.id
-    LEFT JOIN licenses l ON bb.license_id = l.id
-    LEFT JOIN barbers b ON bb.id = b.barbershop_id
-    LEFT JOIN appointments a ON b.id = a.barber_id 
-        AND a.appointment_date BETWEEN ? AND ?
-    GROUP BY bb.id
-    ORDER BY total_revenue DESC
-    LIMIT 10
-", [$startDate, $endDate]);
+    $systemStats = $db->fetch("
+        SELECT 
+            (SELECT COUNT(*) FROM barbershops WHERE status = 'active') as active_barbershops,
+            (SELECT COUNT(*) FROM barbershops) as total_barbershops,
+            (SELECT COUNT(*) FROM users WHERE role = 'owner') as total_owners,
+            (SELECT COUNT(*) FROM users WHERE role = 'barber') as total_barbers,
+            (SELECT COUNT(*) FROM barbers WHERE status = 'active') as active_barbers,
+            $clientCountSelect as total_clients,
+            (SELECT COUNT(*) FROM appointments) as total_appointments,
+            (SELECT COUNT(*) FROM appointments WHERE status = 'completed') as completed_appointments,
+            $revenueSelect as total_revenue
+    ") ?: $systemStats;
 
-// 4. Servicios mas populares
-$popularServices = $db->fetchAll("
-    SELECT 
-        s.name,
-        s.category,
-        COUNT(a.id) as total_bookings,
-        COALESCE(SUM(a.price), 0) as total_revenue,
-        ROUND(AVG(a.price), 2) as avg_price
-    FROM services s
-    JOIN appointments a ON s.id = a.service_id
-    WHERE a.appointment_date BETWEEN ? AND ?
-    AND a.status = 'completed'
-    GROUP BY s.id
-    ORDER BY total_bookings DESC
-    LIMIT 10
-", [$startDate, $endDate]);
+    $growthData = $db->fetchAll("
+        SELECT 
+            DATE_FORMAT(created_at, '%Y-%m') as month,
+            COUNT(DISTINCT CASE WHEN role = 'owner' THEN id END) as new_owners,
+            COUNT(DISTINCT CASE WHEN role = 'barber' THEN id END) as new_barbers
+        FROM users
+        WHERE created_at >= DATE_SUB(CURRENT_DATE(), INTERVAL 6 MONTH)
+        GROUP BY DATE_FORMAT(created_at, '%Y-%m')
+        ORDER BY month DESC
+    ");
 
-// 5. Licencias proximas a vencer (30 dias)
-$expiringLicenses = $db->fetchAll("
-    SELECT 
-        bb.business_name,
-        u.full_name as owner_name,
-        u.email as owner_email,
-        l.type as license_type,
-        l.end_date as license_expires_at,
-        DATEDIFF(l.end_date, CURRENT_DATE()) as days_remaining
-    FROM barbershops bb
-    JOIN users u ON bb.owner_id = u.id
-    JOIN licenses l ON bb.license_id = l.id
-    WHERE l.end_date <= DATE_ADD(CURRENT_DATE(), INTERVAL 30 DAY)
-    AND l.end_date >= CURRENT_DATE()
-    AND bb.status = 'active'
-    ORDER BY l.end_date ASC
-");
+    $topBarbershops = $db->fetchAll("
+        SELECT 
+            bb.business_name,
+            bb.slug,
+            u.full_name as owner_name,
+            l.type as license_type,
+            COUNT(DISTINCT b.id) as barbers_count,
+            COUNT(DISTINCT a.id) as appointments_count,
+            COALESCE(SUM(CASE WHEN a.status = 'completed' THEN a.price ELSE 0 END), 0) as total_revenue
+        FROM barbershops bb
+        LEFT JOIN users u ON bb.owner_id = u.id
+        LEFT JOIN licenses l ON bb.license_id = l.id
+        LEFT JOIN barbers b ON bb.id = b.barbershop_id
+        LEFT JOIN appointments a ON b.id = a.barber_id 
+            AND a.appointment_date BETWEEN ? AND ?
+        GROUP BY bb.id
+        ORDER BY total_revenue DESC
+        LIMIT 10
+    ", [$startDate, $endDate]);
 
-// 6. Estadisticas de citas por estado
-$appointmentStats = $db->fetchAll("
-    SELECT 
-        status,
-        COUNT(*) as total,
-        ROUND((COUNT(*) * 100.0 / (SELECT COUNT(*) FROM appointments WHERE appointment_date BETWEEN ? AND ?)), 2) as percentage
-    FROM appointments
-    WHERE appointment_date BETWEEN ? AND ?
-    GROUP BY status
-    ORDER BY total DESC
-", [$startDate, $endDate, $startDate, $endDate]);
+    $popularServices = $db->fetchAll("
+        SELECT 
+            s.name,
+            s.category,
+            COUNT(a.id) as total_bookings,
+            COALESCE(SUM(a.price), 0) as total_revenue,
+            ROUND(AVG(a.price), 2) as avg_price
+        FROM services s
+        JOIN appointments a ON s.id = a.service_id
+        WHERE a.appointment_date BETWEEN ? AND ?
+        AND a.status = 'completed'
+        GROUP BY s.id
+        ORDER BY total_bookings DESC
+        LIMIT 10
+    ", [$startDate, $endDate]);
+
+    $expiringLicenses = $db->fetchAll("
+        SELECT 
+            bb.business_name,
+            u.full_name as owner_name,
+            u.email as owner_email,
+            l.type as license_type,
+            l.end_date as license_expires_at,
+            DATEDIFF(l.end_date, CURRENT_DATE()) as days_remaining
+        FROM barbershops bb
+        JOIN users u ON bb.owner_id = u.id
+        JOIN licenses l ON bb.license_id = l.id
+        WHERE l.end_date <= DATE_ADD(CURRENT_DATE(), INTERVAL 30 DAY)
+        AND l.end_date >= CURRENT_DATE()
+        AND bb.status = 'active'
+        ORDER BY l.end_date ASC
+    ");
+
+    $appointmentStats = $db->fetchAll("
+        SELECT 
+            status,
+            COUNT(*) as total,
+            ROUND((COUNT(*) * 100.0 / NULLIF((SELECT COUNT(*) FROM appointments WHERE appointment_date BETWEEN ? AND ?), 0)), 2) as percentage
+        FROM appointments
+        WHERE appointment_date BETWEEN ? AND ?
+        GROUP BY status
+        ORDER BY total DESC
+    ", [$startDate, $endDate, $startDate, $endDate]);
+} catch (Throwable $e) {
+    error_log('Reports page load error: ' . $e->getMessage());
+    $pageError = ENVIRONMENT === 'development'
+        ? $e->getMessage()
+        : 'No se pudieron cargar los reportes en este servidor. Revisa el log de PHP/MySQL del hosting.';
+}
 
 $title = 'Reportes del Sistema - Super Admin';
 include BASE_PATH . '/includes/header.php';
@@ -140,6 +164,11 @@ include BASE_PATH . '/includes/header.php';
         </div>
 
         <main class="p-6">
+            <?php if ($pageError): ?>
+            <div class="mb-6 bg-red-50 border-l-4 border-red-500 p-4 rounded-lg">
+                <p class="text-red-700"><?php echo htmlspecialchars($pageError); ?></p>
+            </div>
+            <?php endif; ?>
             <!-- Stats Globales -->
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
                 <div class="bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg shadow-lg p-6 text-white">

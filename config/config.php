@@ -14,7 +14,7 @@ $defaultEnvironment = $isLocalHost ? 'development' : 'production';
 $environment = getenv('APP_ENV') ?: $defaultEnvironment;
 
 $localBaseUrl = 'http://localhost/gestion-barberia';
-$productionBaseUrl = 'https://www.barber.kyrosrd.com';
+$productionBaseUrl = $appScheme . '://' . $appHost;
 $baseUrl = getenv('APP_BASE_URL') ?: ($environment === 'development' ? $localBaseUrl : $productionBaseUrl);
 
 // Misma base de datos compartida para desarrollo y producción.
@@ -62,6 +62,7 @@ if (ENVIRONMENT === 'development') {
 } else {
     error_reporting(0);
     ini_set('display_errors', 0);
+    ini_set('log_errors', 1);
 }
 
 // Configuración de licencias

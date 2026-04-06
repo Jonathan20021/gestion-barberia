@@ -62,6 +62,20 @@ class Database {
     public function lastInsertId() {
         return $this->connection->lastInsertId();
     }
+
+    public function tableExists($tableName) {
+        $sql = "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = ? AND table_name = ?";
+        return (int) $this->fetchColumn($sql, [DB_NAME, $tableName]) > 0;
+    }
+
+    public function columnExists($tableName, $columnName) {
+        $sql = "SELECT COUNT(*) FROM information_schema.columns WHERE table_schema = ? AND table_name = ? AND column_name = ?";
+        return (int) $this->fetchColumn($sql, [DB_NAME, $tableName, $columnName]) > 0;
+    }
+
+    public function fetchColumn($sql, $params = [], $columnIndex = 0) {
+        return $this->query($sql, $params)->fetchColumn($columnIndex);
+    }
     
     public function beginTransaction() {
         return $this->connection->beginTransaction();

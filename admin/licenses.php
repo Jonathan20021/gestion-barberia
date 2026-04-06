@@ -8,179 +8,253 @@ require_once BASE_PATH . '/core/Helpers.php';
 Auth::requireRole('superadmin');
 
 $db = Database::getInstance();
+$pageError = null;
+$licenses = [];
+$freeBarbershops = [];
+$statsRow = [
+    'total' => 0,
+    'activas' => 0,
+    'pruebas' => 0,
+    'suspendidas' => 0,
+    'vencidas' => 0,
+    'ingresos_totales' => 0,
+];
+$supportsTrialDates = $db->columnExists('licenses', 'trial_end_date');
+$supportsActivatedAt = $db->columnExists('licenses', 'activated_at');
 
 // Procesar acciones POST
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $action = $_POST['action'] ?? '';
+    try {
+        $action = $_POST['action'] ?? '';
 
-    if ($action === 'create') {
-        $type         = $_POST['type'] ?? 'basic';
-        $billingCycle = $_POST['billing_cycle'] ?? 'monthly';
-        $startDate    = $_POST['start_date'] ?? date('Y-m-d');
-        $price        = !empty($_POST['price']) ? floatval($_POST['price']) : LICENSE_TYPES[$type]['price'];
-        $barbershopId = !empty($_POST['barbershop_id']) ? intval($_POST['barbershop_id']) : null;
-        $trialDays    = defined('TRIAL_DAYS_DEFAULT') ? intval(TRIAL_DAYS_DEFAULT) : 15;
-        if ($trialDays <= 0) {
-            $trialDays = 15;
+        if ($action === 'create') {
+            $type         = $_POST['type'] ?? 'basic';
+            $billingCycle = $_POST['billing_cycle'] ?? 'monthly';
+            $startDate    = $_POST['start_date'] ?? date('Y-m-d');
+            $price        = !empty($_POST['price']) ? floatval($_POST['price']) : LICENSE_TYPES[$type]['price'];
+            $barbershopId = !empty($_POST['barbershop_id']) ? intval($_POST['barbershop_id']) : null;
+            $trialDays    = defined('TRIAL_DAYS_DEFAULT') ? intval(TRIAL_DAYS_DEFAULT) : 15;
+            if ($trialDays <= 0) {
+                $trialDays = 15;
+            }
+
+            $months   = ['monthly' => 1, 'quarterly' => 3, 'yearly' => 12];
+            $endDate  = date('Y-m-d', strtotime($startDate . ' +' . ($months[$billingCycle] ?? 1) . ' months'));
+            $trialEndDate = date('Y-m-d', strtotime($startDate . ' +' . $trialDays . ' days'));
+            $licenseKey = bin2hex(random_bytes(16));
+
+            if ($supportsTrialDates) {
+                $db->query(
+                    "INSERT INTO licenses (license_key, type, status, price, billing_cycle, start_date, end_date, trial_days, trial_start_date, trial_end_date) VALUES (?, ?, 'trial', ?, ?, ?, ?, ?, ?, ?)",
+                    [$licenseKey, $type, $price, $billingCycle, $startDate, $endDate, $trialDays, $startDate, $trialEndDate]
+                );
+                $_SESSION['success'] = 'Licencia creada exitosamente en modo prueba por ' . $trialDays . ' días';
+            } else {
+                $db->query(
+                    "INSERT INTO licenses (license_key, type, status, price, billing_cycle, start_date, end_date) VALUES (?, ?, 'active', ?, ?, ?, ?)",
+                    [$licenseKey, $type, $price, $billingCycle, $startDate, $endDate]
+                );
+                $_SESSION['success'] = 'Licencia creada exitosamente como plan activo.';
+            }
+
+            $newId = $db->lastInsertId();
+            if ($barbershopId) {
+                $db->query("UPDATE barbershops SET license_id = ? WHERE id = ?", [$newId, $barbershopId]);
+            }
+
+            header('Location: licenses.php');
+            exit;
         }
 
-        $months   = ['monthly' => 1, 'quarterly' => 3, 'yearly' => 12];
-        $endDate  = date('Y-m-d', strtotime($startDate . ' +' . ($months[$billingCycle] ?? 1) . ' months'));
-        $trialEndDate = date('Y-m-d', strtotime($startDate . ' +' . $trialDays . ' days'));
-        $licenseKey = bin2hex(random_bytes(16));
+        if ($action === 'edit') {
+            $licenseId    = intval($_POST['license_id']);
+            $type         = $_POST['type'] ?? 'basic';
+            $billingCycle = $_POST['billing_cycle'] ?? 'monthly';
+            $startDate    = $_POST['start_date'] ?? date('Y-m-d');
+            $endDate      = $_POST['end_date'] ?? date('Y-m-d');
+            $price        = floatval($_POST['price']);
+            $status       = $_POST['status'] ?? 'active';
+            $trialEndDate = !empty($_POST['trial_end_date']) ? $_POST['trial_end_date'] : null;
+            $barbershopId = !empty($_POST['barbershop_id']) ? intval($_POST['barbershop_id']) : null;
+            $assignedBarbershop = $db->fetch("SELECT id FROM barbershops WHERE license_id = ?", [$licenseId]);
 
-        $db->query(
-            "INSERT INTO licenses (license_key, type, status, price, billing_cycle, start_date, end_date, trial_days, trial_start_date, trial_end_date) VALUES (?, ?, 'trial', ?, ?, ?, ?, ?, ?, ?)",
-            [$licenseKey, $type, $price, $billingCycle, $startDate, $endDate, $trialDays, $startDate, $trialEndDate]
-        );
-        $newId = $db->lastInsertId();
+            if ($barbershopId && $assignedBarbershop && (int) $assignedBarbershop['id'] !== $barbershopId) {
+                throw new Exception('No puedes mover la licencia a otra barbería desde esta pantalla sin reasignar primero la actual.');
+            }
 
-        if ($barbershopId) {
-            $db->query("UPDATE barbershops SET license_id = ? WHERE id = ?", [$newId, $barbershopId]);
+            if ($supportsTrialDates && $supportsActivatedAt) {
+                $db->query(
+                    "UPDATE licenses
+                     SET type = ?,
+                         billing_cycle = ?,
+                         start_date = ?,
+                         end_date = ?,
+                         price = ?,
+                         status = ?,
+                         trial_end_date = ?,
+                         activated_at = CASE
+                             WHEN ? = 'active' AND (activated_at IS NULL OR activated_at = '0000-00-00 00:00:00') THEN NOW()
+                             ELSE activated_at
+                         END
+                     WHERE id = ?",
+                    [$type, $billingCycle, $startDate, $endDate, $price, $status, $trialEndDate, $status, $licenseId]
+                );
+            } else {
+                $safeStatus = $status === 'trial' ? 'active' : $status;
+                $db->query(
+                    "UPDATE licenses
+                     SET type = ?, billing_cycle = ?, start_date = ?, end_date = ?, price = ?, status = ?
+                     WHERE id = ?",
+                    [$type, $billingCycle, $startDate, $endDate, $price, $safeStatus, $licenseId]
+                );
+            }
+
+            if ($barbershopId && !$assignedBarbershop) {
+                $db->query("UPDATE barbershops SET license_id = ? WHERE id = ?", [$licenseId, $barbershopId]);
+            }
+
+            $_SESSION['success'] = 'Licencia actualizada exitosamente';
+            header('Location: licenses.php');
+            exit;
         }
 
-        $_SESSION['success'] = 'Licencia creada exitosamente en modo prueba por ' . $trialDays . ' días';
-        header('Location: licenses.php');
-        exit;
-    }
+        if ($action === 'renovar') {
+            $licenseId    = intval($_POST['license_id']);
+            $billingCycle = $_POST['billing_cycle'] ?? 'monthly';
+            $months       = ['monthly' => 1, 'quarterly' => 3, 'yearly' => 12];
+            $extra        = ($months[$billingCycle] ?? 1);
 
-    if ($action === 'edit') {
-        $licenseId    = intval($_POST['license_id']);
-        $type         = $_POST['type'] ?? 'basic';
-        $billingCycle = $_POST['billing_cycle'] ?? 'monthly';
-        $startDate    = $_POST['start_date'] ?? date('Y-m-d');
-        $endDate      = $_POST['end_date'] ?? date('Y-m-d');
-        $price        = floatval($_POST['price']);
-        $status       = $_POST['status'] ?? 'active';
-        $trialEndDate = !empty($_POST['trial_end_date']) ? $_POST['trial_end_date'] : null;
-        $barbershopId = !empty($_POST['barbershop_id']) ? intval($_POST['barbershop_id']) : null;
+            $lic = $db->fetch("SELECT end_date FROM licenses WHERE id = ?", [$licenseId]);
+            $baseDate = (strtotime($lic['end_date']) > time()) ? $lic['end_date'] : date('Y-m-d');
+            $newEnd = date('Y-m-d', strtotime($baseDate . ' +' . $extra . ' months'));
 
-        $db->query(
-            "UPDATE licenses
-             SET type = ?,
-                 billing_cycle = ?,
-                 start_date = ?,
-                 end_date = ?,
-                 price = ?,
-                 status = ?,
-                 trial_end_date = ?,
-                 activated_at = CASE
-                     WHEN ? = 'active' AND (activated_at IS NULL OR activated_at = '0000-00-00 00:00:00') THEN NOW()
-                     ELSE activated_at
-                 END
-             WHERE id = ?",
-            [$type, $billingCycle, $startDate, $endDate, $price, $status, $trialEndDate, $status, $licenseId]
-        );
+            if ($supportsActivatedAt) {
+                $db->query("UPDATE licenses SET end_date = ?, status = 'active', activated_at = COALESCE(activated_at, NOW()) WHERE id = ?", [$newEnd, $licenseId]);
+            } else {
+                $db->query("UPDATE licenses SET end_date = ?, status = 'active' WHERE id = ?", [$newEnd, $licenseId]);
+            }
 
-        $db->query("UPDATE barbershops SET license_id = NULL WHERE license_id = ?", [$licenseId]);
-        if ($barbershopId) {
-            $db->query("UPDATE barbershops SET license_id = ? WHERE id = ?", [$licenseId, $barbershopId]);
+            $_SESSION['success'] = 'Licencia renovada hasta ' . date('d/m/Y', strtotime($newEnd));
+            header('Location: licenses.php');
+            exit;
         }
 
-        $_SESSION['success'] = 'Licencia actualizada exitosamente';
-        header('Location: licenses.php');
-        exit;
-    }
-
-    if ($action === 'renovar') {
-        $licenseId    = intval($_POST['license_id']);
-        $billingCycle = $_POST['billing_cycle'] ?? 'monthly';
-        $months       = ['monthly' => 1, 'quarterly' => 3, 'yearly' => 12];
-        $extra        = ($months[$billingCycle] ?? 1);
-
-        $lic = $db->fetch("SELECT end_date FROM licenses WHERE id = ?", [$licenseId]);
-        $baseDate = (strtotime($lic['end_date']) > time()) ? $lic['end_date'] : date('Y-m-d');
-        $newEnd = date('Y-m-d', strtotime($baseDate . ' +' . $extra . ' months'));
-
-        $db->query("UPDATE licenses SET end_date = ?, status = 'active', activated_at = COALESCE(activated_at, NOW()) WHERE id = ?", [$newEnd, $licenseId]);
-        $_SESSION['success'] = 'Licencia renovada hasta ' . date('d/m/Y', strtotime($newEnd));
-        header('Location: licenses.php');
-        exit;
-    }
-
-    if ($action === 'toggle_status') {
-        $licenseId = intval($_POST['license_id']);
-        $newStatus = $_POST['new_status'] ?? 'suspended';
-        $db->query(
-            "UPDATE licenses
-             SET status = ?,
-                 activated_at = CASE
-                     WHEN ? = 'active' AND (activated_at IS NULL OR activated_at = '0000-00-00 00:00:00') THEN NOW()
-                     ELSE activated_at
-                 END
-             WHERE id = ?",
-            [$newStatus, $newStatus, $licenseId]
-        );
-        $_SESSION['success'] = 'Estado de licencia actualizado';
-        header('Location: licenses.php');
-        exit;
-    }
-
-    if ($action === 'activate_trial') {
-        $licenseId = intval($_POST['license_id'] ?? 0);
-        if ($licenseId > 0) {
-            $db->query(
-                "UPDATE licenses
-                 SET status = 'active',
-                     activated_at = COALESCE(activated_at, NOW())
-                 WHERE id = ? AND status = 'trial'",
-                [$licenseId]
-            );
-            $_SESSION['success'] = 'Licencia de prueba activada como plan activo.';
+        if ($action === 'toggle_status') {
+            $licenseId = intval($_POST['license_id']);
+            $newStatus = $_POST['new_status'] ?? 'suspended';
+            if ($supportsActivatedAt) {
+                $db->query(
+                    "UPDATE licenses
+                     SET status = ?,
+                         activated_at = CASE
+                             WHEN ? = 'active' AND (activated_at IS NULL OR activated_at = '0000-00-00 00:00:00') THEN NOW()
+                             ELSE activated_at
+                         END
+                     WHERE id = ?",
+                    [$newStatus, $newStatus, $licenseId]
+                );
+            } else {
+                $db->query("UPDATE licenses SET status = ? WHERE id = ?", [$newStatus, $licenseId]);
+            }
+            $_SESSION['success'] = 'Estado de licencia actualizado';
+            header('Location: licenses.php');
+            exit;
         }
 
+        if ($action === 'activate_trial') {
+            $licenseId = intval($_POST['license_id'] ?? 0);
+            if (!$supportsTrialDates) {
+                throw new Exception('La base de datos de este servidor no tiene soporte para licencias de prueba. Ejecuta la migración pendiente.');
+            }
+            if ($licenseId > 0) {
+                if ($supportsActivatedAt) {
+                    $db->query(
+                        "UPDATE licenses
+                         SET status = 'active',
+                             activated_at = COALESCE(activated_at, NOW())
+                         WHERE id = ? AND status = 'trial'",
+                        [$licenseId]
+                    );
+                } else {
+                    $db->query("UPDATE licenses SET status = 'active' WHERE id = ? AND status = 'trial'", [$licenseId]);
+                }
+                $_SESSION['success'] = 'Licencia de prueba activada como plan activo.';
+            }
+
+            header('Location: licenses.php');
+            exit;
+        }
+    } catch (Throwable $e) {
+        error_log('Licenses page error: ' . $e->getMessage());
+        $_SESSION['error'] = ENVIRONMENT === 'development'
+            ? $e->getMessage()
+            : 'No se pudo procesar la operación de licencias en este servidor.';
         header('Location: licenses.php');
         exit;
     }
 }
 
-// Obtener licencias con toda la info
-$licenses = $db->fetchAll("
-    SELECT l.*,
-           b.id       AS barbershop_id,
-           b.business_name,
-           b.phone    AS barbershop_phone,
-           b.email    AS barbershop_email,
-           b.address  AS barbershop_address,
-           u.full_name AS owner_name,
-           u.email    AS owner_email,
-           u.phone    AS owner_phone,
-           DATEDIFF(l.end_date, CURDATE()) AS days_remaining,
-           DATEDIFF(l.trial_end_date, CURDATE()) AS trial_days_remaining,
+try {
+    $trialDaysSelect = $supportsTrialDates
+        ? "DATEDIFF(l.trial_end_date, CURDATE()) AS trial_days_remaining,
            CASE
                WHEN l.status = 'trial' THEN DATEDIFF(l.trial_end_date, CURDATE())
                ELSE DATEDIFF(l.end_date, CURDATE())
-           END AS access_days_remaining,
-           (SELECT COUNT(*) FROM appointments a
-            INNER JOIN barbers br ON a.barber_id = br.id
-            INNER JOIN barbershops bs ON br.barbershop_id = bs.id
-            WHERE bs.license_id = l.id) AS total_appointments
-    FROM licenses l
-    LEFT JOIN barbershops b ON b.license_id = l.id
-    LEFT JOIN users u ON b.owner_id = u.id
-    ORDER BY l.created_at DESC
-");
+           END AS access_days_remaining,"
+        : "NULL AS trial_days_remaining,
+           DATEDIFF(l.end_date, CURDATE()) AS access_days_remaining,";
 
-// Barberías sin licencia (para asignar al crear o editar)
-$freeBarbershops = $db->fetchAll("
-    SELECT bs.id, bs.business_name, u.full_name AS owner_name
-    FROM barbershops bs
-    LEFT JOIN users u ON bs.owner_id = u.id
-    WHERE bs.license_id IS NULL
-    ORDER BY bs.business_name
-");
+    $licenses = $db->fetchAll("
+        SELECT l.*,
+               b.id       AS barbershop_id,
+               b.business_name,
+               b.phone    AS barbershop_phone,
+               b.email    AS barbershop_email,
+               b.address  AS barbershop_address,
+               u.full_name AS owner_name,
+               u.email    AS owner_email,
+               u.phone    AS owner_phone,
+               DATEDIFF(l.end_date, CURDATE()) AS days_remaining,
+               $trialDaysSelect
+               (SELECT COUNT(*) FROM appointments a
+                INNER JOIN barbers br ON a.barber_id = br.id
+                INNER JOIN barbershops bs ON br.barbershop_id = bs.id
+                WHERE bs.license_id = l.id) AS total_appointments
+        FROM licenses l
+        LEFT JOIN barbershops b ON b.license_id = l.id
+        LEFT JOIN users u ON b.owner_id = u.id
+        ORDER BY l.created_at DESC
+    ");
 
-// Estadísticas
-$statsRow = $db->fetch("
-    SELECT
-        COUNT(*) AS total,
-        SUM(status = 'active') AS activas,
-        SUM(status = 'trial') AS pruebas,
-        SUM(status = 'suspended') AS suspendidas,
-        SUM(status = 'expired') AS vencidas,
-        SUM(price) AS ingresos_totales
-    FROM licenses
-");
+    $freeBarbershops = $db->fetchAll("
+        SELECT bs.id, bs.business_name, u.full_name AS owner_name
+        FROM barbershops bs
+        LEFT JOIN users u ON bs.owner_id = u.id
+        WHERE NOT EXISTS (
+            SELECT 1
+            FROM licenses l2
+            WHERE l2.id = bs.license_id
+        )
+        ORDER BY bs.business_name
+    ");
+
+    $trialStatsSelect = $supportsTrialDates ? "SUM(status = 'trial') AS pruebas," : "0 AS pruebas,";
+    $statsRow = $db->fetch("
+        SELECT
+            COUNT(*) AS total,
+            SUM(status = 'active') AS activas,
+            $trialStatsSelect
+            SUM(status = 'suspended') AS suspendidas,
+            SUM(status = 'expired') AS vencidas,
+            SUM(price) AS ingresos_totales
+        FROM licenses
+    ") ?: $statsRow;
+} catch (Throwable $e) {
+    error_log('Licenses page load error: ' . $e->getMessage());
+    $pageError = ENVIRONMENT === 'development'
+        ? $e->getMessage()
+        : 'No se pudieron cargar las licencias en este servidor. Revisa el log de PHP/MySQL del hosting.';
+}
 
 $title = 'Gestión de Licencias - Super Admin';
 include BASE_PATH . '/includes/header.php';
@@ -227,6 +301,11 @@ include BASE_PATH . '/includes/header.php';
         </div>
 
         <main class="p-6">
+            <?php if ($pageError): ?>
+            <div class="mb-6 bg-red-50 border-l-4 border-red-500 p-4 rounded-lg">
+                <p class="text-red-700"><?php echo htmlspecialchars($pageError); ?></p>
+            </div>
+            <?php endif; ?>
             <?php if (isset($_SESSION['success'])): ?>
             <div class="mb-6 bg-green-50 border-l-4 border-green-500 p-4 rounded-lg">
                 <p class="text-green-700"><?php echo htmlspecialchars($_SESSION['success']); unset($_SESSION['success']); ?></p>

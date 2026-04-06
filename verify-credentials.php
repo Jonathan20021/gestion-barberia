@@ -15,7 +15,7 @@ $db = Database::getInstance();
 // Credenciales a verificar
 $credentials = [
     [
-        'email' => 'admin@barbersaas.com',
+        'email' => 'admin@kyrosbarbercloud.com',
         'password' => 'password123',
         'expected_role' => 'superadmin',
         'label' => 'Super Admin'
@@ -85,7 +85,7 @@ if ($allValid) {
     echo "Puede iniciar sesión con cualquiera de estas cuentas:\n\n";
     
     echo "Super Admin:\n";
-    echo "  Email: admin@barbersaas.com\n";
+    echo "  Email: admin@kyrosbarbercloud.com\n";
     echo "  Password: password123\n\n";
     
     echo "Owner (Dueño de Barbería):\n";

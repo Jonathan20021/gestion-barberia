@@ -1,8 +1,8 @@
-# 📱 Integración de WhatsApp - BarberSaaS
+# 📱 Integración de WhatsApp - Kyros Barber Cloud
 
 ## 🎯 Resumen de Funcionalidades WhatsApp
 
-El sistema BarberSaaS incluye **integración completa de WhatsApp** en múltiples secciones para mejorar la comunicación con clientes y facilitar la gestión.
+El sistema Kyros Barber Cloud incluye **integración completa de WhatsApp** en múltiples secciones para mejorar la comunicación con clientes y facilitar la gestión.
 
 ---
 

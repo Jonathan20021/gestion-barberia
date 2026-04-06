@@ -6,7 +6,7 @@
 require_once __DIR__ . '/config/config.php';
 
 echo "==========================================\n";
-echo "  MIGRACION DE BASE DE DATOS - BarberSaaS\n";
+echo "  MIGRACION DE BASE DE DATOS - Kyros Barber Cloud\n";
 echo "==========================================\n\n";
 
 try {
@@ -70,14 +70,15 @@ try {
         
         echo "📄 Leyendo archivo database.sql...\n";
         $sql = file_get_contents($sqlFile);
-        
-        // Dividir por sentencias
+
+        // Limpiar comentarios SQL y dividir sentencias de forma robusta.
+        $sql = preg_replace('/\/\*.*?\*\//s', '', $sql);
+        $sql = preg_replace('/^\s*--.*$/m', '', $sql);
+
         $statements = array_filter(
             array_map('trim', explode(';', $sql)),
             function($stmt) {
-                return !empty($stmt) && 
-                       !preg_match('/^--/', $stmt) && 
-                       !preg_match('/^\/\*/', $stmt);
+                return !empty($stmt);
             }
         );
         

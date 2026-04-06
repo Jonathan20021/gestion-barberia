@@ -1,6 +1,6 @@
 <?php
 /*
- * BarberSaaS - Sistema de Gestión de Barberías
+ * Kyros Barber Cloud - Sistema de Gestión de Barberías
  * Verificador de Instalación
  * 
  * Ejecutar: http://localhost/gestion-barberia/check-install.php
@@ -98,7 +98,7 @@ $success_rate = round(($passed / $total) * 100);
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Verificación de Instalación - BarberSaaS</title>
+    <title>Verificación de Instalación - Kyros Barber Cloud</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-gray-100">
@@ -107,7 +107,7 @@ $success_rate = round(($passed / $total) * 100);
             <!-- Header -->
             <div class="bg-white rounded-lg shadow-lg p-8 mb-6">
                 <h1 class="text-3xl font-bold text-gray-900 mb-2">🔍 Verificación de Instalación</h1>
-                <p class="text-gray-600">BarberSaaS - Sistema de Gestión de Barberías</p>
+                <p class="text-gray-600">Kyros Barber Cloud - Sistema de Gestión de Barberías</p>
                 
                 <div class="mt-6">
                     <div class="flex items-center justify-between mb-2">
@@ -214,7 +214,7 @@ $success_rate = round(($passed / $total) * 100);
 
             <!-- Info -->
             <div class="mt-6 text-center text-sm text-gray-600">
-                <p>BarberSaaS v1.0 - Sistema de Gestión de Barberías</p>
+                <p>Kyros Barber Cloud v1.0 - Sistema de Gestión de Barberías</p>
                 <p class="mt-1">Made with ❤️ for República Dominicana</p>
             </div>
         </div>

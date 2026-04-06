@@ -493,7 +493,7 @@ $title = $barbershop['business_name'] . ' - Reserva tu cita';
                 <div class="pt-8 border-t border-gray-700">
                     <div class="flex flex-col md:flex-row justify-between items-center text-gray-400 text-sm">
                         <p>&copy; 2026 <?php echo htmlspecialchars($barbershop['business_name']); ?>. Todos los derechos reservados.</p>
-                        <p class="mt-2 md:mt-0">Powered by <span class="font-bold text-white">BarberSaaS</span></p>
+                        <p class="mt-2 md:mt-0">Powered by <span class="font-bold text-white">Kyros Barber Cloud</span></p>
                     </div>
                 </div>
             </div>

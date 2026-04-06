@@ -168,7 +168,7 @@ Mismo procedimiento, cambiar ruta a `/dashboard/nueva-pagina.php`
 <svg class="w-8 h-8 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
     <!-- Ícono actual -->
 </svg>
-<span class="ml-3 text-white font-bold text-lg">BarberSaaS</span>
+<span class="ml-3 text-white font-bold text-lg">Kyros Barber Cloud</span>
 ```
 
 **Opción 1: Usar imagen**
@@ -432,5 +432,5 @@ Si necesitas volver al diseño antiguo:
 
 ---
 
-**🎨 BarberSaaS - Guía de Mantenimiento**  
+**🎨 Kyros Barber Cloud - Guía de Mantenimiento**  
 **Última actualización**: <?php echo date('Y-m-d'); ?>

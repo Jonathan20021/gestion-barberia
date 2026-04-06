@@ -1,4 +1,4 @@
-# 🗄️ Migraciones de Base de Datos - BarberSaaS
+# 🗄️ Migraciones de Base de Datos - Kyros Barber Cloud
 
 ## ✅ Estado Actual
 
@@ -56,7 +56,7 @@ C:\xampp\mysql\bin\mysql.exe -u root -e "DROP DATABASE IF EXISTS barberia_saas; 
 ### 👥 Usuarios
 | Email | Password | Rol | ID |
 |-------|----------|-----|-----|
-| admin@barbersaas.com | password123 | superadmin | 1 |
+| admin@kyrosbarbercloud.com | password123 | superadmin | 1 |
 | demo@barberia.com | password123 | owner | 2 |
 | barbero@demo.com | password123 | barber | 3 |
 

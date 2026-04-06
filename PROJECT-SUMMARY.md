@@ -1,4 +1,4 @@
-# 🎯 BarberSaaS - Resumen del Proyecto
+# 🎯 Kyros Barber Cloud - Resumen del Proyecto
 
 ## ✅ Sistema Completado
 
@@ -236,7 +236,7 @@ Cada barbería puede personalizar:
 ## 📝 Datos de Demostración
 
 ### Super Admin
-Email: admin@barbersaas.com
+Email: admin@kyrosbarbercloud.com
 Password: password123
 
 ### Owner
@@ -348,5 +348,5 @@ Sistema SaaS completo y profesional para gestión de barberías, desarrollado co
 
 ---
 
-© 2026 BarberSaaS - Sistema de Gestión de Barberías
+© 2026 Kyros Barber Cloud - Sistema de Gestión de Barberías
 Todos los derechos reservados

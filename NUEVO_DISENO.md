@@ -1,4 +1,4 @@
-# Nuevo Diseño Profesional - BarberSaaS
+# Nuevo Diseño Profesional - Kyros Barber Cloud
 
 ## ✅ Cambios Aplicados
 
@@ -290,5 +290,5 @@ py-24 → py-32 (más espaciado)
 
 ---
 
-**Desarrollado con ❤️ para BarberSaaS**
+**Desarrollado con ❤️ para Kyros Barber Cloud**
 *Diseño profesional, moderno y optimizado para conversión*

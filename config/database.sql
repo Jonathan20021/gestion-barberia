@@ -1,10 +1,10 @@
 -- ====================================================
--- BarberSaaS - Base de Datos Multi-Tenant
+-- Kyros Barber Cloud - Base de Datos Multi-Tenant
 -- Sistema de Gestión de Barberías - República Dominicana
 -- ====================================================
 
-CREATE DATABASE IF NOT EXISTS barberia_saas CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-USE barberia_saas;
+CREATE DATABASE IF NOT EXISTS neetjbte_barbersass CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+USE neetjbte_barbersass;
 
 -- Tabla de Usuarios (Multi-rol)
 CREATE TABLE users (
@@ -320,7 +320,7 @@ CREATE TABLE activity_logs (
 
 -- Crear Super Admin
 INSERT INTO users (email, password, full_name, phone, role, status) 
-VALUES ('admin@barbersaas.com', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'Super Administrador', '809-000-0000', 'superadmin', 'active');
+VALUES ('admin@kyrosbarbercloud.com', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'Super Administrador', '809-000-0000', 'superadmin', 'active');
 -- Password: password123
 
 -- Crear Licencia de Ejemplo

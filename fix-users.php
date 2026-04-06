@@ -22,7 +22,7 @@ echo "Hash generado: " . substr($hashedPassword, 0, 30) . "...\n\n";
 // Usuarios a actualizar
 $users = [
     [
-        'email' => 'admin@barbersaas.com',
+        'email' => 'admin@kyrosbarbercloud.com',
         'label' => 'Super Admin'
     ],
     [
@@ -66,7 +66,7 @@ if ($updated === 3) {
     echo "Credenciales actualizadas:\n\n";
     
     echo "Super Admin:\n";
-    echo "  Email: admin@barbersaas.com\n";
+    echo "  Email: admin@kyrosbarbercloud.com\n";
     echo "  Password: password123\n";
     echo "  URL: http://localhost/gestion-barberia/auth/login.php\n\n";
     

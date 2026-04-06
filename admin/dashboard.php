@@ -53,7 +53,7 @@ $monthly_revenue_data = $db->fetchAll("
     ORDER BY month ASC
 ");
 
-$title = 'Panel Super Admin - BarberSaaS';
+$title = 'Panel Super Admin - Kyros Barber Cloud';
 include BASE_PATH . '/includes/header.php';
 ?>
 

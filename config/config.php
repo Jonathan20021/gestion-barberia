@@ -12,15 +12,15 @@ if (session_status() === PHP_SESSION_NONE) {
 }
 
 // Configuración de entorno
-define('ENVIRONMENT', 'development'); // development | production
-define('BASE_URL', 'http://localhost/gestion-barberia');
+define('ENVIRONMENT', 'production'); // development | production
+define('BASE_URL', 'https://barber.kyrosrd.com');
 define('BASE_PATH', __DIR__ . '/..');
 
 // Configuración de Base de Datos
-define('DB_HOST', 'localhost');
-define('DB_NAME', 'barberia_saas');
-define('DB_USER', 'root');
-define('DB_PASS', '');
+define('DB_HOST', '129.121.81.172');
+define('DB_NAME', 'neetjbte_barbersass');
+define('DB_USER', 'neetjbte_barber');
+define('DB_PASS', 'Hacker#2002');
 define('DB_CHARSET', 'utf8mb4');
 
 // Integracion cPanel Email (UAPI)

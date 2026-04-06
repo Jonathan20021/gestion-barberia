@@ -1,4 +1,4 @@
-# 📦 BarberSaaS - Guía de Instalación Rápida
+# 📦 Kyros Barber Cloud - Guía de Instalación Rápida
 
 ## ⚡ Instalación en 5 Minutos
 
@@ -23,7 +23,7 @@ C:\xampp\htdocs\gestion-barberia\
 ### Paso 5: Login
 ```
 Super Admin:
-📧 Email: admin@barbersaas.com
+📧 Email: admin@kyrosbarbercloud.com
 🔑 Password: password123
 
 Owner/Dueño:

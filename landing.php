@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BarberSaaS - Sistema de Gestión para Barberías RD</title>
+    <title>Kyros Barber Cloud - Sistema de Gestión para Barberías RD</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <style>
@@ -34,7 +34,7 @@
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between items-center h-16">
                 <div class="flex items-center">
-                    <span class="text-2xl font-bold gradient-text">💈 BarberSaaS</span>
+                    <span class="text-2xl font-bold gradient-text">💈 Kyros Barber Cloud</span>
                     <span class="ml-2 px-2 py-1 text-xs bg-indigo-100 text-indigo-700 rounded-full font-medium">RD</span>
                 </div>
                 
@@ -473,7 +473,7 @@
                 ¿Listo para Modernizar tu Barbería?
             </h2>
             <p class="text-xl text-gray-600 mb-8">
-                Únete a cientos de barberías que ya están creciendo con BarberSaaS
+                Únete a cientos de barberías que ya están creciendo con Kyros Barber Cloud
             </p>
             <a href="auth/login.php" class="inline-block px-12 py-4 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl font-semibold text-lg hover:from-indigo-700 hover:to-purple-700 transition shadow-xl">
                 🚀 Comenzar Gratis por 30 Días
@@ -487,7 +487,7 @@
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="grid md:grid-cols-4 gap-8">
                 <div>
-                    <h3 class="text-2xl font-bold gradient-text mb-4">💈 BarberSaaS</h3>
+                    <h3 class="text-2xl font-bold gradient-text mb-4">💈 Kyros Barber Cloud</h3>
                     <p class="text-gray-400">
                         Sistema profesional de gestión para barberías en República Dominicana.
                     </p>
@@ -517,7 +517,7 @@
                 </div>
             </div>
             <div class="border-t border-gray-800 mt-8 pt-8 text-center text-gray-400">
-                <p>&copy; 2026 BarberSaaS. Todos los derechos reservados. Made with ❤️ in República Dominicana</p>
+                <p>&copy; 2026 Kyros Barber Cloud. Todos los derechos reservados. Made with ❤️ in República Dominicana</p>
             </div>
         </footer>
     </footer>

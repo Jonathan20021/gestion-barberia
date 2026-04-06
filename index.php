@@ -1,6 +1,6 @@
 <?php
 /**
- * BarberSaaS - Sistema de Gestión de Barberías
+ * Kyros Barber Cloud - Sistema de Gestión de Barberías
  * Multi-tenant SaaS Platform
  * República Dominicana
  */

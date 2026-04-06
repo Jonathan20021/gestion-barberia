@@ -2,7 +2,7 @@
 
 ## ✅ ESTADO: TODAS LAS PÁGINAS IMPLEMENTADAS
 
-Este documento detalla **todas las páginas** creadas para el sistema BarberSaaS con integración completa de WhatsApp.
+Este documento detalla **todas las páginas** creadas para el sistema Kyros Barber Cloud con integración completa de WhatsApp.
 
 ---
 

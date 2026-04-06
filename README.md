@@ -1,4 +1,4 @@
-# 🪒 BarberSaaS - Sistema de Gestión de Barberías
+# 🪒 Kyros Barber Cloud - Sistema de Gestión de Barberías
 ## ✅ SISTEMA COMPLETO con Integración WhatsApp
 
 Sistema SaaS completo para gestión de barberías en República Dominicana con **integración WhatsApp** en múltiples secciones. Cada barbería con licencia tiene su propia página de reservas y los barberos pueden tener sus páginas individuales.
@@ -103,7 +103,7 @@ define('BASE_URL', 'http://localhost/gestion-barberia');
 ## 👥 Credenciales de Prueba
 
 ### Super Administrador
-- **Email**: admin@barbersaas.com
+- **Email**: admin@kyrosbarbercloud.com
 - **Password**: password123
 - **Acceso**: Gestión completa del sistema, licencias, todas las barberías
 
@@ -481,7 +481,7 @@ Para soporte técnico, revisar:
 
 **Desarrollado con ❤️ para la comunidad de barberos de República Dominicana**
 
-© 2026 BarberSaaS - Todos los derechos reservados
+© 2026 Kyros Barber Cloud - Todos los derechos reservados
 
 ## 🎨 Personalización
 
@@ -558,12 +558,12 @@ Use el panel de configuración de la barbería para subir imágenes.
 ## 📞 Soporte
 
 Para soporte o preguntas:
-- Email: admin@barbersaas.com
+- Email: admin@kyrosbarbercloud.com
 - Documentación técnica en los comentarios del código
 
 ## 📄 Licencia
 
-Sistema propietario. Todos los derechos reservados © 2026 BarberSaaS
+Sistema propietario. Todos los derechos reservados © 2026 Kyros Barber Cloud
 
 ---
 

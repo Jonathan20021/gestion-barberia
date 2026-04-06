@@ -3,25 +3,45 @@
  * Configuración Principal del Sistema
  */
 
+define('BASE_PATH', __DIR__ . '/..');
+
+$appHost = $_SERVER['HTTP_HOST'] ?? 'localhost';
+$appScheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
+$localHosts = ['localhost', '127.0.0.1', '::1'];
+$isLocalHost = in_array($appHost, $localHosts, true) || str_contains($appHost, 'localhost');
+
+$defaultEnvironment = $isLocalHost ? 'development' : 'production';
+$environment = getenv('APP_ENV') ?: $defaultEnvironment;
+
+$localBaseUrl = 'http://localhost/gestion-barberia';
+$productionBaseUrl = 'https://www.barber.kyrosrd.com';
+$baseUrl = getenv('APP_BASE_URL') ?: ($environment === 'development' ? $localBaseUrl : $productionBaseUrl);
+
+// Misma base de datos compartida para desarrollo y producción.
+$sharedDbHost = getenv('DB_HOST') ?: '129.121.81.172';
+$sharedDbName = getenv('DB_NAME') ?: 'neetjbte_barbersass';
+$sharedDbUser = getenv('DB_USER') ?: 'neetjbte_barber';
+$sharedDbPass = getenv('DB_PASS') ?: 'Hacker#2002';
+$dbCharset = getenv('DB_CHARSET') ?: 'utf8mb4';
+
 // IMPORTANTE: Configurar sesión ANTES de session_start()
 // Estas configuraciones deben estar antes de que cualquier archivo llame session_start()
 if (session_status() === PHP_SESSION_NONE) {
     ini_set('session.cookie_httponly', 1);
     ini_set('session.use_only_cookies', 1);
-    ini_set('session.cookie_secure', 0); // Cambiar a 1 en producción con HTTPS
+    ini_set('session.cookie_secure', $appScheme === 'https' ? '1' : '0');
 }
 
 // Configuración de entorno
-define('ENVIRONMENT', 'production'); // development | production
-define('BASE_URL', 'https://www.barber.kyrosrd.com');
-define('BASE_PATH', __DIR__ . '/..');
+define('ENVIRONMENT', $environment); // development | production
+define('BASE_URL', rtrim($baseUrl, '/'));
 
 // Configuración de Base de Datos
-define('DB_HOST', '129.121.81.172');
-define('DB_NAME', 'neetjbte_barbersass');
-define('DB_USER', 'neetjbte_barber');
-define('DB_PASS', 'Hacker#2002');
-define('DB_CHARSET', 'utf8mb4');
+define('DB_HOST', $sharedDbHost);
+define('DB_NAME', $sharedDbName);
+define('DB_USER', $sharedDbUser);
+define('DB_PASS', $sharedDbPass);
+define('DB_CHARSET', $dbCharset);
 
 // Integracion cPanel Email (UAPI)
 // Nota: activa en produccion y coloca valores reales del hosting.

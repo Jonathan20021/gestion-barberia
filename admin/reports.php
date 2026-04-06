@@ -12,6 +12,8 @@ if (isset($_GET['debug']) && $_GET['debug'] === '1') {
     ini_set('display_errors', 1);
 }
 
+@set_time_limit(120);
+
 $db = Database::getInstance();
 $pageError = null;
 
@@ -85,14 +87,13 @@ try {
             bb.slug,
             u.full_name as owner_name,
             l.type as license_type,
-            COUNT(DISTINCT b.id) as barbers_count,
-            COUNT(DISTINCT a.id) as appointments_count,
+            (SELECT COUNT(*) FROM barbers b WHERE b.barbershop_id = bb.id) as barbers_count,
+            COUNT(a.id) as appointments_count,
             COALESCE(SUM(CASE WHEN a.status = 'completed' THEN a.price ELSE 0 END), 0) as total_revenue
         FROM barbershops bb
         LEFT JOIN users u ON bb.owner_id = u.id
         LEFT JOIN licenses l ON bb.license_id = l.id
-        LEFT JOIN barbers b ON bb.id = b.barbershop_id
-        LEFT JOIN appointments a ON b.id = a.barber_id 
+        LEFT JOIN appointments a ON bb.id = a.barbershop_id 
             AND a.appointment_date BETWEEN ? AND ?
         GROUP BY bb.id
         ORDER BY total_revenue DESC
@@ -132,16 +133,27 @@ try {
         ORDER BY l.end_date ASC
     ");
 
+    $periodAppointmentsRow = $db->fetch("SELECT COUNT(*) AS total FROM appointments WHERE appointment_date BETWEEN ? AND ?", [$startDate, $endDate]);
+    $periodAppointmentsTotal = (int) ($periodAppointmentsRow ? $periodAppointmentsRow['total'] : 0);
+
     $appointmentStats = $db->fetchAll("
         SELECT 
             status,
-            COUNT(*) as total,
-            ROUND((COUNT(*) * 100.0 / NULLIF((SELECT COUNT(*) FROM appointments WHERE appointment_date BETWEEN ? AND ?), 0)), 2) as percentage
+            COUNT(*) as total
         FROM appointments
         WHERE appointment_date BETWEEN ? AND ?
         GROUP BY status
         ORDER BY total DESC
-    ", [$startDate, $endDate, $startDate, $endDate]);
+    ", [$startDate, $endDate]);
+
+    if (!empty($appointmentStats)) {
+        foreach ($appointmentStats as $key => $stat) {
+            $totalByStatus = (int) $stat['total'];
+            $appointmentStats[$key]['percentage'] = $periodAppointmentsTotal > 0
+                ? round(($totalByStatus * 100.0) / $periodAppointmentsTotal, 2)
+                : 0;
+        }
+    }
 } catch (Exception $e) {
     error_log('Reports page load error: ' . $e->getMessage());
     $pageError = ENVIRONMENT === 'development'

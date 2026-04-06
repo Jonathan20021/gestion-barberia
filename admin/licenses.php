@@ -12,6 +12,8 @@ if (isset($_GET['debug']) && $_GET['debug'] === '1') {
     ini_set('display_errors', 1);
 }
 
+@set_time_limit(120);
+
 $db = Database::getInstance();
 $pageError = null;
 $licenses = [];
@@ -236,13 +238,16 @@ try {
                u.phone    AS owner_phone,
                DATEDIFF(l.end_date, CURDATE()) AS days_remaining,
                $trialDaysSelect
-               (SELECT COUNT(*) FROM appointments a
-                INNER JOIN barbers br ON a.barber_id = br.id
-                INNER JOIN barbershops bs ON br.barbershop_id = bs.id
-                WHERE bs.license_id = l.id) AS total_appointments
+               COALESCE(ap.total_appointments, 0) AS total_appointments
         FROM licenses l
         LEFT JOIN barbershops b ON b.license_id = l.id
         LEFT JOIN users u ON b.owner_id = u.id
+        LEFT JOIN (
+            SELECT bs.license_id, COUNT(*) AS total_appointments
+            FROM appointments a
+            INNER JOIN barbershops bs ON a.barbershop_id = bs.id
+            GROUP BY bs.license_id
+        ) ap ON ap.license_id = l.id
         ORDER BY l.created_at DESC
     ");
 

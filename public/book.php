@@ -40,6 +40,11 @@ if (!empty($clientEmail) && !isValidEmail($clientEmail)) {
 }
 
 try {
+    if (!canCreateAppointmentForBarbershop($barbershopId, $limitMessage, $appointmentDate)) {
+        setFlash('error', $limitMessage);
+        redirect($_SERVER['HTTP_REFERER']);
+    }
+
     // Obtener información del servicio
     $service = $db->fetch("SELECT * FROM services WHERE id = ? AND barbershop_id = ?", [$serviceId, $barbershopId]);
     

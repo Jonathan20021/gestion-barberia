@@ -69,6 +69,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             ", [$name, $description, $duration, $price, $status, $serviceId, $shopId]);
             $_SESSION['success'] = 'Servicio actualizado';
         } else {
+            if (!canAddServiceToBarbershop($shopId, $limitMessage)) {
+                throw new Exception($limitMessage);
+            }
+
             // Crear nuevo servicio
             $db->query("
                 INSERT INTO services (barbershop_id, name, description, duration, price, status, created_at)

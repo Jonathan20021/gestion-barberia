@@ -45,19 +45,25 @@ if (ENVIRONMENT === 'development') {
 }
 
 // Configuración de licencias
+define('TRIAL_DAYS_DEFAULT', 15);
+
 define('LICENSE_TYPES', [
     'basic' => [
         'name' => 'Básico',
         'price' => 1500, // RD$
-        'max_barbers' => 3,
+        'max_barbers' => 2,
         'max_services' => 10,
+        'max_monthly_appointments' => 100,
+        'max_locations' => 1,
         'features' => ['reservas_online', 'calendario', 'clientes']
     ],
     'professional' => [
         'name' => 'Profesional',
         'price' => 3000,
-        'max_barbers' => 10,
+        'max_barbers' => 5,
         'max_services' => 50,
+        'max_monthly_appointments' => -1,
+        'max_locations' => 1,
         'features' => ['reservas_online', 'calendario', 'clientes', 'reportes', 'notificaciones_sms']
     ],
     'enterprise' => [
@@ -65,6 +71,8 @@ define('LICENSE_TYPES', [
         'price' => 5000,
         'max_barbers' => -1, // Ilimitado
         'max_services' => -1,
+        'max_monthly_appointments' => -1,
+        'max_locations' => -1,
         'features' => ['reservas_online', 'calendario', 'clientes', 'reportes', 'notificaciones_sms', 'api_acceso', 'soporte_prioritario', 'multi_sucursal']
     ]
 ]);

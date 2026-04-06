@@ -19,14 +19,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $startDate    = $_POST['start_date'] ?? date('Y-m-d');
         $price        = !empty($_POST['price']) ? floatval($_POST['price']) : LICENSE_TYPES[$type]['price'];
         $barbershopId = !empty($_POST['barbershop_id']) ? intval($_POST['barbershop_id']) : null;
+        $trialDays    = defined('TRIAL_DAYS_DEFAULT') ? intval(TRIAL_DAYS_DEFAULT) : 15;
+        if ($trialDays <= 0) {
+            $trialDays = 15;
+        }
 
         $months   = ['monthly' => 1, 'quarterly' => 3, 'yearly' => 12];
         $endDate  = date('Y-m-d', strtotime($startDate . ' +' . ($months[$billingCycle] ?? 1) . ' months'));
+        $trialEndDate = date('Y-m-d', strtotime($startDate . ' +' . $trialDays . ' days'));
         $licenseKey = bin2hex(random_bytes(16));
 
         $db->query(
-            "INSERT INTO licenses (license_key, type, status, price, billing_cycle, start_date, end_date) VALUES (?, ?, 'active', ?, ?, ?, ?)",
-            [$licenseKey, $type, $price, $billingCycle, $startDate, $endDate]
+            "INSERT INTO licenses (license_key, type, status, price, billing_cycle, start_date, end_date, trial_days, trial_start_date, trial_end_date) VALUES (?, ?, 'trial', ?, ?, ?, ?, ?, ?, ?)",
+            [$licenseKey, $type, $price, $billingCycle, $startDate, $endDate, $trialDays, $startDate, $trialEndDate]
         );
         $newId = $db->lastInsertId();
 
@@ -34,7 +39,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $db->query("UPDATE barbershops SET license_id = ? WHERE id = ?", [$newId, $barbershopId]);
         }
 
-        $_SESSION['success'] = 'Licencia creada exitosamente';
+        $_SESSION['success'] = 'Licencia creada exitosamente en modo prueba por ' . $trialDays . ' días';
         header('Location: licenses.php');
         exit;
     }
@@ -47,11 +52,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $endDate      = $_POST['end_date'] ?? date('Y-m-d');
         $price        = floatval($_POST['price']);
         $status       = $_POST['status'] ?? 'active';
+        $trialEndDate = !empty($_POST['trial_end_date']) ? $_POST['trial_end_date'] : null;
         $barbershopId = !empty($_POST['barbershop_id']) ? intval($_POST['barbershop_id']) : null;
 
         $db->query(
-            "UPDATE licenses SET type = ?, billing_cycle = ?, start_date = ?, end_date = ?, price = ?, status = ? WHERE id = ?",
-            [$type, $billingCycle, $startDate, $endDate, $price, $status, $licenseId]
+            "UPDATE licenses
+             SET type = ?,
+                 billing_cycle = ?,
+                 start_date = ?,
+                 end_date = ?,
+                 price = ?,
+                 status = ?,
+                 trial_end_date = ?,
+                 activated_at = CASE
+                     WHEN ? = 'active' AND (activated_at IS NULL OR activated_at = '0000-00-00 00:00:00') THEN NOW()
+                     ELSE activated_at
+                 END
+             WHERE id = ?",
+            [$type, $billingCycle, $startDate, $endDate, $price, $status, $trialEndDate, $status, $licenseId]
         );
 
         $db->query("UPDATE barbershops SET license_id = NULL WHERE license_id = ?", [$licenseId]);
@@ -74,7 +92,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $baseDate = (strtotime($lic['end_date']) > time()) ? $lic['end_date'] : date('Y-m-d');
         $newEnd = date('Y-m-d', strtotime($baseDate . ' +' . $extra . ' months'));
 
-        $db->query("UPDATE licenses SET end_date = ?, status = 'active' WHERE id = ?", [$newEnd, $licenseId]);
+        $db->query("UPDATE licenses SET end_date = ?, status = 'active', activated_at = COALESCE(activated_at, NOW()) WHERE id = ?", [$newEnd, $licenseId]);
         $_SESSION['success'] = 'Licencia renovada hasta ' . date('d/m/Y', strtotime($newEnd));
         header('Location: licenses.php');
         exit;
@@ -83,8 +101,34 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($action === 'toggle_status') {
         $licenseId = intval($_POST['license_id']);
         $newStatus = $_POST['new_status'] ?? 'suspended';
-        $db->query("UPDATE licenses SET status = ? WHERE id = ?", [$newStatus, $licenseId]);
+        $db->query(
+            "UPDATE licenses
+             SET status = ?,
+                 activated_at = CASE
+                     WHEN ? = 'active' AND (activated_at IS NULL OR activated_at = '0000-00-00 00:00:00') THEN NOW()
+                     ELSE activated_at
+                 END
+             WHERE id = ?",
+            [$newStatus, $newStatus, $licenseId]
+        );
         $_SESSION['success'] = 'Estado de licencia actualizado';
+        header('Location: licenses.php');
+        exit;
+    }
+
+    if ($action === 'activate_trial') {
+        $licenseId = intval($_POST['license_id'] ?? 0);
+        if ($licenseId > 0) {
+            $db->query(
+                "UPDATE licenses
+                 SET status = 'active',
+                     activated_at = COALESCE(activated_at, NOW())
+                 WHERE id = ? AND status = 'trial'",
+                [$licenseId]
+            );
+            $_SESSION['success'] = 'Licencia de prueba activada como plan activo.';
+        }
+
         header('Location: licenses.php');
         exit;
     }
@@ -102,6 +146,11 @@ $licenses = $db->fetchAll("
            u.email    AS owner_email,
            u.phone    AS owner_phone,
            DATEDIFF(l.end_date, CURDATE()) AS days_remaining,
+           DATEDIFF(l.trial_end_date, CURDATE()) AS trial_days_remaining,
+           CASE
+               WHEN l.status = 'trial' THEN DATEDIFF(l.trial_end_date, CURDATE())
+               ELSE DATEDIFF(l.end_date, CURDATE())
+           END AS access_days_remaining,
            (SELECT COUNT(*) FROM appointments a
             INNER JOIN barbers br ON a.barber_id = br.id
             INNER JOIN barbershops bs ON br.barbershop_id = bs.id
@@ -126,6 +175,7 @@ $statsRow = $db->fetch("
     SELECT
         COUNT(*) AS total,
         SUM(status = 'active') AS activas,
+        SUM(status = 'trial') AS pruebas,
         SUM(status = 'suspended') AS suspendidas,
         SUM(status = 'expired') AS vencidas,
         SUM(price) AS ingresos_totales
@@ -189,7 +239,7 @@ include BASE_PATH . '/includes/header.php';
             <?php endif; ?>
 
             <!-- Stats -->
-            <div class="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
+            <div class="grid grid-cols-2 md:grid-cols-6 gap-4 mb-6">
                 <div class="bg-white rounded-lg shadow p-5">
                     <p class="text-xs text-gray-500 uppercase font-medium">Total</p>
                     <p class="text-3xl font-bold text-gray-800"><?php echo $statsRow['total']; ?></p>
@@ -199,12 +249,16 @@ include BASE_PATH . '/includes/header.php';
                     <p class="text-3xl font-bold text-green-600"><?php echo $statsRow['activas']; ?></p>
                 </div>
                 <div class="bg-white rounded-lg shadow p-5">
+                    <p class="text-xs text-gray-500 uppercase font-medium">En prueba</p>
+                    <p class="text-3xl font-bold text-indigo-500"><?php echo $statsRow['pruebas']; ?></p>
+                </div>
+                <div class="bg-white rounded-lg shadow p-5">
                     <p class="text-xs text-gray-500 uppercase font-medium">Suspendidas</p>
                     <p class="text-3xl font-bold text-orange-500"><?php echo $statsRow['suspendidas']; ?></p>
                 </div>
-                <div class="bg-white rounded-lg shadow p-5">
+                <div class="bg-white rounded-lg shadow p-5 col-span-2 md:col-span-1">
                     <p class="text-xs text-gray-500 uppercase font-medium">Vencidas</p>
-                    <p class="text-3xl font-bold text-red-500"><?php echo $statsRow['vencidas']; ?></p>
+                    <p class="text-2xl font-bold text-red-600"><?php echo $statsRow['vencidas']; ?></p>
                 </div>
                 <div class="bg-white rounded-lg shadow p-5 col-span-2 md:col-span-1">
                     <p class="text-xs text-gray-500 uppercase font-medium">Ingresos</p>
@@ -236,6 +290,7 @@ include BASE_PATH . '/includes/header.php';
                                 $licJson = htmlspecialchars(json_encode($lic), ENT_QUOTES, 'UTF-8');
                                 $daysLeft = intval($lic['days_remaining']);
                                 $statusColor = match($lic['status']) {
+                                    'trial'     => 'bg-indigo-100 text-indigo-800',
                                     'active'    => 'bg-green-100 text-green-800',
                                     'suspended' => 'bg-orange-100 text-orange-800',
                                     'expired'   => 'bg-red-100 text-red-800',
@@ -271,10 +326,17 @@ include BASE_PATH . '/includes/header.php';
                                     </span>
                                 </td>
                                 <td class="px-6 py-4">
+                                    <?php if ($lic['status'] === 'trial'): ?>
+                                    <p class="text-sm text-gray-900">Prueba hasta <?php echo date('d/m/Y', strtotime($lic['trial_end_date'])); ?></p>
+                                    <p class="text-xs <?php echo intval($lic['trial_days_remaining']) < 3 ? 'text-red-600 font-semibold' : 'text-indigo-600'; ?>">
+                                        <?php echo intval($lic['trial_days_remaining']) >= 0 ? intval($lic['trial_days_remaining']) . ' d&iacute;as de prueba' : 'Prueba vencida'; ?>
+                                    </p>
+                                    <?php else: ?>
                                     <p class="text-sm text-gray-900"><?php echo date('d/m/Y', strtotime($lic['end_date'])); ?></p>
                                     <p class="text-xs <?php echo $daysLeft < 7 ? 'text-red-600 font-semibold' : 'text-gray-500'; ?>">
                                         <?php echo $daysLeft >= 0 ? $daysLeft . ' d&iacute;as' : 'Vencida'; ?>
                                     </p>
+                                    <?php endif; ?>
                                 </td>
                                 <td class="px-6 py-4">
                                     <p class="text-sm font-semibold text-gray-900"><?php echo formatPrice($lic['price']); ?></p>
@@ -287,6 +349,17 @@ include BASE_PATH . '/includes/header.php';
                                             class="text-amber-600 hover:text-amber-900 text-sm font-medium">Editar</button>
                                     <button @click="openRenovar(<?php echo $licJson; ?>)"
                                             class="text-green-600 hover:text-green-900 text-sm font-medium">Renovar</button>
+                                    <?php if ($lic['status'] === 'trial'): ?>
+                                    <form method="POST" class="inline">
+                                        <input type="hidden" name="action" value="activate_trial">
+                                        <input type="hidden" name="license_id" value="<?php echo $lic['id']; ?>">
+                                        <button type="submit"
+                                                onclick="return confirm('¿Activar esta licencia de prueba como plan activo?')"
+                                                class="text-blue-600 hover:text-blue-900 text-sm font-medium">
+                                            Activar Plan
+                                        </button>
+                                    </form>
+                                    <?php endif; ?>
                                     <form method="POST" class="inline">
                                         <input type="hidden" name="action" value="toggle_status">
                                         <input type="hidden" name="license_id" value="<?php echo $lic['id']; ?>">
@@ -357,9 +430,16 @@ include BASE_PATH . '/includes/header.php';
                                 <p class="text-sm" x-text="activeLicense?.end_date"></p>
                             </div>
                             <div>
+                                <p class="text-xs text-gray-500">Fin de prueba</p>
+                                <p class="text-sm" x-text="activeLicense?.trial_end_date || '—'"></p>
+                            </div>
+                            <div>
                                 <p class="text-xs text-gray-500">Días restantes</p>
-                                <p class="text-sm font-bold" :class="activeLicense?.days_remaining < 7 ? 'text-red-600' : 'text-gray-900'"
-                                   x-text="activeLicense?.days_remaining >= 0 ? activeLicense?.days_remaining + ' días' : 'Vencida'"></p>
+                                <p class="text-sm font-bold"
+                                   :class="(activeLicense?.status === 'trial' ? activeLicense?.trial_days_remaining : activeLicense?.days_remaining) < 7 ? 'text-red-600' : 'text-gray-900'"
+                                   x-text="activeLicense?.status === 'trial'
+                                       ? (activeLicense?.trial_days_remaining >= 0 ? activeLicense?.trial_days_remaining + ' días de prueba' : 'Prueba vencida')
+                                       : (activeLicense?.days_remaining >= 0 ? activeLicense?.days_remaining + ' días' : 'Vencida')"></p>
                             </div>
                             <div>
                                 <p class="text-xs text-gray-500">Citas registradas</p>
@@ -437,6 +517,7 @@ include BASE_PATH . '/includes/header.php';
                             <label class="block text-sm font-medium text-gray-700 mb-1">Estado *</label>
                             <select name="status" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500">
                                 <option value="active"    :selected="activeLicense?.status === 'active'">Activa</option>
+                                <option value="trial"     :selected="activeLicense?.status === 'trial'">Prueba</option>
                                 <option value="suspended" :selected="activeLicense?.status === 'suspended'">Suspendida</option>
                                 <option value="expired"   :selected="activeLicense?.status === 'expired'">Vencida</option>
                             </select>
@@ -463,6 +544,11 @@ include BASE_PATH . '/includes/header.php';
                             <label class="block text-sm font-medium text-gray-700 mb-1">Fecha Vencimiento *</label>
                             <input type="date" name="end_date" :value="activeLicense?.end_date"
                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500" required>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Fin de Prueba</label>
+                            <input type="date" name="trial_end_date" :value="activeLicense?.trial_end_date"
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500">
                         </div>
                         <div class="md:col-span-2">
                             <label class="block text-sm font-medium text-gray-700 mb-1">Barbería Asignada</label>
@@ -567,6 +653,7 @@ include BASE_PATH . '/includes/header.php';
                             <label class="block text-sm font-medium text-gray-700 mb-1">Fecha de Inicio *</label>
                             <input type="date" name="start_date" value="<?php echo date('Y-m-d'); ?>" required
                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500">
+                            <p class="text-xs text-indigo-600 mt-1">Se creará en modo prueba por 15 días automáticamente.</p>
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">Asignar a Barbería</label>

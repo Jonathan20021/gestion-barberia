@@ -239,15 +239,193 @@ function getTimeSlots($startTime, $endTime, $interval = 30) {
  * Verificar si una licencia está activa
  */
 function isLicenseActive($licenseId) {
+    if (empty($licenseId)) {
+        return false;
+    }
+
     $db = Database::getInstance();
     $license = $db->fetch(
-        "SELECT status, end_date FROM licenses WHERE id = ?",
+        "SELECT id, status, end_date, trial_end_date FROM licenses WHERE id = ?",
         [$licenseId]
     );
     
     if (!$license) return false;
-    
-    return $license['status'] === 'active' && strtotime($license['end_date']) >= time();
+
+    $today = date('Y-m-d');
+
+    // Expiración automática de trial
+    if ($license['status'] === 'trial') {
+        if (!empty($license['trial_end_date']) && $license['trial_end_date'] < $today) {
+            $db->execute("UPDATE licenses SET status = 'expired' WHERE id = ?", [$license['id']]);
+            return false;
+        }
+        return !empty($license['trial_end_date']) && $license['trial_end_date'] >= $today;
+    }
+
+    if ($license['status'] !== 'active') {
+        return false;
+    }
+
+    if (!empty($license['end_date']) && $license['end_date'] < $today) {
+        $db->execute("UPDATE licenses SET status = 'expired' WHERE id = ?", [$license['id']]);
+        return false;
+    }
+
+    return !empty($license['end_date']) && $license['end_date'] >= $today;
+}
+
+/**
+ * Obtener configuración de licencia por barbería
+ */
+function getLicenseConfigForBarbershop($barbershopId) {
+    $db = Database::getInstance();
+    $row = $db->fetch(
+        "SELECT l.id as license_id, l.type as license_type
+         FROM barbershops b
+         INNER JOIN licenses l ON b.license_id = l.id
+         WHERE b.id = ?
+         LIMIT 1",
+        [$barbershopId]
+    );
+
+    if (!$row || empty($row['license_type']) || !isset(LICENSE_TYPES[$row['license_type']])) {
+        return null;
+    }
+
+    return [
+        'license_id' => intval($row['license_id']),
+        'license_type' => $row['license_type'],
+        'limits' => LICENSE_TYPES[$row['license_type']]
+    ];
+}
+
+/**
+ * Validar límite de barberos por barbería
+ */
+function canAddBarberToBarbershop($barbershopId, &$message = null) {
+    $cfg = getLicenseConfigForBarbershop($barbershopId);
+    if (!$cfg) {
+        $message = 'No se pudo validar la licencia de la barbería.';
+        return false;
+    }
+
+    $max = intval($cfg['limits']['max_barbers'] ?? -1);
+    if ($max < 0) {
+        return true;
+    }
+
+    $db = Database::getInstance();
+    $count = intval($db->fetch(
+        "SELECT COUNT(*) as total FROM barbers WHERE barbershop_id = ?",
+        [$barbershopId]
+    )['total'] ?? 0);
+
+    if ($count >= $max) {
+        $message = 'Tu plan ' . ucfirst($cfg['license_type']) . ' permite hasta ' . $max . ' barberos.';
+        return false;
+    }
+
+    return true;
+}
+
+/**
+ * Validar límite de servicios por barbería
+ */
+function canAddServiceToBarbershop($barbershopId, &$message = null) {
+    $cfg = getLicenseConfigForBarbershop($barbershopId);
+    if (!$cfg) {
+        $message = 'No se pudo validar la licencia de la barbería.';
+        return false;
+    }
+
+    $max = intval($cfg['limits']['max_services'] ?? -1);
+    if ($max < 0) {
+        return true;
+    }
+
+    $db = Database::getInstance();
+    $count = intval($db->fetch(
+        "SELECT COUNT(*) as total FROM services WHERE barbershop_id = ?",
+        [$barbershopId]
+    )['total'] ?? 0);
+
+    if ($count >= $max) {
+        $message = 'Tu plan ' . ucfirst($cfg['license_type']) . ' permite hasta ' . $max . ' servicios.';
+        return false;
+    }
+
+    return true;
+}
+
+/**
+ * Validar límite mensual de citas por barbería
+ */
+function canCreateAppointmentForBarbershop($barbershopId, &$message = null, $dateRef = null) {
+    $cfg = getLicenseConfigForBarbershop($barbershopId);
+    if (!$cfg) {
+        $message = 'No se pudo validar la licencia de la barbería.';
+        return false;
+    }
+
+    $max = intval($cfg['limits']['max_monthly_appointments'] ?? -1);
+    if ($max < 0) {
+        return true;
+    }
+
+    $dateRef = $dateRef ?: date('Y-m-d');
+    $start = date('Y-m-01', strtotime($dateRef));
+    $end = date('Y-m-t', strtotime($dateRef));
+
+    $db = Database::getInstance();
+    $count = intval($db->fetch(
+        "SELECT COUNT(*) as total
+         FROM appointments
+         WHERE barbershop_id = ?
+           AND appointment_date BETWEEN ? AND ?
+           AND status NOT IN ('cancelled', 'no_show')",
+        [$barbershopId, $start, $end]
+    )['total'] ?? 0);
+
+    if ($count >= $max) {
+        $monthName = getMonthName(intval(date('n', strtotime($dateRef))));
+        $message = 'Límite de citas del plan alcanzado (' . $max . ') para ' . $monthName . '.';
+        return false;
+    }
+
+    return true;
+}
+
+/**
+ * Validar límite de sucursales por licencia
+ */
+function canAddBarbershopToLicense($licenseId, &$message = null) {
+    $db = Database::getInstance();
+    $license = $db->fetch(
+        "SELECT id, type FROM licenses WHERE id = ? LIMIT 1",
+        [$licenseId]
+    );
+
+    if (!$license || !isset(LICENSE_TYPES[$license['type']])) {
+        $message = 'Licencia no válida.';
+        return false;
+    }
+
+    $max = intval(LICENSE_TYPES[$license['type']]['max_locations'] ?? 1);
+    if ($max < 0) {
+        return true;
+    }
+
+    $count = intval($db->fetch(
+        "SELECT COUNT(*) as total FROM barbershops WHERE license_id = ?",
+        [$licenseId]
+    )['total'] ?? 0);
+
+    if ($count >= $max) {
+        $message = 'La licencia ' . ucfirst($license['type']) . ' permite hasta ' . $max . ' sucursal(es).';
+        return false;
+    }
+
+    return true;
 }
 
 /**

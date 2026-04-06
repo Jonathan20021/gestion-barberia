@@ -34,7 +34,7 @@ if (!$user) {
 $licenses = $db->fetchAll("
     SELECT id, type, status
     FROM licenses
-    WHERE status = 'active'
+    WHERE status IN ('active', 'trial')
     ORDER BY type ASC
 ");
 
@@ -92,13 +92,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $updateData['password'] = password_hash($newPassword, PASSWORD_DEFAULT);
         }
         
-        // Si es owner, asignar licencia
-        if ($role === 'owner' && !empty($licenseId)) {
-            $updateData['license_id'] = $licenseId;
-        } else {
-            $updateData['license_id'] = null;
-        }
-        
         // Construir query de actualización
         $setClause = [];
         $values = [];
@@ -127,7 +120,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         // Si es owner y se seleccionó una barbería, asignarla
         if ($role === 'owner' && !empty($_POST['barbershop_id'])) {
             $barbershopId = $_POST['barbershop_id'];
-            $db->query("UPDATE barbershops SET owner_id = ? WHERE id = ?", [$userId, $barbershopId]);
+            $db->query(
+                "UPDATE barbershops SET owner_id = ?, license_id = ? WHERE id = ?",
+                [$userId, !empty($licenseId) ? $licenseId : null, $barbershopId]
+            );
         }
         
         // Si es barber y se seleccionó una barbería, crear/actualizar registro
@@ -287,7 +283,7 @@ include BASE_PATH . '/includes/header.php';
                             <select name="license_id" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
                                 <option value="">Sin licencia</option>
                                 <?php foreach ($licenses as $license): ?>
-                                <option value="<?php echo $license['id']; ?>" <?php echo $user['license_id'] == $license['id'] ? 'selected' : ''; ?>>
+                                <option value="<?php echo $license['id']; ?>" <?php echo (($currentBarbershop['license_id'] ?? null) == $license['id']) ? 'selected' : ''; ?>>
                                     <?php echo ucfirst($license['type']); ?>
                                 </option>
                                 <?php endforeach; ?>
@@ -306,7 +302,7 @@ include BASE_PATH . '/includes/header.php';
                                 // Obtener barbería actual del usuario
                                 $currentBarbershop = null;
                                 if ($user['role'] === 'owner') {
-                                    $currentBarbershop = $db->fetch("SELECT id FROM barbershops WHERE owner_id = ?", [$userId]);
+                                    $currentBarbershop = $db->fetch("SELECT id, license_id FROM barbershops WHERE owner_id = ?", [$userId]);
                                 } elseif ($user['role'] === 'barber') {
                                     $currentBarbershop = $db->fetch("SELECT barbershop_id as id FROM barbers WHERE user_id = ?", [$userId]);
                                 }

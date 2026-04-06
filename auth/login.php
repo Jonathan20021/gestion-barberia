@@ -20,7 +20,7 @@ if (Auth::check()) {
     }
 }
 
-$error = '';
+$error = isset($_GET['error']) ? trim((string)$_GET['error']) : '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $email = input('email');
@@ -43,7 +43,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     redirect(BASE_URL . '/public/index.php');
             }
         } else {
-            $error = 'Credenciales incorrectas';
+            $error = $auth->getLastError();
         }
     }
 }

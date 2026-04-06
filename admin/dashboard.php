@@ -12,11 +12,11 @@ $db = Database::getInstance();
 // Obtener estadísticas generales
 $stats = [
     'total_barbershops' => $db->fetch("SELECT COUNT(*) as count FROM barbershops WHERE status = 'active'")['count'],
-    'total_licenses' => $db->fetch("SELECT COUNT(*) as count FROM licenses WHERE status = 'active'")['count'],
+    'total_licenses' => $db->fetch("SELECT COUNT(*) as count FROM licenses WHERE status IN ('active', 'trial')")['count'],
     'total_barbers' => $db->fetch("SELECT COUNT(*) as count FROM barbers WHERE status = 'active'")['count'],
     'total_appointments' => $db->fetch("SELECT COUNT(*) as count FROM appointments WHERE appointment_date >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)")['count'],
     'monthly_revenue' => $db->fetch("SELECT COALESCE(SUM(amount), 0) as total FROM transactions WHERE type = 'license_payment' AND transaction_date >= DATE_SUB(NOW(), INTERVAL 30 DAY)")['total'],
-    'pending_licenses' => $db->fetch("SELECT COUNT(*) as count FROM licenses WHERE end_date <= DATE_ADD(CURDATE(), INTERVAL 7 DAY) AND status = 'active'")['count']
+    'pending_licenses' => $db->fetch("SELECT COUNT(*) as count FROM licenses WHERE ((status = 'active' AND end_date <= DATE_ADD(CURDATE(), INTERVAL 7 DAY)) OR (status = 'trial' AND trial_end_date <= DATE_ADD(CURDATE(), INTERVAL 7 DAY)))")['count']
 ];
 
 // Licencias próximas a vencer
@@ -25,9 +25,9 @@ $expiring_licenses = $db->fetchAll("
     FROM licenses l
     LEFT JOIN barbershops b ON l.id = b.license_id
     LEFT JOIN users u ON b.owner_id = u.id
-    WHERE l.end_date <= DATE_ADD(CURDATE(), INTERVAL 30 DAY)
-    AND l.status = 'active'
-    ORDER BY l.end_date ASC
+    WHERE (l.status = 'active' AND l.end_date <= DATE_ADD(CURDATE(), INTERVAL 30 DAY))
+       OR (l.status = 'trial' AND l.trial_end_date <= DATE_ADD(CURDATE(), INTERVAL 30 DAY))
+    ORDER BY CASE WHEN l.status = 'trial' THEN l.trial_end_date ELSE l.end_date END ASC
     LIMIT 10
 ");
 
@@ -171,11 +171,12 @@ include BASE_PATH . '/includes/header.php';
                                         </div>
                                         <div class="text-right">
                                             <p class="text-sm font-medium text-red-600">
-                                                Vence: <?php echo formatDate($license['end_date']); ?>
+                                                Vence: <?php echo formatDate($license['status'] === 'trial' ? $license['trial_end_date'] : $license['end_date']); ?>
                                             </p>
                                             <span class="inline-block px-2 py-1 text-xs font-medium rounded-full bg-red-100 text-red-800 mt-1">
                                                 <?php 
-                                                $days = floor((strtotime($license['end_date']) - time()) / 86400);
+                                                $deadline = $license['status'] === 'trial' ? $license['trial_end_date'] : $license['end_date'];
+                                                $days = floor((strtotime($deadline) - time()) / 86400);
                                                 echo $days . ' días';
                                                 ?>
                                             </span>

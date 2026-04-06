@@ -24,6 +24,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $action = input('action');
     
     if ($action === 'create') {
+        if (!canAddServiceToBarbershop($barbershopId, $limitMessage)) {
+            setFlash('error', $limitMessage);
+            redirect($_SERVER['PHP_SELF']);
+        }
+
         $name = input('name');
         $description = input('description');
         $duration = input('duration');

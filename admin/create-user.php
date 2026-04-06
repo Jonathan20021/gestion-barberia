@@ -13,7 +13,7 @@ $db = Database::getInstance();
 $licenses = $db->fetchAll("
     SELECT id, type, status
     FROM licenses
-    WHERE status = 'active'
+    WHERE status IN ('active', 'trial')
     ORDER BY type ASC
 ");
 
@@ -66,16 +66,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
         
         $db->query("
-            INSERT INTO users (full_name, email, phone, password, role, status, license_id, created_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?, NOW())
+            INSERT INTO users (full_name, email, phone, password, role, status, created_at)
+            VALUES (?, ?, ?, ?, ?, ?, NOW())
         ", [
             $fullName,
             $email,
             $phone,
             $hashedPassword,
             $role,
-            $status,
-            ($role === 'owner' && !empty($licenseId)) ? $licenseId : null
+            $status
         ]);
         
         $userId = $db->lastInsertId();
@@ -83,7 +82,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         // Si es owner y se seleccionó una barbería, asignarla
         if ($role === 'owner' && !empty($_POST['barbershop_id'])) {
             $barbershopId = $_POST['barbershop_id'];
-            $db->query("UPDATE barbershops SET owner_id = ? WHERE id = ?", [$userId, $barbershopId]);
+            $db->query(
+                "UPDATE barbershops SET owner_id = ?, license_id = ? WHERE id = ?",
+                [$userId, !empty($licenseId) ? $licenseId : null, $barbershopId]
+            );
         }
         
         // Si es barber y se seleccionó una barbería, crear registro

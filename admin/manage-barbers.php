@@ -48,6 +48,10 @@ $availableBarbers = $db->fetchAll("
 // Procesar asignación de barbero
 if (isset($_POST['assign_barber'])) {
     try {
+        if (!canAddBarberToBarbershop($shopId, $limitMessage)) {
+            throw new Exception($limitMessage);
+        }
+
         $userId = $_POST['user_id'] ?? null;
         $specialty = trim($_POST['specialty'] ?? '');
         

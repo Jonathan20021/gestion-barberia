@@ -13,7 +13,7 @@ $db = Database::getInstance();
 $licenses = $db->fetchAll("
     SELECT id, type, status, end_date
     FROM licenses
-    WHERE status = 'active'
+    WHERE status IN ('active', 'trial')
     ORDER BY type ASC
 ");
 
@@ -72,6 +72,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         
         if (empty($ownerId)) {
             throw new Exception('Debe seleccionar un owner');
+        }
+
+        if (!canAddBarbershopToLicense($licenseId, $limitMessage)) {
+            throw new Exception($limitMessage);
         }
         
         // Crear barbería

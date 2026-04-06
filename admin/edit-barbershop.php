@@ -36,7 +36,7 @@ if (!$shop) {
 $licenses = $db->fetchAll("
     SELECT id, type, status, end_date
     FROM licenses
-    WHERE status = 'active'
+    WHERE status IN ('active', 'trial')
     ORDER BY type ASC
 ");
 

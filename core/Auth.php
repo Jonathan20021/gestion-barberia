@@ -4,6 +4,7 @@
  */
 class Auth {
     private $db;
+    private $lastError = '';
     
     public function __construct() {
         $this->db = Database::getInstance();
@@ -13,19 +14,40 @@ class Auth {
      * Login de usuario
      */
     public function login($email, $password) {
+        $this->lastError = '';
+
         $user = $this->db->fetch(
             "SELECT * FROM users WHERE email = ? AND status = 'active'",
             [$email]
         );
         
         if ($user && password_verify($password, $user['password'])) {
+            if (in_array($user['role'], ['owner', 'barber'], true)) {
+                $licenseCheck = self::getUserLicenseAccessStatus($user['id'], $user['role']);
+                if (!$licenseCheck['allowed']) {
+                    $this->lastError = $licenseCheck['message'];
+                    return false;
+                }
+            }
+
             $this->createSession($user);
             $this->updateLastLogin($user['id']);
             $this->logActivity($user['id'], 'login', 'Inicio de sesión exitoso');
             return true;
         }
+
+        if (empty($this->lastError)) {
+            $this->lastError = 'Credenciales incorrectas';
+        }
         
         return false;
+    }
+
+    /**
+     * Último mensaje de error del flujo de autenticación
+     */
+    public function getLastError() {
+        return $this->lastError;
     }
     
     /**
@@ -170,6 +192,79 @@ class Auth {
             http_response_code(403);
             die('Acceso denegado');
         }
+
+        if (in_array($role, ['owner', 'barber'], true)) {
+            $licenseCheck = self::getUserLicenseAccessStatus($_SESSION['user_id'], $role);
+            if (!$licenseCheck['allowed']) {
+                self::logoutByPolicy($licenseCheck['message']);
+            }
+        }
+    }
+
+    /**
+     * Cierre de sesión por política de licenciamiento
+     */
+    private static function logoutByPolicy($message) {
+        session_unset();
+        session_destroy();
+        header('Location: ' . BASE_URL . '/auth/login.php?error=' . urlencode($message));
+        exit;
+    }
+
+    /**
+     * Validar acceso por estado de licencia para owner/barber
+     */
+    private static function getUserLicenseAccessStatus($userId, $role) {
+        $db = Database::getInstance();
+
+        if ($role === 'owner') {
+            $license = $db->fetch(
+                "SELECT l.id, l.status, l.end_date, l.trial_end_date
+                 FROM barbershops b
+                 INNER JOIN licenses l ON b.license_id = l.id
+                 WHERE b.owner_id = ?
+                 ORDER BY b.id ASC
+                 LIMIT 1",
+                [$userId]
+            );
+        } else {
+            $license = $db->fetch(
+                "SELECT l.id, l.status, l.end_date, l.trial_end_date
+                 FROM barbers br
+                 INNER JOIN barbershops b ON br.barbershop_id = b.id
+                 INNER JOIN licenses l ON b.license_id = l.id
+                 WHERE br.user_id = ?
+                 ORDER BY br.id ASC
+                 LIMIT 1",
+                [$userId]
+            );
+        }
+
+        if (!$license) {
+            return ['allowed' => false, 'message' => 'No tienes una licencia asignada.'];
+        }
+
+        $today = date('Y-m-d');
+
+        if ($license['status'] === 'trial') {
+            if (empty($license['trial_end_date']) || $license['trial_end_date'] < $today) {
+                $db->execute("UPDATE licenses SET status = 'expired' WHERE id = ?", [$license['id']]);
+                return ['allowed' => false, 'message' => 'El periodo de prueba de 15 días ha finalizado. Contacta al Super Admin.'];
+            }
+
+            return ['allowed' => true, 'message' => ''];
+        }
+
+        if ($license['status'] !== 'active') {
+            return ['allowed' => false, 'message' => 'Tu licencia no está activa. Contacta al Super Admin.'];
+        }
+
+        if (empty($license['end_date']) || $license['end_date'] < $today) {
+            $db->execute("UPDATE licenses SET status = 'expired' WHERE id = ?", [$license['id']]);
+            return ['allowed' => false, 'message' => 'Tu licencia está vencida. Contacta al Super Admin para renovarla.'];
+        }
+
+        return ['allowed' => true, 'message' => ''];
     }
     
     /**

@@ -27,6 +27,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $action = input('action');
     
     if ($action === 'create') {
+        if (!canAddBarberToBarbershop($barbershopId, $limitMessage)) {
+            setFlash('error', $limitMessage);
+            redirect($_SERVER['PHP_SELF']);
+        }
+
         // Crear usuario primero
         $email = input('email');
         $plainPassword = trim((string) input('password'));

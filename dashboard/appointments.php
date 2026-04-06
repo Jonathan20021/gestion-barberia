@@ -76,6 +76,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             redirect($_SERVER['PHP_SELF'] . '?action=create');
         }
 
+        if (!canCreateAppointmentForBarbershop($barbershopId, $limitMessage, $appointmentDate)) {
+            setFlash('error', $limitMessage);
+            redirect($_SERVER['PHP_SELF'] . '?action=create');
+        }
+
         $service = $db->fetch(
             "SELECT duration, price FROM services WHERE id = ? AND barbershop_id = ?",
             [$serviceId, $barbershopId]

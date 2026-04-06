@@ -13,7 +13,7 @@ if (session_status() === PHP_SESSION_NONE) {
 
 // Configuración de entorno
 define('ENVIRONMENT', 'production'); // development | production
-define('BASE_URL', 'https://barber.kyrosrd.com');
+define('BASE_URL', 'https://www.barber.kyrosrd.com');
 define('BASE_PATH', __DIR__ . '/..');
 
 // Configuración de Base de Datos

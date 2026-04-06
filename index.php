@@ -19,18 +19,18 @@ if (isset($_SESSION['user_id'])) {
     
     switch ($role) {
         case 'superadmin':
-            header('Location: /gestion-barberia/admin/dashboard.php');
+            header('Location: ' . BASE_URL . '/admin/dashboard.php');
             break;
         case 'owner':
-            header('Location: /gestion-barberia/dashboard/index.php');
+            header('Location: ' . BASE_URL . '/dashboard/index.php');
             break;
         case 'barber':
-            header('Location: /gestion-barberia/dashboard/barber/index.php');
+            header('Location: ' . BASE_URL . '/dashboard/barber/index.php');
             break;
         default:
-            header('Location: /gestion-barberia/landing.php');
+            header('Location: ' . BASE_URL . '/landing.php');
     }
 } else {
-    header('Location: /gestion-barberia/landing.php');
+    header('Location: ' . BASE_URL . '/landing.php');
 }
 exit;

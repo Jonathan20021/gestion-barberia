@@ -1,6 +1,6 @@
 <IfModule mod_rewrite.c>
     RewriteEngine On
-    RewriteBase /gestion-barberia/
+    RewriteBase /
     
     # Forzar HTTPS en producción (comentado para desarrollo local)
     # RewriteCond %{HTTPS} off
@@ -17,8 +17,8 @@
     RedirectMatch 403 /logs/.*
     
     # Redireccionar errores comunes
-    ErrorDocument 404 /gestion-barberia/public/404.php
-    ErrorDocument 403 /gestion-barberia/public/403.php
+    ErrorDocument 404 /public/404.php
+    ErrorDocument 403 /public/403.php
     
     # Habilitar compresión
     <IfModule mod_deflate.c>

@@ -7,9 +7,33 @@ require_once BASE_PATH . '/core/Helpers.php';
 
 Auth::requireRole('superadmin');
 
-if (isset($_GET['debug']) && $_GET['debug'] === '1') {
+$debugMode = isset($_GET['debug']) && $_GET['debug'] === '1';
+if ($debugMode) {
     error_reporting(E_ALL);
     ini_set('display_errors', 1);
+
+    register_shutdown_function(function () {
+        $error = error_get_last();
+        if (!$error) {
+            return;
+        }
+
+        $fatalTypes = [E_ERROR, E_PARSE, E_CORE_ERROR, E_COMPILE_ERROR, E_USER_ERROR];
+        if (!in_array($error['type'], $fatalTypes, true)) {
+            return;
+        }
+
+        while (ob_get_level() > 0) {
+            ob_end_clean();
+        }
+
+        header('Content-Type: text/plain; charset=UTF-8');
+        echo "FATAL EN reports.php\n";
+        echo "Mensaje: " . $error['message'] . "\n";
+        echo "Archivo: " . $error['file'] . "\n";
+        echo "Línea: " . $error['line'] . "\n";
+        echo "PHP: " . phpversion() . "\n";
+    });
 }
 
 @set_time_limit(120);

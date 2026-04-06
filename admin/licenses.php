@@ -368,18 +368,23 @@ include BASE_PATH . '/includes/header.php';
                             <?php
                                 $licJson = htmlspecialchars(json_encode($lic), ENT_QUOTES, 'UTF-8');
                                 $daysLeft = intval($lic['days_remaining']);
-                                $statusColor = match($lic['status']) {
-                                    'trial'     => 'bg-indigo-100 text-indigo-800',
-                                    'active'    => 'bg-green-100 text-green-800',
-                                    'suspended' => 'bg-orange-100 text-orange-800',
-                                    'expired'   => 'bg-red-100 text-red-800',
-                                    default     => 'bg-gray-100 text-gray-800'
-                                };
-                                $planColor = match($lic['type']) {
-                                    'enterprise'   => 'bg-purple-100 text-purple-800',
-                                    'professional' => 'bg-blue-100 text-blue-800',
-                                    default        => 'bg-gray-100 text-gray-800'
-                                };
+                                $statusColor = 'bg-gray-100 text-gray-800';
+                                if ($lic['status'] === 'trial') {
+                                    $statusColor = 'bg-indigo-100 text-indigo-800';
+                                } elseif ($lic['status'] === 'active') {
+                                    $statusColor = 'bg-green-100 text-green-800';
+                                } elseif ($lic['status'] === 'suspended') {
+                                    $statusColor = 'bg-orange-100 text-orange-800';
+                                } elseif ($lic['status'] === 'expired') {
+                                    $statusColor = 'bg-red-100 text-red-800';
+                                }
+
+                                $planColor = 'bg-gray-100 text-gray-800';
+                                if ($lic['type'] === 'enterprise') {
+                                    $planColor = 'bg-purple-100 text-purple-800';
+                                } elseif ($lic['type'] === 'professional') {
+                                    $planColor = 'bg-blue-100 text-blue-800';
+                                }
                             ?>
                             <tr class="hover:bg-gray-50">
                                 <td class="px-6 py-4">

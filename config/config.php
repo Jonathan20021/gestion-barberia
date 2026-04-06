@@ -8,7 +8,7 @@ define('BASE_PATH', __DIR__ . '/..');
 $appHost = $_SERVER['HTTP_HOST'] ?? 'localhost';
 $appScheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
 $localHosts = ['localhost', '127.0.0.1', '::1'];
-$isLocalHost = in_array($appHost, $localHosts, true) || str_contains($appHost, 'localhost');
+$isLocalHost = in_array($appHost, $localHosts, true) || strpos($appHost, 'localhost') !== false;
 
 $defaultEnvironment = $isLocalHost ? 'development' : 'production';
 $environment = getenv('APP_ENV') ?: $defaultEnvironment;

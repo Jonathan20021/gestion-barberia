@@ -113,7 +113,7 @@ $barberPhoto = !empty($barber['photo']) ? imageUrl($barber['photo']) : null;
 <nav style="position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(255,255,255,.96);backdrop-filter:blur(12px);border-bottom:1px solid #f0f0ec;">
     <div style="max-width:1200px;margin:0 auto;padding:0 24px;display:flex;align-items:center;justify-content:space-between;height:64px;">
 
-        <a href="booking.php?shop=<?php echo $shopSlug; ?>"
+        <a href="<?php echo BASE_URL; ?>/public/<?php echo $shopSlug; ?>"
            style="display:inline-flex;align-items:center;gap:8px;color:#52525b;text-decoration:none;font-size:.875rem;font-weight:600;transition:color .18s;"
            onmouseover="this.style.color='#0a0a0a'" onmouseout="this.style.color='#52525b'">
             <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
@@ -366,7 +366,7 @@ $barberPhoto = !empty($barber['photo']) ? imageUrl($barber['photo']) : null;
             <?php endif; ?>
             <div>
                 <p style="font-weight:700;color:#fff;font-size:.875rem;margin:0;"><?php echo e($barber['business_name']); ?></p>
-                <a href="booking.php?shop=<?php echo $shopSlug; ?>" style="font-size:.75rem;color:#52525b;text-decoration:none;transition:color .18s;"
+                <a href="<?php echo BASE_URL; ?>/public/<?php echo $shopSlug; ?>" style="font-size:.75rem;color:#52525b;text-decoration:none;transition:color .18s;"
                    onmouseover="this.style.color='#a1a1aa'" onmouseout="this.style.color='#52525b'">← Ver toda la barbería</a>
             </div>
         </div>

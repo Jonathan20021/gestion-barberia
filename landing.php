@@ -1,525 +1,556 @@
+<?php require_once __DIR__ . '/config/config.php'; ?>
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kyros Barber Cloud - Sistema de Gestión para Barberías RD</title>
+    <title>Kyros Barber Cloud — Sistema de Gestión para Barberías RD</title>
+    <meta name="description" content="Sistema completo de gestión de citas, clientes y finanzas para barberías en República Dominicana. 100% en la nube, fácil de usar y con reservas online.">
     <script src="https://cdn.tailwindcss.com"></script>
-    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Sora:wght@700;800;900&display=swap" rel="stylesheet">
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <style>
-        @keyframes fadeInUp {
-            from {
-                opacity: 0;
-                transform: translateY(30px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+        *, *::before, *::after { box-sizing:border-box; }
+        body { font-family:'Inter',sans-serif; background:#fff; margin:0; color:#0a0a0a; }
+        h1,h2,h3,h4 { font-family:'Sora',sans-serif; }
+
+        /* ── Animations ── */
+        @keyframes fadeUp   { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
+        @keyframes shimmer  { 0%{transform:translateX(-100%)} 100%{transform:translateX(100%)} }
+        @keyframes ticker   { 0%{transform:translateX(0)} 100%{transform:translateX(-50%)} }
+        @keyframes float    { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-8px)} }
+
+        .fade-up  { animation:fadeUp .6s cubic-bezier(.16,1,.3,1) both; }
+        .fade-up2 { animation:fadeUp .6s .1s cubic-bezier(.16,1,.3,1) both; }
+        .fade-up3 { animation:fadeUp .6s .2s cubic-bezier(.16,1,.3,1) both; }
+
+        /* ── Gold button ── */
+        .btn-gold {
+            display:inline-flex; align-items:center; justify-content:center; gap:8px;
+            position:relative; overflow:hidden;
+            background:linear-gradient(135deg,#c9901a 0%,#e8b84b 50%,#c9901a 100%);
+            color:#0a0a0a; font-weight:700; border:none; cursor:pointer; text-decoration:none;
+            box-shadow:0 4px 20px rgba(201,144,26,.35);
+            transition:box-shadow .2s, transform .2s;
         }
-        .fade-in-up {
-            animation: fadeInUp 0.6s ease-out forwards;
+        .btn-gold::after {
+            content:''; position:absolute; top:0; left:-100%; width:100%; height:100%;
+            background:linear-gradient(90deg,transparent,rgba(255,255,255,.3),transparent);
         }
-        .gradient-text {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
+        .btn-gold:hover::after { animation:shimmer .5s ease forwards; }
+        .btn-gold:hover { box-shadow:0 6px 28px rgba(201,144,26,.5); transform:translateY(-1px); }
+
+        /* ── Dark button ── */
+        .btn-dark {
+            display:inline-flex; align-items:center; justify-content:center; gap:8px;
+            background:#0a0a0a; color:#fff; font-weight:600; border:none; cursor:pointer;
+            text-decoration:none; transition:background .18s, transform .18s;
         }
+        .btn-dark:hover { background:#1f1f1f; transform:translateY(-1px); }
+
+        /* ── Outline button ── */
+        .btn-outline {
+            display:inline-flex; align-items:center; justify-content:center; gap:8px;
+            background:transparent; color:#0a0a0a; font-weight:600; border:1.5px solid #e5e5e2;
+            cursor:pointer; text-decoration:none; transition:border-color .18s, background .18s;
+        }
+        .btn-outline:hover { border-color:#0a0a0a; background:#f9f9f7; }
+
+        /* ── Card hover ── */
+        .card { transition:transform .22s cubic-bezier(.4,0,.2,1), box-shadow .22s; }
+        .card:hover { transform:translateY(-4px); box-shadow:0 20px 44px rgba(0,0,0,.09); }
+
+        /* ── Pricing popular ── */
+        .plan-popular { position:relative; }
+
+        /* ── Feature icon ── */
+        .feat-icon {
+            width:52px; height:52px; border-radius:14px; flex-shrink:0;
+            display:flex; align-items:center; justify-content:center;
+        }
+
+        /* ── Mock dashboard ── */
+        .dash-bar { border-radius:4px; background:linear-gradient(90deg,#e8b84b,#c9901a); }
+        .dash-bar-2 { border-radius:4px; background:#e5e5e0; }
+
+        @media(min-width:768px){
+            .hero-grid { grid-template-columns:1fr 1fr !important; }
+            .feat-grid { grid-template-columns:repeat(3,1fr) !important; }
+            .steps-grid { grid-template-columns:repeat(3,1fr) !important; }
+            .price-grid { grid-template-columns:repeat(3,1fr) !important; }
+            .footer-grid { grid-template-columns:2fr 1fr 1fr 1fr !important; }
+        }
+
+        /* ── Ticker ── */
+        .ticker-wrap { overflow:hidden; }
+        .ticker-inner { display:flex; animation:ticker 30s linear infinite; width:max-content; }
+        .ticker-inner:hover { animation-play-state:paused; }
     </style>
 </head>
-<body class="bg-gray-50">
-    <!-- Navbar -->
-    <nav class="bg-white shadow-sm sticky top-0 z-50" x-data="{ mobileMenuOpen: false }">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex justify-between items-center h-16">
-                <div class="flex items-center">
-                    <span class="text-2xl font-bold gradient-text">💈 Kyros Barber Cloud</span>
-                    <span class="ml-2 px-2 py-1 text-xs bg-indigo-100 text-indigo-700 rounded-full font-medium">RD</span>
-                </div>
-                
-                <div class="hidden md:flex items-center space-x-8">
-                    <a href="#features" class="text-gray-700 hover:text-indigo-600 transition">Características</a>
-                    <a href="#pricing" class="text-gray-700 hover:text-indigo-600 transition">Precios</a>
-                    <a href="#demo" class="text-gray-700 hover:text-indigo-600 transition">Demo</a>
-                    <a href="auth/login.php" class="px-4 py-2 text-indigo-600 hover:text-indigo-700 transition">Iniciar Sesión</a>
-                    <a href="auth/login.php" class="px-6 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg hover:from-indigo-700 hover:to-purple-700 transition shadow-lg">
-                        Comenzar Gratis
-                    </a>
-                </div>
+<body x-data="{ mobileOpen: false }">
 
-                <button @click="mobileMenuOpen = !mobileMenuOpen" class="md:hidden p-2">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
-                    </svg>
-                </button>
+<!-- ═══════════════════════════════════════════
+     NAVBAR
+══════════════════════════════════════════════ -->
+<header style="position:sticky;top:0;z-index:100;background:rgba(255,255,255,.96);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-bottom:1px solid #f0f0ec;">
+    <div style="max-width:1200px;margin:0 auto;padding:0 24px;display:flex;align-items:center;justify-content:space-between;height:64px;">
+
+        <!-- Logo -->
+        <a href="/" style="display:flex;align-items:center;gap:10px;text-decoration:none;">
+            <div style="width:32px;height:32px;background:linear-gradient(135deg,#c9901a,#e8b84b);border-radius:8px;display:flex;align-items:center;justify-content:center;">
+                <svg width="18" height="18" fill="none" stroke="white" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M14.121 14.121L19 19m-7-7l7-7m-7 7l-2.879 2.879M12 12L9.121 9.121m0 5.758a3 3 0 10-4.243 4.243 3 3 0 004.243-4.243zm0-5.758a3 3 0 10-4.243-4.243 3 3 0 004.243 4.243z"/></svg>
+            </div>
+            <span style="font-family:'Sora',sans-serif;font-weight:800;font-size:1.0625rem;color:#0a0a0a;letter-spacing:-.02em;">Kyros Barber Cloud</span>
+            <span style="padding:2px 8px;background:#f0f9ff;border:1px solid #bae6fd;border-radius:999px;font-size:.625rem;font-weight:700;color:#0284c7;letter-spacing:.06em;">RD</span>
+        </a>
+
+        <!-- Desktop nav -->
+        <nav style="display:none;align-items:center;gap:32px;" id="desk-nav">
+            <a href="#features" style="font-size:.875rem;font-weight:500;color:#52525b;text-decoration:none;transition:color .18s;" onmouseover="this.style.color='#0a0a0a'" onmouseout="this.style.color='#52525b'">Características</a>
+            <a href="#pricing"  style="font-size:.875rem;font-weight:500;color:#52525b;text-decoration:none;transition:color .18s;" onmouseover="this.style.color='#0a0a0a'" onmouseout="this.style.color='#52525b'">Precios</a>
+            <a href="#demo"     style="font-size:.875rem;font-weight:500;color:#52525b;text-decoration:none;transition:color .18s;" onmouseover="this.style.color='#0a0a0a'" onmouseout="this.style.color='#52525b'">Demo</a>
+            <a href="<?php echo BASE_URL; ?>/auth/login" style="font-size:.875rem;font-weight:500;color:#52525b;text-decoration:none;transition:color .18s;" onmouseover="this.style.color='#0a0a0a'" onmouseout="this.style.color='#52525b'">Iniciar Sesión</a>
+            <a href="<?php echo BASE_URL; ?>/auth/login" class="btn-gold" style="padding:9px 20px;border-radius:10px;font-size:.875rem;">Empezar Gratis</a>
+        </nav>
+
+        <!-- Mobile toggle -->
+        <button @click="mobileOpen = !mobileOpen"
+                style="display:flex;align-items:center;justify-content:center;width:40px;height:40px;background:#f5f5f0;border:none;border-radius:10px;cursor:pointer;"
+                id="mob-toggle">
+            <svg x-show="!mobileOpen" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/></svg>
+            <svg x-show="mobileOpen" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="display:none;"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+    </div>
+
+    <!-- Mobile menu -->
+    <div x-show="mobileOpen" style="background:#fff;border-top:1px solid #f0f0ec;padding:16px 24px;display:flex;flex-direction:column;gap:12px;" x-cloak>
+        <a href="#features"   style="font-size:.9375rem;font-weight:500;color:#3f3f46;text-decoration:none;padding:8px 0;">Características</a>
+        <a href="#pricing"    style="font-size:.9375rem;font-weight:500;color:#3f3f46;text-decoration:none;padding:8px 0;">Precios</a>
+        <a href="#demo"       style="font-size:.9375rem;font-weight:500;color:#3f3f46;text-decoration:none;padding:8px 0;">Demo</a>
+        <a href="<?php echo BASE_URL; ?>/auth/login" style="font-size:.9375rem;font-weight:500;color:#3f3f46;text-decoration:none;padding:8px 0;">Iniciar Sesión</a>
+        <a href="<?php echo BASE_URL; ?>/auth/login" class="btn-gold" style="padding:12px 20px;border-radius:12px;font-size:.9375rem;text-align:center;">Empezar Gratis</a>
+    </div>
+</header>
+
+<style>
+@media(min-width:768px){
+    #desk-nav  { display:flex !important; }
+    #mob-toggle{ display:none !important; }
+}
+[x-cloak]{ display:none !important; }
+</style>
+
+<!-- ═══════════════════════════════════════════
+     HERO
+══════════════════════════════════════════════ -->
+<section style="background:#0a0a0a;color:#fff;padding:80px 24px 0;overflow:hidden;position:relative;">
+
+    <!-- Ambient glows -->
+    <div style="position:absolute;top:-100px;left:50%;transform:translateX(-50%);width:700px;height:400px;background:radial-gradient(ellipse,rgba(201,144,26,.15) 0%,transparent 70%);pointer-events:none;"></div>
+
+    <div style="max-width:1200px;margin:0 auto;position:relative;z-index:1;">
+        <!-- Eyebrow -->
+        <div class="fade-up" style="display:flex;justify-content:center;margin-bottom:24px;">
+            <div style="display:inline-flex;align-items:center;gap:8px;padding:6px 16px;border-radius:999px;background:rgba(201,144,26,.12);border:1px solid rgba(201,144,26,.3);">
+                <span style="width:6px;height:6px;background:#e8b84b;border-radius:50%;display:block;"></span>
+                <span style="font-size:.75rem;font-weight:600;color:#e8b84b;letter-spacing:.06em;">NUEVO · Ahora con reservas por WhatsApp</span>
             </div>
         </div>
 
-        <!-- Mobile Menu -->
-        <div x-show="mobileMenuOpen" class="md:hidden bg-white border-t" style="display: none;">
-            <div class="px-4 py-3 space-y-3">
-                <a href="#features" class="block text-gray-700 hover:text-indigo-600">Características</a>
-                <a href="#pricing" class="block text-gray-700 hover:text-indigo-600">Precios</a>
-                <a href="#demo" class="block text-gray-700 hover:text-indigo-600">Demo</a>
-                <a href="auth/login.php" class="block w-full px-4 py-2 text-center bg-indigo-600 text-white rounded-lg">Comenzar Gratis</a>
-            </div>
-        </div>
-    </nav>
-
-    <!-- Hero Section -->
-    <section class="relative bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 py-20 overflow-hidden">
-        <div class="absolute inset-0 opacity-10">
-            <div class="absolute top-0 left-0 w-96 h-96 bg-purple-500 rounded-full filter blur-3xl"></div>
-            <div class="absolute bottom-0 right-0 w-96 h-96 bg-indigo-500 rounded-full filter blur-3xl"></div>
-        </div>
-
-        <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="grid md:grid-cols-2 gap-12 items-center">
-                <div class="fade-in-up">
-                    <h1 class="text-5xl md:text-6xl font-bold text-gray-900 mb-6 leading-tight">
-                        Gestiona tu Barbería
-                        <span class="gradient-text">Como un Profesional</span>
-                    </h1>
-                    <p class="text-xl text-gray-600 mb-8">
-                        Sistema completo de gestión de citas, clientes y finanzas para barberías en República Dominicana. 
-                        100% en la nube, fácil de usar y con reservas online.
-                    </p>
-                    <div class="flex flex-col sm:flex-row gap-4">
-                        <a href="auth/login.php" class="px-8 py-4 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl font-semibold text-lg hover:from-indigo-700 hover:to-purple-700 transition shadow-xl text-center">
-                            🚀 Probar Gratis 30 Días
-                        </a>
-                        <a href="#demo" class="px-8 py-4 bg-white text-indigo-600 rounded-xl font-semibold text-lg hover:bg-gray-50 transition border-2 border-indigo-600 text-center">
-                            📺 Ver Demo
-                        </a>
-                    </div>
-                    <div class="mt-8 flex items-center space-x-6 text-sm text-gray-600">
-                        <div class="flex items-center">
-                            <svg class="w-5 h-5 text-green-500 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
-                            </svg>
-                            Sin contratos
-                        </div>
-                        <div class="flex items-center">
-                            <svg class="w-5 h-5 text-green-500 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
-                            </svg>
-                            Cancela cuando quieras
-                        </div>
-                        <div class="flex items-center">
-                            <svg class="w-5 h-5 text-green-500 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
-                            </svg>
-                            Soporte en español
-                        </div>
-                    </div>
-                </div>
-
-                <div class="relative fade-in-up" style="animation-delay: 0.2s;">
-                    <div class="bg-white rounded-2xl shadow-2xl p-8 transform hover:scale-105 transition duration-300">
-                        <div class="flex items-center justify-between mb-6">
-                            <div class="flex items-center space-x-3">
-                                <div class="w-3 h-3 bg-red-500 rounded-full"></div>
-                                <div class="w-3 h-3 bg-yellow-500 rounded-full"></div>
-                                <div class="w-3 h-3 bg-green-500 rounded-full"></div>
-                            </div>
-                            <span class="text-sm text-gray-500">Vista Previa</span>
-                        </div>
-                        <div class="space-y-4">
-                            <div class="flex items-center justify-between p-4 bg-gradient-to-r from-indigo-50 to-purple-50 rounded-lg">
-                                <div>
-                                    <p class="text-sm text-gray-600">Citas Hoy</p>
-                                    <p class="text-3xl font-bold text-indigo-600">24</p>
-                                </div>
-                                <div class="w-16 h-16 bg-indigo-600 rounded-full flex items-center justify-center text-white text-2xl">
-                                    📅
-                                </div>
-                            </div>
-                            <div class="flex items-center justify-between p-4 bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg">
-                                <div>
-                                    <p class="text-sm text-gray-600">Ingresos Hoy</p>
-                                    <p class="text-3xl font-bold text-green-600">RD$8,450</p>
-                                </div>
-                                <div class="w-16 h-16 bg-green-600 rounded-full flex items-center justify-center text-white text-2xl">
-                                    💰
-                                </div>
-                            </div>
-                            <div class="grid grid-cols-2 gap-4">
-                                <div class="p-4 bg-blue-50 rounded-lg text-center">
-                                    <p class="text-2xl font-bold text-blue-600">156</p>
-                                    <p class="text-sm text-gray-600">Clientes</p>
-                                </div>
-                                <div class="p-4 bg-purple-50 rounded-lg text-center">
-                                    <p class="text-2xl font-bold text-purple-600">4.9⭐</p>
-                                    <p class="text-sm text-gray-600">Rating</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Stats Section -->
-    <section class="py-12 bg-white">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
-                <div>
-                    <p class="text-4xl font-bold text-indigo-600">500+</p>
-                    <p class="text-gray-600 mt-2">Barberías Activas</p>
-                </div>
-                <div>
-                    <p class="text-4xl font-bold text-purple-600">50K+</p>
-                    <p class="text-gray-600 mt-2">Citas Mensuales</p>
-                </div>
-                <div>
-                    <p class="text-4xl font-bold text-pink-600">99.9%</p>
-                    <p class="text-gray-600 mt-2">Uptime</p>
-                </div>
-                <div>
-                    <p class="text-4xl font-bold text-green-600">4.8⭐</p>
-                    <p class="text-gray-600 mt-2">Satisfacción</p>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Features Section -->
-    <section id="features" class="py-20 bg-gray-50">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="text-center mb-16">
-                <h2 class="text-4xl font-bold text-gray-900 mb-4">Todo lo que Necesitas</h2>
-                <p class="text-xl text-gray-600">Herramientas profesionales para gestionar tu barbería</p>
-            </div>
-
-            <div class="grid md:grid-cols-3 gap-8">
-                <div class="bg-white rounded-xl shadow-lg p-8 hover:shadow-xl transition">
-                    <div class="w-14 h-14 bg-gradient-to-br from-indigo-500 to-purple-500 rounded-xl flex items-center justify-center text-white text-2xl mb-6">
-                        📱
-                    </div>
-                    <h3 class="text-xl font-bold text-gray-900 mb-3">Reservas Online 24/7</h3>
-                    <p class="text-gray-600">
-                        Tus clientes pueden agendar citas desde cualquier lugar, cualquier hora. 
-                        Página personalizada para tu barbería.
-                    </p>
-                </div>
-
-                <div class="bg-white rounded-xl shadow-lg p-8 hover:shadow-xl transition">
-                    <div class="w-14 h-14 bg-gradient-to-br from-green-500 to-emerald-500 rounded-xl flex items-center justify-center text-white text-2xl mb-6">
-                        📊
-                    </div>
-                    <h3 class="text-xl font-bold text-gray-900 mb-3">Dashboard Completo</h3>
-                    <p class="text-gray-600">
-                        Visualiza tus estadísticas, ingresos y citas en tiempo real. 
-                        Reportes detallados para tomar mejores decisiones.
-                    </p>
-                </div>
-
-                <div class="bg-white rounded-xl shadow-lg p-8 hover:shadow-xl transition">
-                    <div class="w-14 h-14 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-xl flex items-center justify-center text-white text-2xl mb-6">
-                        👥
-                    </div>
-                    <h3 class="text-xl font-bold text-gray-900 mb-3">Gestión de Clientes</h3>
-                    <p class="text-gray-600">
-                        Base de datos completa de clientes con historial de servicios, 
-                        preferencias y recordatorios automáticos.
-                    </p>
-                </div>
-
-                <div class="bg-white rounded-xl shadow-lg p-8 hover:shadow-xl transition">
-                    <div class="w-14 h-14 bg-gradient-to-br from-purple-500 to-pink-500 rounded-xl flex items-center justify-center text-white text-2xl mb-6">
-                        ✂️
-                    </div>
-                    <h3 class="text-xl font-bold text-gray-900 mb-3">Gestión de Barberos</h3>
-                    <p class="text-gray-600">
-                        Administra horarios, comisiones y rendimiento de tu equipo. 
-                        Cada barbero con su propio portal.
-                    </p>
-                </div>
-
-                <div class="bg-white rounded-xl shadow-lg p-8 hover:shadow-xl transition">
-                    <div class="w-14 h-14 bg-gradient-to-br from-yellow-500 to-orange-500 rounded-xl flex items-center justify-center text-white text-2xl mb-6">
-                        💳
-                    </div>
-                    <h3 class="text-xl font-bold text-gray-900 mb-3">Control Financiero</h3>
-                    <p class="text-gray-600">
-                        Registra ingresos, gastos y comisiones. Reportes fiscales 
-                        y análisis de rentabilidad por servicio.
-                    </p>
-                </div>
-
-                <div class="bg-white rounded-xl shadow-lg p-8 hover:shadow-xl transition">
-                    <div class="w-14 h-14 bg-gradient-to-br from-red-500 to-rose-500 rounded-xl flex items-center justify-center text-white text-2xl mb-6">
-                        🔔
-                    </div>
-                    <h3 class="text-xl font-bold text-gray-900 mb-3">Notificaciones SMS</h3>
-                    <p class="text-gray-600">
-                        Recordatorios automáticos a clientes vía WhatsApp y SMS. 
-                        Reduce las ausencias hasta en 80%.
-                    </p>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Pricing Section -->
-    <section id="pricing" class="py-20 bg-white">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="text-center mb-16">
-                <h2 class="text-4xl font-bold text-gray-900 mb-4">Planes Transparentes</h2>
-                <p class="text-xl text-gray-600">Sin costos ocultos. Cancela cuando quieras.</p>
-            </div>
-
-            <div class="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
-                <!-- Plan Básico -->
-                <div class="bg-white border-2 border-gray-200 rounded-2xl p-8 hover:border-indigo-600 transition">
-                    <h3 class="text-2xl font-bold text-gray-900 mb-2">Básico</h3>
-                    <p class="text-gray-600 mb-6">Ideal para empezar</p>
-                    <div class="mb-6">
-                        <span class="text-5xl font-bold text-gray-900">RD$1,500</span>
-                        <span class="text-gray-600">/mes</span>
-                    </div>
-                    <ul class="space-y-3 mb-8">
-                        <li class="flex items-start">
-                            <svg class="w-5 h-5 text-green-500 mr-2 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
-                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
-                            </svg>
-                            <span class="text-gray-700">Hasta 100 citas/mes</span>
-                        </li>
-                        <li class="flex items-start">
-                            <svg class="w-5 h-5 text-green-500 mr-2 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
-                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
-                            </svg>
-                            <span class="text-gray-700">2 barberos</span>
-                        </li>
-                        <li class="flex items-start">
-                            <svg class="w-5 h-5 text-green-500 mr-2 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
-                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
-                            </svg>
-                            <span class="text-gray-700">Página de reservas</span>
-                        </li>
-                        <li class="flex items-start">
-                            <svg class="w-5 h-5 text-green-500 mr-2 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
-                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
-                            </svg>
-                            <span class="text-gray-700">Soporte por email</span>
-                        </li>
-                    </ul>
-                    <a href="auth/login.php" class="block w-full px-6 py-3 bg-gray-900 text-white rounded-lg text-center font-semibold hover:bg-gray-800 transition">
-                        Comenzar
-                    </a>
-                </div>
-
-                <!-- Plan Profesional (Popular) -->
-                <div class="bg-gradient-to-br from-indigo-600 to-purple-600 rounded-2xl p-8 transform scale-105 shadow-2xl">
-                    <div class="absolute top-0 right-6 -mt-4">
-                        <span class="bg-yellow-400 text-gray-900 px-4 py-1 rounded-full text-sm font-bold">Popular</span>
-                    </div>
-                    <h3 class="text-2xl font-bold text-white mb-2">Profesional</h3>
-                    <p class="text-indigo-100 mb-6">Más vendido</p>
-                    <div class="mb-6">
-                        <span class="text-5xl font-bold text-white">RD$3,000</span>
-                        <span class="text-indigo-100">/mes</span>
-                    </div>
-                    <ul class="space-y-3 mb-8">
-                        <li class="flex items-start">
-                            <svg class="w-5 h-5 text-yellow-400 mr-2 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
-                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
-                            </svg>
-                            <span class="text-white font-medium">Citas ilimitadas</span>
-                        </li>
-                        <li class="flex items-start">
-                            <svg class="w-5 h-5 text-yellow-400 mr-2 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
-                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
-                            </svg>
-                            <span class="text-white font-medium">Hasta 5 barberos</span>
-                        </li>
-                        <li class="flex items-start">
-                            <svg class="w-5 h-5 text-yellow-400 mr-2 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
-                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
-                            </svg>
-                            <span class="text-white font-medium">Notificaciones SMS</span>
-                        </li>
-                        <li class="flex items-start">
-                            <svg class="w-5 h-5 text-yellow-400 mr-2 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
-                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
-                            </svg>
-                            <span class="text-white font-medium">Reportes avanzados</span>
-                        </li>
-                        <li class="flex items-start">
-                            <svg class="w-5 h-5 text-yellow-400 mr-2 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
-                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
-                            </svg>
-                            <span class="text-white font-medium">Soporte prioritario</span>
-                        </li>
-                    </ul>
-                    <a href="auth/login.php" class="block w-full px-6 py-3 bg-white text-indigo-600 rounded-lg text-center font-semibold hover:bg-gray-50 transition">
-                        Comenzar Prueba
-                    </a>
-                </div>
-
-                <!-- Plan Empresarial -->
-                <div class="bg-white border-2 border-gray-200 rounded-2xl p-8 hover:border-indigo-600 transition">
-                    <h3 class="text-2xl font-bold text-gray-900 mb-2">Empresarial</h3>
-                    <p class="text-gray-600 mb-6">Múltiples sucursales</p>
-                    <div class="mb-6">
-                        <span class="text-5xl font-bold text-gray-900">RD$5,000</span>
-                        <span class="text-gray-600">/mes</span>
-                    </div>
-                    <ul class="space-y-3 mb-8">
-                        <li class="flex items-start">
-                            <svg class="w-5 h-5 text-green-500 mr-2 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
-                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
-                            </svg>
-                            <span class="text-gray-700"><strong>Todo Profesional</strong> +</span>
-                        </li>
-                        <li class="flex items-start">
-                            <svg class="w-5 h-5 text-green-500 mr-2 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
-                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
-                            </svg>
-                            <span class="text-gray-700">Barberos ilimitados</span>
-                        </li>
-                        <li class="flex items-start">
-                            <svg class="w-5 h-5 text-green-500 mr-2 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
-                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
-                            </svg>
-                            <span class="text-gray-700">Múltiples sucursales</span>
-                        </li>
-                        <li class="flex items-start">
-                            <svg class="w-5 h-5 text-green-500 mr-2 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
-                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
-                            </svg>
-                            <span class="text-gray-700">API personalizada</span>
-                        </li>
-                        <li class="flex items-start">
-                            <svg class="w-5 h-5 text-green-500 mr-2 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
-                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
-                            </svg>
-                            <span class="text-gray-700">Gerente de cuenta</span>
-                        </li>
-                    </ul>
-                    <a href="auth/login.php" class="block w-full px-6 py-3 bg-gray-900 text-white rounded-lg text-center font-semibold hover:bg-gray-800 transition">
-                        Contactar Ventas
-                    </a>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Demo Section -->
-    <section id="demo" class="py-20 bg-gradient-to-br from-indigo-900 to-purple-900">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="text-center mb-12">
-                <h2 class="text-4xl font-bold text-white mb-4">Prueba el Sistema Ahora</h2>
-                <p class="text-xl text-indigo-200">Accede con las credenciales de demostración</p>
-            </div>
-
-            <div class="grid md:grid-cols-2 gap-8 max-w-3xl mx-auto">
-                <div class="bg-white/10 backdrop-blur-lg rounded-xl p-8 border border-white/20 transform hover:scale-105 transition duration-300">
-                    <div class="text-center mb-4">
-                        <div class="w-20 h-20 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center text-white text-3xl mx-auto mb-4 shadow-lg">
-                            🏪
-                        </div>
-                        <h3 class="text-2xl font-bold text-white mb-2">Dueño de Barbería</h3>
-                        <p class="text-indigo-200 text-sm">Panel completo de gestión</p>
-                    </div>
-                    <div class="space-y-3 text-sm bg-white/5 rounded-lg p-4 mb-4">
-                        <p class="text-indigo-100"><strong class="text-white">Email:</strong></p>
-                        <p class="font-mono text-white bg-black/20 px-3 py-2 rounded">demo@barberia.com</p>
-                        <p class="text-indigo-100"><strong class="text-white">Password:</strong></p>
-                        <p class="font-mono text-white bg-black/20 px-3 py-2 rounded">password123</p>
-                    </div>
-                    <a href="auth/login.php" class="mt-4 block w-full px-6 py-3 bg-white text-indigo-600 rounded-lg text-center font-bold hover:bg-gray-100 transition shadow-lg">
-                        Acceder como Owner
-                    </a>
-                </div>
-
-                <div class="bg-white/10 backdrop-blur-lg rounded-xl p-8 border border-white/20 transform hover:scale-105 transition duration-300">
-                    <div class="text-center mb-4">
-                        <div class="w-20 h-20 bg-gradient-to-br from-green-500 to-emerald-600 rounded-full flex items-center justify-center text-white text-3xl mx-auto mb-4 shadow-lg">
-                            ✂️
-                        </div>
-                        <h3 class="text-2xl font-bold text-white mb-2">Barbero</h3>
-                        <p class="text-indigo-200 text-sm">Panel de barbero individual</p>
-                    </div>
-                    <div class="space-y-3 text-sm bg-white/5 rounded-lg p-4 mb-4">
-                        <p class="text-indigo-100"><strong class="text-white">Email:</strong></p>
-                        <p class="font-mono text-white bg-black/20 px-3 py-2 rounded">barbero@demo.com</p>
-                        <p class="text-indigo-100"><strong class="text-white">Password:</strong></p>
-                        <p class="font-mono text-white bg-black/20 px-3 py-2 rounded">password123</p>
-                    </div>
-                    <a href="auth/login.php" class="mt-4 block w-full px-6 py-3 bg-white text-indigo-600 rounded-lg text-center font-bold hover:bg-gray-100 transition shadow-lg">
-                        Acceder como Barbero
-                    </a>
-                </div>
-            </div>
-
-            <div class="mt-12 text-center">
-                <a href="public/booking.php?shop=estilo-rd" class="inline-flex items-center px-8 py-4 bg-white text-indigo-600 rounded-xl font-semibold text-lg hover:bg-gray-100 transition shadow-xl">
-                    🌐 Ver Página Pública de Reservas
-                    <svg class="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
-                    </svg>
-                </a>
-            </div>
-        </div>
-    </section>
-
-    <!-- CTA Section -->
-    <section class="py-20 bg-white">
-        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-            <h2 class="text-4xl font-bold text-gray-900 mb-4">
-                ¿Listo para Modernizar tu Barbería?
-            </h2>
-            <p class="text-xl text-gray-600 mb-8">
-                Únete a cientos de barberías que ya están creciendo con Kyros Barber Cloud
+        <!-- Headline -->
+        <div class="fade-up" style="text-align:center;max-width:800px;margin:0 auto 28px;">
+            <h1 style="font-size:clamp(2.5rem,6vw,4.5rem);font-weight:900;line-height:1.04;letter-spacing:-.04em;margin:0 0 20px;">
+                Gestiona tu Barbería
+                <span style="background:linear-gradient(135deg,#c9901a 0%,#e8b84b 60%,#c9901a 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;display:block;">Como un Profesional</span>
+            </h1>
+            <p style="font-size:clamp(1rem,2.5vw,1.1875rem);color:#9ca3af;line-height:1.7;margin:0 auto;max-width:560px;">
+                Sistema completo de gestión de citas, clientes y finanzas para barberías en República Dominicana. 100% en la nube y con reservas online.
             </p>
-            <a href="auth/login.php" class="inline-block px-12 py-4 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl font-semibold text-lg hover:from-indigo-700 hover:to-purple-700 transition shadow-xl">
-                🚀 Comenzar Gratis por 30 Días
-            </a>
-            <p class="mt-4 text-sm text-gray-500">No requiere tarjeta de crédito • Cancela cuando quieras</p>
         </div>
-    </section>
 
-    <!-- Footer -->
-    <footer class="bg-gray-900 text-white py-12">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="grid md:grid-cols-4 gap-8">
-                <div>
-                    <h3 class="text-2xl font-bold gradient-text mb-4">💈 Kyros Barber Cloud</h3>
-                    <p class="text-gray-400">
-                        Sistema profesional de gestión para barberías en República Dominicana.
-                    </p>
+        <!-- CTA row -->
+        <div class="fade-up2" style="display:flex;flex-wrap:wrap;gap:12px;justify-content:center;margin-bottom:16px;">
+            <a href="<?php echo BASE_URL; ?>/auth/login" class="btn-gold" style="padding:15px 32px;border-radius:14px;font-family:'Sora',sans-serif;font-size:1rem;">
+                <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                Probar Gratis 30 Días
+            </a>
+            <a href="#demo" class="btn-outline" style="padding:15px 28px;border-radius:14px;font-size:1rem;color:#fff;border-color:rgba(255,255,255,.2);"
+               onmouseover="this.style.background='rgba(255,255,255,.07)';this.style.borderColor='rgba(255,255,255,.4)'"
+               onmouseout="this.style.background='transparent';this.style.borderColor='rgba(255,255,255,.2)'">
+                <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/><path stroke-linecap="round" stroke-linejoin="round" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                Ver Demo
+            </a>
+        </div>
+
+        <!-- Trust badges -->
+        <div class="fade-up3" style="display:flex;flex-wrap:wrap;gap:20px;justify-content:center;margin-bottom:48px;">
+            <?php $badges = [['Sin contratos','M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z'],['Cancela cuando quieras','M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z'],['Soporte en español','M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z']]; foreach($badges as $b): ?>
+            <div style="display:flex;align-items:center;gap:6px;font-size:.8125rem;color:#6b7280;">
+                <svg width="15" height="15" fill="#22c55e" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+                <?php echo $b[0]; ?>
+            </div>
+            <?php endforeach; ?>
+        </div>
+
+        <!-- Mock Dashboard Preview -->
+        <div style="max-width:960px;margin:0 auto;position:relative;">
+            <div style="position:absolute;inset:-20px;background:radial-gradient(ellipse,rgba(201,144,26,.12) 0%,transparent 70%);pointer-events:none;"></div>
+            <div style="position:relative;background:#111;border-radius:20px 20px 0 0;border:1px solid rgba(255,255,255,.08);border-bottom:none;overflow:hidden;box-shadow:0 -8px 80px rgba(0,0,0,.6);">
+
+                <!-- Browser chrome -->
+                <div style="background:#1a1a1a;padding:12px 16px;border-bottom:1px solid rgba(255,255,255,.06);display:flex;align-items:center;gap:12px;">
+                    <div style="display:flex;gap:6px;">
+                        <div style="width:12px;height:12px;border-radius:50%;background:#ff5f57;"></div>
+                        <div style="width:12px;height:12px;border-radius:50%;background:#febc2e;"></div>
+                        <div style="width:12px;height:12px;border-radius:50%;background:#28c840;"></div>
+                    </div>
+                    <div style="flex:1;background:rgba(255,255,255,.06);border-radius:6px;padding:5px 12px;font-size:.6875rem;color:#6b7280;font-family:monospace;">
+                        kyros.app/dashboard
+                    </div>
                 </div>
-                <div>
-                    <h4 class="font-semibold mb-4">Producto</h4>
-                    <ul class="space-y-2 text-gray-400">
-                        <li><a href="#features" class="hover:text-white transition">Características</a></li>
-                        <li><a href="#pricing" class="hover:text-white transition">Precios</a></li>
-                        <li><a href="#demo" class="hover:text-white transition">Demo</a></li>
-                    </ul>
-                </div>
-                <div>
-                    <h4 class="font-semibold mb-4">Soporte</h4>
-                    <ul class="space-y-2 text-gray-400">
-                        <li><a href="#" class="hover:text-white transition">Documentación</a></li>
-                        <li><a href="#" class="hover:text-white transition">Tutoriales</a></li>
-                        <li><a href="#" class="hover:text-white transition">Contacto</a></li>
-                    </ul>
-                </div>
-                <div>
-                    <h4 class="font-semibold mb-4">Legal</h4>
-                    <ul class="space-y-2 text-gray-400">
-                        <li><a href="#" class="hover:text-white transition">Términos</a></li>
-                        <li><a href="#" class="hover:text-white transition">Privacidad</a></li>
-                    </ul>
+
+                <!-- Dashboard UI -->
+                <div style="padding:24px;display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:12px;font-family:'Inter',sans-serif;">
+                    <!-- Stat cards -->
+                    <?php $stats_mock = [['Citas Hoy','24','#e8b84b','M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z'],['Ingresos','RD$8,450','#22c55e','M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z'],['Clientes','156','#818cf8','M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z'],['Rating','4.9★','#f472b6','M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z']]; foreach($stats_mock as $s): ?>
+                    <div style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);border-radius:12px;padding:14px;">
+                        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+                            <svg width="16" height="16" fill="none" stroke="<?php echo $s[2]; ?>" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="<?php echo $s[3]; ?>"/></svg>
+                            <span style="font-size:.6875rem;color:#4b5563;"><?php echo $s[0]; ?></span>
+                        </div>
+                        <p style="font-family:'Sora',sans-serif;font-size:1.375rem;font-weight:800;color:#fff;margin:0;"><?php echo $s[1]; ?></p>
+                    </div>
+                    <?php endforeach; ?>
+
+                    <!-- Chart area -->
+                    <div style="grid-column:1/-1;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);border-radius:12px;padding:16px;">
+                        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+                            <span style="font-size:.8125rem;font-weight:600;color:#9ca3af;">Ingresos esta semana</span>
+                            <span style="font-size:.6875rem;color:#4b5563;background:rgba(255,255,255,.05);padding:3px 8px;border-radius:6px;">Últimos 7 días</span>
+                        </div>
+                        <div style="display:flex;align-items:flex-end;gap:8px;height:60px;">
+                            <?php $bars = [40,65,45,80,55,90,70]; foreach($bars as $h): ?>
+                            <div style="flex:1;height:<?php echo $h; ?>%;border-radius:4px 4px 0 0;background:linear-gradient(to top,#c9901a,#e8b84b);opacity:.8;"></div>
+                            <?php endforeach; ?>
+                        </div>
+                        <div style="display:flex;justify-content:space-between;margin-top:6px;">
+                            <?php foreach(['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'] as $d): ?>
+                            <span style="font-size:.5rem;color:#4b5563;flex:1;text-align:center;"><?php echo $d; ?></span>
+                            <?php endforeach; ?>
+                        </div>
+                    </div>
                 </div>
             </div>
-            <div class="border-t border-gray-800 mt-8 pt-8 text-center text-gray-400">
-                <p>&copy; 2026 Kyros Barber Cloud. Todos los derechos reservados. Made with ❤️ in República Dominicana</p>
+        </div>
+    </div>
+</section>
+
+<!-- ═══════════════════════════════════════════
+     STATS TICKER
+══════════════════════════════════════════════ -->
+<section style="background:#fff;border-bottom:1px solid #f0f0ec;padding:20px 0;overflow:hidden;">
+    <div class="ticker-wrap">
+        <div class="ticker-inner">
+            <?php $items = ['500+ Barberías Activas','50K+ Citas Mensuales','99.9% Uptime garantizado','4.8 Satisfacción promedio','República Dominicana #1','Soporte 24/7 en español']; for($r=0;$r<4;$r++): foreach($items as $it): ?>
+            <div style="display:inline-flex;align-items:center;gap:12px;padding:0 32px;white-space:nowrap;">
+                <span style="width:6px;height:6px;border-radius:50%;background:linear-gradient(135deg,#c9901a,#e8b84b);display:block;flex-shrink:0;"></span>
+                <span style="font-size:.875rem;font-weight:500;color:#52525b;"><?php echo $it; ?></span>
             </div>
-        </footer>
-    </footer>
+            <?php endforeach; endfor; ?>
+        </div>
+    </div>
+</section>
+
+<!-- ═══════════════════════════════════════════
+     FEATURES
+══════════════════════════════════════════════ -->
+<section id="features" style="background:#fafaf8;padding:96px 24px;">
+    <div style="max-width:1200px;margin:0 auto;">
+        <div style="text-align:center;margin-bottom:64px;">
+            <span style="display:inline-block;padding:5px 14px;background:#fef9ee;border:1px solid #f0d88a;border-radius:999px;font-size:.6875rem;font-weight:700;letter-spacing:.1em;color:#a16207;text-transform:uppercase;margin-bottom:14px;">Características</span>
+            <h2 style="font-size:clamp(2rem,5vw,3rem);font-weight:900;color:#0a0a0a;letter-spacing:-.03em;margin:0 0 14px;">Todo lo que Necesitas</h2>
+            <p style="font-size:1.0625rem;color:#71717a;max-width:480px;margin:0 auto;line-height:1.65;">Herramientas profesionales diseñadas para barberías dominicanas</p>
+        </div>
+
+        <div class="feat-grid" style="display:grid;grid-template-columns:1fr;gap:16px;">
+            <?php
+            $features = [
+                ['Reservas Online 24/7','Tus clientes agendan citas desde cualquier lugar, a cualquier hora. Página personalizada para tu barbería con URL propia.','M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z','#c9901a','#fef9ee'],
+                ['Dashboard Completo','Visualiza estadísticas, ingresos y citas en tiempo real. Reportes detallados para tomar mejores decisiones de negocio.','M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z','#818cf8','#f0f9ff'],
+                ['Gestión de Clientes','Base de datos completa con historial de servicios, preferencias y recordatorios automáticos vía WhatsApp.','M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z','#22c55e','#f0fdf4'],
+                ['Gestión de Barberos','Administra horarios, comisiones y rendimiento de tu equipo. Cada barbero con su propio perfil público y portal.','M14.121 14.121L19 19m-7-7l7-7m-7 7l-2.879 2.879M12 12L9.121 9.121m0 5.758a3 3 0 10-4.243 4.243 3 3 0 004.243-4.243zm0-5.758a3 3 0 10-4.243-4.243 3 3 0 004.243 4.243z','#0a0a0a','#f5f5f0'],
+                ['Control Financiero','Registra ingresos, gastos y comisiones. Reportes fiscales y análisis de rentabilidad por servicio o barbero.','M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z','#e8b84b','#fffbeb'],
+                ['WhatsApp Integrado','Recordatorios automáticos a clientes vía WhatsApp. Reduce ausencias hasta 80% y mantiene la comunicación fluida.','M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z','#22c55e','#f0fdf4'],
+            ];
+            foreach($features as $f): ?>
+            <div class="card" style="background:#fff;border:1.5px solid #ebebeb;border-radius:20px;padding:28px;display:flex;flex-direction:column;gap:16px;">
+                <div class="feat-icon" style="background:<?php echo $f[4]; ?>;">
+                    <svg width="24" height="24" fill="none" stroke="<?php echo $f[3]; ?>" stroke-width="1.75" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="<?php echo $f[2]; ?>"/>
+                    </svg>
+                </div>
+                <div>
+                    <h3 style="font-family:'Sora',sans-serif;font-size:1.0625rem;font-weight:700;color:#0a0a0a;margin:0 0 6px;"><?php echo $f[0]; ?></h3>
+                    <p style="font-size:.875rem;color:#71717a;line-height:1.6;margin:0;"><?php echo $f[1]; ?></p>
+                </div>
+            </div>
+            <?php endforeach; ?>
+        </div>
+    </div>
+</section>
+
+<!-- ═══════════════════════════════════════════
+     HOW IT WORKS
+══════════════════════════════════════════════ -->
+<section style="background:#fff;padding:96px 24px;">
+    <div style="max-width:1000px;margin:0 auto;">
+        <div style="text-align:center;margin-bottom:64px;">
+            <span style="display:inline-block;padding:5px 14px;background:#fef9ee;border:1px solid #f0d88a;border-radius:999px;font-size:.6875rem;font-weight:700;letter-spacing:.1em;color:#a16207;text-transform:uppercase;margin-bottom:14px;">Proceso</span>
+            <h2 style="font-size:clamp(2rem,5vw,3rem);font-weight:900;color:#0a0a0a;letter-spacing:-.03em;margin:0 0 14px;">En funcionamiento en 15 minutos</h2>
+            <p style="font-size:1.0625rem;color:#71717a;margin:0 auto;max-width:440px;line-height:1.65;">Sin conocimientos técnicos. Sin instalaciones. Listo para usar desde el primer día.</p>
+        </div>
+
+        <div class="steps-grid" style="display:grid;grid-template-columns:1fr;gap:24px;">
+            <?php $steps = [['Crea tu cuenta','Regístrate gratis con tu email. Configura el nombre, servicios y horarios de tu barbería en minutos.'],['Personaliza tu página','Tu barbería tendrá una URL única (kyros.app/tu-barberia). Agrega tus barberos, fotos y precios.'],['Empieza a recibir citas','Comparte tu link en WhatsApp e Instagram. Tus clientes agendan solos y tú gestionas todo desde el dashboard.']]; foreach($steps as $i => $s): ?>
+            <div style="display:flex;gap:20px;align-items:flex-start;">
+                <div style="flex-shrink:0;width:44px;height:44px;border-radius:12px;background:<?php echo $i===1?'linear-gradient(135deg,#c9901a,#e8b84b)':'#0a0a0a'; ?>;display:flex;align-items:center;justify-content:center;font-family:'Sora',sans-serif;font-weight:900;font-size:1rem;color:<?php echo $i===1?'#0a0a0a':'#e8b84b'; ?>;">
+                    0<?php echo $i+1; ?>
+                </div>
+                <div style="padding-top:8px;">
+                    <h3 style="font-family:'Sora',sans-serif;font-size:1.125rem;font-weight:700;color:#0a0a0a;margin:0 0 6px;"><?php echo $s[0]; ?></h3>
+                    <p style="font-size:.875rem;color:#71717a;line-height:1.65;margin:0;"><?php echo $s[1]; ?></p>
+                </div>
+            </div>
+            <?php endforeach; ?>
+        </div>
+    </div>
+</section>
+
+<!-- ═══════════════════════════════════════════
+     PRICING
+══════════════════════════════════════════════ -->
+<section id="pricing" style="background:#fafaf8;padding:96px 24px;">
+    <div style="max-width:1100px;margin:0 auto;">
+        <div style="text-align:center;margin-bottom:64px;">
+            <span style="display:inline-block;padding:5px 14px;background:#fef9ee;border:1px solid #f0d88a;border-radius:999px;font-size:.6875rem;font-weight:700;letter-spacing:.1em;color:#a16207;text-transform:uppercase;margin-bottom:14px;">Precios</span>
+            <h2 style="font-size:clamp(2rem,5vw,3rem);font-weight:900;color:#0a0a0a;letter-spacing:-.03em;margin:0 0 12px;">Planes Transparentes</h2>
+            <p style="font-size:1.0625rem;color:#71717a;margin:0;">Sin costos ocultos. Cancela cuando quieras.</p>
+        </div>
+
+        <div class="price-grid" style="display:grid;grid-template-columns:1fr;gap:16px;align-items:start;">
+
+            <!-- Básico -->
+            <div class="card" style="background:#fff;border:1.5px solid #ebebeb;border-radius:24px;padding:32px;">
+                <h3 style="font-family:'Sora',sans-serif;font-size:1.25rem;font-weight:800;color:#0a0a0a;margin:0 0 4px;">Básico</h3>
+                <p style="font-size:.875rem;color:#71717a;margin:0 0 20px;">Ideal para empezar</p>
+                <div style="margin-bottom:24px;">
+                    <span style="font-family:'Sora',sans-serif;font-size:2.5rem;font-weight:900;color:#0a0a0a;">RD$1,500</span>
+                    <span style="color:#71717a;font-size:.875rem;">/mes</span>
+                </div>
+                <ul style="list-style:none;padding:0;margin:0 0 28px;display:flex;flex-direction:column;gap:10px;">
+                    <?php foreach(['Hasta 100 citas/mes','2 barberos','Página de reservas online','Soporte por email'] as $li): ?>
+                    <li style="display:flex;align-items:center;gap:8px;font-size:.875rem;color:#52525b;">
+                        <svg width="16" height="16" fill="#22c55e" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+                        <?php echo $li; ?>
+                    </li>
+                    <?php endforeach; ?>
+                </ul>
+                <a href="<?php echo BASE_URL; ?>/auth/login" class="btn-dark" style="width:100%;padding:13px;border-radius:12px;font-size:.9375rem;">Comenzar</a>
+            </div>
+
+            <!-- Profesional -->
+            <div style="background:#0a0a0a;border:1.5px solid #0a0a0a;border-radius:24px;padding:32px;position:relative;overflow:hidden;box-shadow:0 24px 64px rgba(0,0,0,.2);">
+                <div style="position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,#c9901a,#e8b84b,#c9901a);"></div>
+                <div style="position:absolute;top:16px;right:16px;padding:4px 12px;background:linear-gradient(135deg,#c9901a,#e8b84b);border-radius:999px;font-size:.6875rem;font-weight:700;color:#0a0a0a;">MÁS POPULAR</div>
+                <h3 style="font-family:'Sora',sans-serif;font-size:1.25rem;font-weight:800;color:#fff;margin:0 0 4px;">Profesional</h3>
+                <p style="font-size:.875rem;color:#71717a;margin:0 0 20px;">El más vendido</p>
+                <div style="margin-bottom:24px;">
+                    <span style="font-family:'Sora',sans-serif;font-size:2.5rem;font-weight:900;color:#fff;">RD$3,000</span>
+                    <span style="color:#71717a;font-size:.875rem;">/mes</span>
+                </div>
+                <ul style="list-style:none;padding:0;margin:0 0 28px;display:flex;flex-direction:column;gap:10px;">
+                    <?php foreach(['Citas ilimitadas','Hasta 5 barberos','Notificaciones WhatsApp/SMS','Reportes avanzados','Soporte prioritario'] as $li): ?>
+                    <li style="display:flex;align-items:center;gap:8px;font-size:.875rem;color:#d4d4d4;">
+                        <svg width="16" height="16" fill="#e8b84b" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+                        <?php echo $li; ?>
+                    </li>
+                    <?php endforeach; ?>
+                </ul>
+                <a href="<?php echo BASE_URL; ?>/auth/login" class="btn-gold" style="width:100%;padding:13px;border-radius:12px;font-size:.9375rem;">Comenzar Prueba Gratis</a>
+            </div>
+
+            <!-- Empresarial -->
+            <div class="card" style="background:#fff;border:1.5px solid #ebebeb;border-radius:24px;padding:32px;">
+                <h3 style="font-family:'Sora',sans-serif;font-size:1.25rem;font-weight:800;color:#0a0a0a;margin:0 0 4px;">Empresarial</h3>
+                <p style="font-size:.875rem;color:#71717a;margin:0 0 20px;">Múltiples sucursales</p>
+                <div style="margin-bottom:24px;">
+                    <span style="font-family:'Sora',sans-serif;font-size:2.5rem;font-weight:900;color:#0a0a0a;">RD$5,000</span>
+                    <span style="color:#71717a;font-size:.875rem;">/mes</span>
+                </div>
+                <ul style="list-style:none;padding:0;margin:0 0 28px;display:flex;flex-direction:column;gap:10px;">
+                    <?php foreach(['Todo del plan Profesional','Barberos ilimitados','Múltiples sucursales','API personalizada','Gerente de cuenta dedicado'] as $li): ?>
+                    <li style="display:flex;align-items:center;gap:8px;font-size:.875rem;color:#52525b;">
+                        <svg width="16" height="16" fill="#22c55e" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+                        <?php echo $li; ?>
+                    </li>
+                    <?php endforeach; ?>
+                </ul>
+                <a href="<?php echo BASE_URL; ?>/auth/login" class="btn-dark" style="width:100%;padding:13px;border-radius:12px;font-size:.9375rem;">Contactar Ventas</a>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ═══════════════════════════════════════════
+     DEMO
+══════════════════════════════════════════════ -->
+<section id="demo" style="background:#0a0a0a;padding:96px 24px;">
+    <div style="max-width:1000px;margin:0 auto;">
+        <div style="text-align:center;margin-bottom:56px;">
+            <span style="display:inline-block;padding:5px 14px;background:rgba(201,144,26,.12);border:1px solid rgba(201,144,26,.3);border-radius:999px;font-size:.6875rem;font-weight:700;letter-spacing:.1em;color:#e8b84b;text-transform:uppercase;margin-bottom:14px;">Demo en Vivo</span>
+            <h2 style="font-size:clamp(2rem,5vw,3rem);font-weight:900;color:#fff;letter-spacing:-.03em;margin:0 0 14px;">Prueba el Sistema Ahora</h2>
+            <p style="font-size:1.0625rem;color:#71717a;margin:0;">Accede con las credenciales de demostración. Sin necesidad de registro.</p>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr;gap:16px;margin-bottom:32px;" id="demo-grid">
+            <!-- Owner -->
+            <div class="card" style="background:rgba(255,255,255,.04);border:1.5px solid rgba(255,255,255,.08);border-radius:20px;padding:28px;">
+                <div style="display:flex;align-items:center;gap:14px;margin-bottom:20px;">
+                    <div style="width:48px;height:48px;border-radius:14px;background:linear-gradient(135deg,#4f46e5,#7c3aed);display:flex;align-items:center;justify-content:center;">
+                        <svg width="22" height="22" fill="none" stroke="white" stroke-width="1.75" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+                    </div>
+                    <div>
+                        <h3 style="font-family:'Sora',sans-serif;font-size:1.0625rem;font-weight:700;color:#fff;margin:0;">Dueño de Barbería</h3>
+                        <p style="font-size:.8125rem;color:#71717a;margin:3px 0 0;">Panel completo de gestión</p>
+                    </div>
+                </div>
+                <div style="background:rgba(0,0,0,.3);border-radius:10px;padding:14px;margin-bottom:18px;font-size:.8125rem;">
+                    <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
+                        <span style="color:#71717a;">Email</span>
+                        <span style="font-family:monospace;color:#e8b84b;">demo@barberia.com</span>
+                    </div>
+                    <div style="height:1px;background:rgba(255,255,255,.05);margin-bottom:8px;"></div>
+                    <div style="display:flex;justify-content:space-between;">
+                        <span style="color:#71717a;">Password</span>
+                        <span style="font-family:monospace;color:#e8b84b;">password123</span>
+                    </div>
+                </div>
+                <a href="<?php echo BASE_URL; ?>/auth/login" class="btn-gold" style="width:100%;padding:12px;border-radius:12px;font-size:.875rem;">Acceder como Owner</a>
+            </div>
+
+            <!-- Barber -->
+            <div class="card" style="background:rgba(255,255,255,.04);border:1.5px solid rgba(255,255,255,.08);border-radius:20px;padding:28px;">
+                <div style="display:flex;align-items:center;gap:14px;margin-bottom:20px;">
+                    <div style="width:48px;height:48px;border-radius:14px;background:linear-gradient(135deg,#059669,#10b981);display:flex;align-items:center;justify-content:center;">
+                        <svg width="22" height="22" fill="none" stroke="white" stroke-width="1.75" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M14.121 14.121L19 19m-7-7l7-7m-7 7l-2.879 2.879M12 12L9.121 9.121m0 5.758a3 3 0 10-4.243 4.243 3 3 0 004.243-4.243zm0-5.758a3 3 0 10-4.243-4.243 3 3 0 004.243 4.243z"/></svg>
+                    </div>
+                    <div>
+                        <h3 style="font-family:'Sora',sans-serif;font-size:1.0625rem;font-weight:700;color:#fff;margin:0;">Barbero</h3>
+                        <p style="font-size:.8125rem;color:#71717a;margin:3px 0 0;">Panel de barbero individual</p>
+                    </div>
+                </div>
+                <div style="background:rgba(0,0,0,.3);border-radius:10px;padding:14px;margin-bottom:18px;font-size:.8125rem;">
+                    <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
+                        <span style="color:#71717a;">Email</span>
+                        <span style="font-family:monospace;color:#e8b84b;">barbero@demo.com</span>
+                    </div>
+                    <div style="height:1px;background:rgba(255,255,255,.05);margin-bottom:8px;"></div>
+                    <div style="display:flex;justify-content:space-between;">
+                        <span style="color:#71717a;">Password</span>
+                        <span style="font-family:monospace;color:#e8b84b;">password123</span>
+                    </div>
+                </div>
+                <a href="<?php echo BASE_URL; ?>/auth/login" class="btn-dark" style="width:100%;padding:12px;border-radius:12px;font-size:.875rem;background:#1f1f1f;border:1px solid rgba(255,255,255,.1);">Acceder como Barbero</a>
+            </div>
+        </div>
+
+        <div style="text-align:center;">
+            <a href="<?php echo BASE_URL; ?>/public/estilo-rd"
+               style="display:inline-flex;align-items:center;gap:8px;padding:14px 28px;background:rgba(255,255,255,.06);border:1.5px solid rgba(255,255,255,.12);color:#fff;border-radius:14px;font-weight:600;font-size:.9375rem;text-decoration:none;transition:background .18s;"
+               onmouseover="this.style.background='rgba(255,255,255,.1)'" onmouseout="this.style.background='rgba(255,255,255,.06)'">
+                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"/></svg>
+                Ver Página Pública de Reservas
+                <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+            </a>
+        </div>
+    </div>
+
+    <style>@media(min-width:640px){#demo-grid{grid-template-columns:1fr 1fr !important;}}</style>
+</section>
+
+<!-- ═══════════════════════════════════════════
+     FINAL CTA
+══════════════════════════════════════════════ -->
+<section style="background:#fff;padding:96px 24px;text-align:center;">
+    <div style="max-width:600px;margin:0 auto;">
+        <div style="width:48px;height:48px;background:linear-gradient(135deg,#c9901a,#e8b84b);border-radius:14px;display:flex;align-items:center;justify-content:center;margin:0 auto 24px;">
+            <svg width="24" height="24" fill="none" stroke="white" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+        </div>
+        <h2 style="font-size:clamp(2rem,5vw,3rem);font-weight:900;color:#0a0a0a;letter-spacing:-.03em;margin:0 0 16px;line-height:1.1;">¿Listo para Modernizar tu Barbería?</h2>
+        <p style="font-size:1.0625rem;color:#71717a;margin:0 0 36px;line-height:1.65;">Únete a cientos de barberías que ya están creciendo con Kyros Barber Cloud</p>
+        <a href="<?php echo BASE_URL; ?>/auth/login" class="btn-gold" style="padding:16px 36px;border-radius:14px;font-family:'Sora',sans-serif;font-size:1.0625rem;">
+            Comenzar Gratis por 30 Días
+        </a>
+        <p style="font-size:.8125rem;color:#a1a1aa;margin:16px 0 0;">No requiere tarjeta de crédito · Cancela cuando quieras</p>
+    </div>
+</section>
+
+<!-- ═══════════════════════════════════════════
+     FOOTER
+══════════════════════════════════════════════ -->
+<footer style="background:#0a0a0a;color:#fff;padding:64px 24px 32px;">
+    <div style="max-width:1200px;margin:0 auto;">
+        <div class="footer-grid" style="display:grid;grid-template-columns:1fr;gap:40px;margin-bottom:48px;">
+
+            <!-- Brand -->
+            <div>
+                <a href="/" style="display:flex;align-items:center;gap:10px;text-decoration:none;margin-bottom:16px;">
+                    <div style="width:32px;height:32px;background:linear-gradient(135deg,#c9901a,#e8b84b);border-radius:8px;display:flex;align-items:center;justify-content:center;">
+                        <svg width="17" height="17" fill="none" stroke="white" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M14.121 14.121L19 19m-7-7l7-7m-7 7l-2.879 2.879M12 12L9.121 9.121m0 5.758a3 3 0 10-4.243 4.243 3 3 0 004.243-4.243zm0-5.758a3 3 0 10-4.243-4.243 3 3 0 004.243 4.243z"/></svg>
+                    </div>
+                    <span style="font-family:'Sora',sans-serif;font-weight:800;font-size:1rem;color:#fff;">Kyros Barber Cloud</span>
+                </a>
+                <p style="font-size:.875rem;color:#52525b;line-height:1.65;margin:0;max-width:280px;">Sistema profesional de gestión para barberías en República Dominicana.</p>
+            </div>
+
+            <!-- Producto -->
+            <div>
+                <h4 style="font-size:.6875rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#52525b;margin:0 0 16px;">Producto</h4>
+                <ul style="list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:10px;">
+                    <?php foreach([['Características','#features'],['Precios','#pricing'],['Demo','#demo']] as $l): ?>
+                    <li><a href="<?php echo $l[1]; ?>" style="font-size:.875rem;color:#71717a;text-decoration:none;transition:color .18s;" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='#71717a'"><?php echo $l[0]; ?></a></li>
+                    <?php endforeach; ?>
+                </ul>
+            </div>
+
+            <!-- Cuenta -->
+            <div>
+                <h4 style="font-size:.6875rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#52525b;margin:0 0 16px;">Cuenta</h4>
+                <ul style="list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:10px;">
+                    <?php foreach([['Iniciar Sesión',BASE_URL.'/auth/login'],['Registrarse',BASE_URL.'/auth/login'],['Demo',BASE_URL.'/auth/login']] as $l): ?>
+                    <li><a href="<?php echo $l[1]; ?>" style="font-size:.875rem;color:#71717a;text-decoration:none;transition:color .18s;" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='#71717a'"><?php echo $l[0]; ?></a></li>
+                    <?php endforeach; ?>
+                </ul>
+            </div>
+
+            <!-- Soporte -->
+            <div>
+                <h4 style="font-size:.6875rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#52525b;margin:0 0 16px;">Soporte</h4>
+                <ul style="list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:10px;">
+                    <?php foreach([['Documentación','#'],['Tutoriales','#'],['Contacto','#']] as $l): ?>
+                    <li><a href="<?php echo $l[1]; ?>" style="font-size:.875rem;color:#71717a;text-decoration:none;transition:color .18s;" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='#71717a'"><?php echo $l[0]; ?></a></li>
+                    <?php endforeach; ?>
+                </ul>
+            </div>
+        </div>
+
+        <div style="padding-top:24px;border-top:1px solid rgba(255,255,255,.05);display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:8px;">
+            <p style="font-size:.8125rem;color:#3f3f46;margin:0;">&copy; <?php echo date('Y'); ?> Kyros Barber Cloud. Todos los derechos reservados.</p>
+            <p style="font-size:.8125rem;color:#3f3f46;margin:0;">Hecho con ♥ en República Dominicana</p>
+        </div>
+    </div>
+</footer>
+
 </body>
 </html>

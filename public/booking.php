@@ -478,7 +478,7 @@ foreach ($schedules as $schedule) {
 
                     <!-- Buttons -->
                     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:auto;">
-                        <a href="<?php echo BASE_URL; ?>/public/barber.php?shop=<?php echo urlencode($barbershop['slug']); ?>&barber=<?php echo urlencode($barber['slug']); ?>"
+                        <a href="<?php echo BASE_URL; ?>/public/<?php echo urlencode($barbershop['slug']); ?>/<?php echo urlencode($barber['slug']); ?>"
                            style="display:flex;align-items:center;justify-content:center;padding:10px;border:1.5px solid #e5e5e2;border-radius:12px;font-size:.8125rem;font-weight:600;color:#3f3f46;text-decoration:none;transition:border-color .18s,color .18s;text-align:center;"
                            onmouseover="this.style.borderColor='#0a0a0a';this.style.color='#0a0a0a'"
                            onmouseout="this.style.borderColor='#e5e5e2';this.style.color='#3f3f46'">

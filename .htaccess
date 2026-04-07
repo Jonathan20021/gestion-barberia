@@ -1,40 +1,50 @@
 <IfModule mod_rewrite.c>
     RewriteEngine On
+    RewriteBase /gestion-barberia/
 
-    # Si el recurso existe fisicamente, no reescribir.
+    # ── 1. Redirigir .php → URL limpia (301) ──────────────────────────────────
+    RewriteCond %{THE_REQUEST} \s([^?\s]+)\.php[?\s] [NC]
+    RewriteRule ^ %1 [R=301,L]
+
+    # ── 2. Si el recurso existe físicamente, no reescribir ────────────────────
     RewriteCond %{REQUEST_FILENAME} -f [OR]
     RewriteCond %{REQUEST_FILENAME} -d
     RewriteRule ^ - [L]
 
-    # URL publica por barberia: /public/{slug}
-    RewriteRule ^public/([a-zA-Z0-9-]+)/?$ public/booking.php?shop=$1 [L,QSA,NC]
+    # ── 3. URLs públicas de barbería y barbero (ya limpias) ───────────────────
+    # /public/{slug}  →  public/booking.php?shop={slug}
+    RewriteRule ^public/([a-zA-Z0-9_-]+)/?$ public/booking.php?shop=$1 [L,QSA,NC]
 
-    # URL publica por barbero: /public/{shop}/{barber}
-    RewriteRule ^public/([a-zA-Z0-9-]+)/([a-zA-Z0-9-]+)/?$ public/barber.php?shop=$1&barber=$2 [L,QSA,NC]
-    
+    # /public/{shop}/{barber}  →  public/barber.php?shop={shop}&barber={barber}
+    RewriteRule ^public/([a-zA-Z0-9_-]+)/([a-zA-Z0-9_-]+)/?$ public/barber.php?shop=$1&barber=$2 [L,QSA,NC]
+
+    # ── 4. Quitar .php de cualquier otra ruta (auth/login, dashboard/*, etc.) ─
+    RewriteCond %{REQUEST_FILENAME}.php -f
+    RewriteRule ^(.+?)/?$ $1.php [L,QSA]
+
     # Forzar HTTPS en producción (comentado para desarrollo local)
     # RewriteCond %{HTTPS} off
     # RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
-    
+
     # Proteger archivos de configuración
     <FilesMatch "^(config\.php|database\.sql)$">
         Order allow,deny
         Deny from all
     </FilesMatch>
-    
+
     # Proteger directorios sensibles
     RedirectMatch 403 /\.git
     RedirectMatch 403 /logs/.*
-    
+
     # Redireccionar errores comunes
-    ErrorDocument 404 /public/404.php
-    ErrorDocument 403 /public/403.php
-    
+    ErrorDocument 404 /gestion-barberia/public/404.php
+    ErrorDocument 403 /gestion-barberia/public/403.php
+
     # Habilitar compresión
     <IfModule mod_deflate.c>
         AddOutputFilterByType DEFLATE text/html text/plain text/xml text/css text/javascript application/javascript application/json
     </IfModule>
-    
+
     # Cache de archivos estáticos
     <IfModule mod_expires.c>
         ExpiresActive On
@@ -48,19 +58,12 @@
         ExpiresByType application/javascript "access plus 1 month"
         ExpiresByType image/x-icon "access plus 1 year"
     </IfModule>
-    
+
     # Seguridad adicional
     <IfModule mod_headers.c>
-        # Prevenir clickjacking
         Header always set X-Frame-Options "SAMEORIGIN"
-        
-        # Prevenir MIME type sniffing
         Header always set X-Content-Type-Options "nosniff"
-        
-        # Habilitar XSS protection
         Header always set X-XSS-Protection "1; mode=block"
-        
-        # Referrer Policy
         Header always set Referrer-Policy "no-referrer-when-downgrade"
     </IfModule>
 </IfModule>

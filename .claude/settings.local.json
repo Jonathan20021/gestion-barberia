@@ -1,7 +1,11 @@
 {
   "permissions": {
     "allow": [
-      "Bash(ls -la /c/xampp/htdocs/gestion-barberia/public/*.php)"
+      "Bash(ls -la /c/xampp/htdocs/gestion-barberia/public/*.php)",
+      "Bash(sed -i 's|href=\"/auth/login\"|href=\"<?php echo BASE_URL; ?>/auth/login\"|g' c:/xampp/htdocs/gestion-barberia/landing.php)",
+      "Bash(sed -i 's|href=\"/public/estilo-rd\"|href=\"<?php echo BASE_URL; ?>/public/estilo-rd\"|g' c:/xampp/htdocs/gestion-barberia/landing.php)",
+      "Bash(php -l c:/xampp/htdocs/gestion-barberia/landing.php)",
+      "Bash(php -l c:/xampp/htdocs/gestion-barberia/auth/login.php)"
     ]
   }
 }

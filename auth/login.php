@@ -5,27 +5,22 @@ require_once BASE_PATH . '/core/Database.php';
 require_once BASE_PATH . '/core/Auth.php';
 require_once BASE_PATH . '/core/Helpers.php';
 
-// Si ya está autenticado, redirigir
 if (Auth::check()) {
     $role = $_SESSION['user_role'];
     switch ($role) {
-        case 'superadmin':
-            redirect(BASE_URL . '/admin/dashboard.php');
-        case 'owner':
-            redirect(BASE_URL . '/dashboard/index.php');
-        case 'barber':
-            redirect(BASE_URL . '/dashboard/barber/index.php');
-        default:
-            redirect(BASE_URL . '/public/index.php');
+        case 'superadmin': redirect(BASE_URL . '/admin/dashboard'); break;
+        case 'owner':      redirect(BASE_URL . '/dashboard'); break;
+        case 'barber':     redirect(BASE_URL . '/dashboard/barber'); break;
+        default:           redirect(BASE_URL . '/'); break;
     }
 }
 
 $error = isset($_GET['error']) ? trim((string)$_GET['error']) : '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $email = input('email');
+    $email    = input('email');
     $password = input('password');
-    
+
     if (empty($email) || empty($password)) {
         $error = 'Por favor complete todos los campos';
     } else {
@@ -33,219 +28,341 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if ($auth->login($email, $password)) {
             $role = $_SESSION['user_role'];
             switch ($role) {
-                case 'superadmin':
-                    redirect(BASE_URL . '/admin/dashboard.php');
-                case 'owner':
-                    redirect(BASE_URL . '/dashboard/index.php');
-                case 'barber':
-                    redirect(BASE_URL . '/dashboard/barber/index.php');
-                default:
-                    redirect(BASE_URL . '/public/index.php');
+                case 'superadmin': redirect(BASE_URL . '/admin/dashboard'); break;
+                case 'owner':      redirect(BASE_URL . '/dashboard'); break;
+                case 'barber':     redirect(BASE_URL . '/dashboard/barber'); break;
+                default:           redirect(BASE_URL . '/'); break;
             }
         } else {
             $error = $auth->getLastError();
         }
     }
 }
-
-$title = 'Iniciar Sesión - Kyros Barber Cloud';
-include BASE_PATH . '/includes/header.php';
 ?>
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Iniciar Sesión — Kyros Barber Cloud</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Sora:wght@700;800;900&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing:border-box; margin:0; padding:0; }
+        html, body { height:100%; }
+        body { font-family:'Inter',sans-serif; background:#0a0a0a; min-height:100vh; display:flex; color:#f5f5f0; }
+        h1,h2,h3 { font-family:'Sora',sans-serif; }
 
-<div class="min-h-screen flex">
-    <!-- Lado Izquierdo - Branding -->
-    <div class="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-500 flex-col justify-center items-center p-12 text-white relative overflow-hidden">
-        <!-- Decoración de fondo -->
-        <div class="absolute inset-0 opacity-10">
-            <svg class="w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
-                <path d="M0,0 L100,0 L100,100 L0,100 Z" fill="url(#grid)"/>
-                <defs>
-                    <pattern id="grid" width="10" height="10" patternUnits="userSpaceOnUse">
-                        <circle cx="5" cy="5" r="1" fill="white"/>
-                    </pattern>
-                </defs>
-            </svg>
+        /* ── Animations ── */
+        @keyframes shimmer { 0%{transform:translateX(-100%)} 100%{transform:translateX(100%)} }
+        @keyframes fadeUp  { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
+        @keyframes pulse   { 0%,100%{opacity:1} 50%{opacity:.4} }
+
+        .fade-up  { animation:fadeUp .6s cubic-bezier(.16,1,.3,1) both; }
+        .fade-up2 { animation:fadeUp .6s .08s cubic-bezier(.16,1,.3,1) both; }
+        .fade-up3 { animation:fadeUp .6s .16s cubic-bezier(.16,1,.3,1) both; }
+
+        /* ── Gold button ── */
+        .btn-gold {
+            display:flex; align-items:center; justify-content:center; gap:9px; width:100%;
+            position:relative; overflow:hidden;
+            background:linear-gradient(135deg,#c9901a 0%,#e8b84b 48%,#c9901a 100%);
+            color:#0a0a0a; font-weight:700; font-size:.9375rem;
+            border:none; cursor:pointer; padding:15px 24px; border-radius:13px;
+            box-shadow:0 4px 24px rgba(201,144,26,.35);
+            transition:box-shadow .2s, transform .2s;
+            font-family:'Inter',sans-serif; letter-spacing:.01em;
+        }
+        .btn-gold::after {
+            content:''; position:absolute; top:0; left:-100%; width:100%; height:100%;
+            background:linear-gradient(90deg,transparent,rgba(255,255,255,.3),transparent);
+        }
+        .btn-gold:hover::after { animation:shimmer .5s ease forwards; }
+        .btn-gold:hover { box-shadow:0 8px 32px rgba(201,144,26,.55); transform:translateY(-1px); }
+        .btn-gold:active { transform:translateY(0); }
+
+        /* ── Inputs ── */
+        .field-wrap { position:relative; }
+        .field-icon {
+            position:absolute; left:15px; top:50%; transform:translateY(-50%);
+            color:#3f3f46; pointer-events:none; display:flex; transition:color .18s;
+        }
+        .field-input {
+            width:100%; padding:14px 14px 14px 44px;
+            background:#111111; border:1.5px solid #222222; border-radius:12px;
+            color:#f5f5f0; font-size:.9375rem; font-family:'Inter',sans-serif;
+            outline:none; transition:border-color .18s, box-shadow .18s, background .18s;
+            -webkit-appearance:none;
+        }
+        .field-input::placeholder { color:#3f3f46; }
+        .field-input:focus { background:#161616; border-color:#c9901a; box-shadow:0 0 0 3px rgba(201,144,26,.12); }
+        .field-input:focus ~ .field-icon,
+        .field-wrap:focus-within .field-icon { color:#c9901a; }
+
+        /* ── Custom checkbox ── */
+        .custom-check {
+            width:17px; height:17px; border:1.5px solid #333; border-radius:5px;
+            background:#111; cursor:pointer; appearance:none; -webkit-appearance:none;
+            flex-shrink:0; position:relative; transition:background .15s, border-color .15s;
+        }
+        .custom-check:checked { background:#c9901a; border-color:#c9901a; }
+        .custom-check:checked::after {
+            content:''; position:absolute; left:4px; top:1px;
+            width:6px; height:10px; border:2px solid #0a0a0a;
+            border-left:none; border-top:none; transform:rotate(45deg);
+        }
+
+        /* ── Stat badge ── */
+        .stat-badge {
+            display:flex; align-items:center; gap:10px;
+            background:rgba(255,255,255,.04); border:1px solid #222;
+            border-radius:12px; padding:12px 16px;
+        }
+
+        /* ── Responsive ── */
+        @media(min-width:1024px){
+            .split-left   { display:flex !important; }
+            .mobile-logo  { display:none !important; }
+        }
+        @media(max-width:1023px){
+            .split-right-inner { max-width:100% !important; }
+        }
+    </style>
+</head>
+<body>
+
+<div style="display:flex;width:100%;min-height:100vh;">
+
+    <!-- ══════════════════════════════════
+         LEFT PANEL — branding
+    ══════════════════════════════════════ -->
+    <div class="split-left" style="display:none;flex:0 0 460px;flex-direction:column;justify-content:space-between;padding:44px 48px;background:#0d0d0d;border-right:1px solid #1a1a1a;position:relative;overflow:hidden;">
+
+        <!-- Background decorations -->
+        <div style="position:absolute;inset:0;background-image:radial-gradient(circle,rgba(255,255,255,.025) 1px,transparent 1px);background-size:24px 24px;pointer-events:none;"></div>
+        <div style="position:absolute;top:-160px;left:-100px;width:480px;height:480px;background:radial-gradient(circle,rgba(201,144,26,.09) 0%,transparent 65%);pointer-events:none;"></div>
+        <div style="position:absolute;bottom:-80px;right:-80px;width:300px;height:300px;background:radial-gradient(circle,rgba(201,144,26,.05) 0%,transparent 65%);pointer-events:none;"></div>
+
+        <!-- Logo -->
+        <a href="<?php echo BASE_URL; ?>/" style="display:flex;align-items:center;gap:12px;text-decoration:none;position:relative;z-index:1;">
+            <div style="width:42px;height:42px;background:linear-gradient(135deg,#c9901a,#e8b84b);border-radius:11px;display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 4px 16px rgba(201,144,26,.3);">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#0a0a0a" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+                </svg>
+            </div>
+            <span style="font-family:'Sora',sans-serif;font-weight:800;font-size:1.125rem;color:#f5f5f0;letter-spacing:-.02em;">Kyros Barber Cloud</span>
+        </a>
+
+        <!-- Main content -->
+        <div style="position:relative;z-index:1;">
+
+            <!-- Badge -->
+            <div style="display:inline-flex;align-items:center;gap:8px;background:rgba(201,144,26,.1);border:1px solid rgba(201,144,26,.22);border-radius:100px;padding:6px 14px;margin-bottom:28px;">
+                <span style="width:6px;height:6px;background:#c9901a;border-radius:50%;display:inline-block;animation:pulse 2s ease-in-out infinite;"></span>
+                <span style="font-size:.6875rem;font-weight:700;color:#e8b84b;letter-spacing:.08em;text-transform:uppercase;">Sistema Activo</span>
+            </div>
+
+            <h2 style="font-size:2.5rem;font-weight:900;color:#f5f5f0;line-height:1.12;margin-bottom:18px;letter-spacing:-.03em;">
+                Gestiona tu<br>
+                <span style="background:linear-gradient(90deg,#c9901a,#f0cc6a);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">barbería</span><br>
+                desde aquí.
+            </h2>
+            <p style="font-size:.9375rem;color:#52525b;line-height:1.7;margin-bottom:36px;max-width:300px;">
+                Reservas, clientes, barberos y finanzas — todo en un solo lugar, hecho para RD.
+            </p>
+
+            <!-- Feature list -->
+            <?php
+            $features = [
+                ['Reservas online 24/7 sin llamadas',       'M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z'],
+                ['Panel completo de barberos y horarios',    'M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z'],
+                ['Reportes y estadísticas en tiempo real',   'M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z'],
+                ['Página pública para reservas de clientes', 'M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064'],
+            ];
+            foreach ($features as $f): ?>
+            <div style="display:flex;align-items:center;gap:14px;margin-bottom:14px;">
+                <div style="width:34px;height:34px;background:rgba(201,144,26,.08);border:1px solid rgba(201,144,26,.16);border-radius:9px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#c9901a" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="<?php echo $f[1]; ?>"/>
+                    </svg>
+                </div>
+                <span style="font-size:.875rem;color:#71717a;"><?php echo $f[0]; ?></span>
+            </div>
+            <?php endforeach; ?>
+
+            <!-- Mini stats -->
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:28px;">
+                <div class="stat-badge">
+                    <div>
+                        <p style="font-size:1.125rem;font-weight:800;color:#f5f5f0;font-family:'Sora',sans-serif;">500+</p>
+                        <p style="font-size:.75rem;color:#52525b;margin-top:1px;">Barberías activas</p>
+                    </div>
+                </div>
+                <div class="stat-badge">
+                    <div>
+                        <p style="font-size:1.125rem;font-weight:800;color:#c9901a;font-family:'Sora',sans-serif;">24/7</p>
+                        <p style="font-size:.75rem;color:#52525b;margin-top:1px;">Disponible siempre</p>
+                    </div>
+                </div>
+            </div>
         </div>
 
-        <div class="relative z-10 max-w-md">
-            <div class="mb-8 transform hover:scale-110 transition duration-500">
-                <svg class="w-20 h-20 mb-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M14.121 14.121L19 19m-7-7l7-7m-7 7l-2.879 2.879M12 12L9.121 9.121m0 5.758a3 3 0 10-4.243 4.243 3 3 0 004.243-4.243zm0-5.758a3 3 0 10-4.243-4.243 3 3 0 004.243 4.243z"/>
-                </svg>
-                <h1 class="text-5xl font-bold mb-4">Kyros Barber Cloud</h1>
-                <p class="text-2xl text-indigo-100 mb-8">Gestión Profesional de Barberías</p>
-            </div>
-
-            <div class="space-y-6">
-                <div class="flex items-start space-x-4">
-                    <div class="flex-shrink-0 w-12 h-12 bg-white/20 backdrop-blur-sm rounded-lg flex items-center justify-center">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                        </svg>
-                    </div>
-                    <div>
-                        <h3 class="text-lg font-semibold mb-1">Sistema Completo</h3>
-                        <p class="text-indigo-100">Gestiona citas, clientes, barberos y servicios desde un solo lugar</p>
-                    </div>
+        <!-- Footer -->
+        <div style="position:relative;z-index:1;padding-top:24px;border-top:1px solid #1a1a1a;">
+            <p style="font-size:.8125rem;color:#3f3f46;line-height:1.65;font-style:italic;">
+                "La herramienta que toda barbería profesional en República Dominicana necesita."
+            </p>
+            <div style="display:flex;align-items:center;gap:10px;margin-top:14px;">
+                <div style="width:32px;height:32px;background:linear-gradient(135deg,#c9901a,#e8b84b);border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#0a0a0a" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
                 </div>
-
-                <div class="flex items-start space-x-4">
-                    <div class="flex-shrink-0 w-12 h-12 bg-white/20 backdrop-blur-sm rounded-lg flex items-center justify-center">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"/>
-                        </svg>
-                    </div>
-                    <div>
-                        <h3 class="text-lg font-semibold mb-1">Acceso Móvil</h3>
-                        <p class="text-indigo-100">Gestiona tu negocio desde cualquier dispositivo, en cualquier momento</p>
-                    </div>
-                </div>
-
-                <div class="flex items-start space-x-4">
-                    <div class="flex-shrink-0 w-12 h-12 bg-white/20 backdrop-blur-sm rounded-lg flex items-center justify-center">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
-                        </svg>
-                    </div>
-                    <div>
-                        <h3 class="text-lg font-semibold mb-1">Súper Rápido</h3>
-                        <p class="text-indigo-100">Interfaz optimizada para máxima velocidad y eficiencia</p>
-                    </div>
-                </div>
-            </div>
-
-            <div class="mt-12 pt-8 border-t border-white/20">
-                <p class="text-sm text-indigo-100">Más de 500+ barberías confían en nosotros</p>
-                <div class="flex items-center mt-3 space-x-1">
-                    <svg class="w-5 h-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
-                    <svg class="w-5 h-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
-                    <svg class="w-5 h-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
-                    <svg class="w-5 h-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
-                    <svg class="w-5 h-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
-                    <span class="ml-2 text-sm">4.9/5.0</span>
+                <div>
+                    <p style="font-size:.8125rem;font-weight:600;color:#a1a1aa;">Equipo Kyros</p>
+                    <p style="font-size:.75rem;color:#3f3f46;">República Dominicana</p>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Lado Derecho - Formulario -->
-    <div class="flex-1 flex items-center justify-center p-8 sm:p-12 bg-gray-50">
-        <div class="w-full max-w-md">
-            <!-- Logo móvil -->
-            <div class="lg:hidden text-center mb-8">
-                <svg class="w-16 h-16 mx-auto mb-4 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.121 14.121L19 19m-7-7l7-7m-7 7l-2.879 2.879M12 12L9.121 9.121m0 5.758a3 3 0 10-4.243 4.243 3 3 0 004.243-4.243zm0-5.758a3 3 0 10-4.243-4.243 3 3 0 004.243 4.243z"/>
-                </svg>
-                <h1 class="text-3xl font-bold text-gray-900">Kyros Barber Cloud</h1>
+    <!-- ══════════════════════════════════
+         RIGHT PANEL — form
+    ══════════════════════════════════════ -->
+    <div style="flex:1;display:flex;align-items:center;justify-content:center;padding:40px 24px;background:#0a0a0a;position:relative;">
+
+        <!-- Subtle bg glow -->
+        <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:600px;height:600px;background:radial-gradient(circle,rgba(201,144,26,.04) 0%,transparent 60%);pointer-events:none;"></div>
+
+        <div class="fade-up" style="width:100%;max-width:400px;position:relative;z-index:1;">
+
+            <!-- Mobile logo -->
+            <div class="mobile-logo" style="display:flex;justify-content:center;margin-bottom:36px;">
+                <a href="<?php echo BASE_URL; ?>/" style="display:flex;align-items:center;gap:10px;text-decoration:none;">
+                    <div style="width:38px;height:38px;background:linear-gradient(135deg,#c9901a,#e8b84b);border-radius:10px;display:flex;align-items:center;justify-content:center;">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0a0a0a" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                    </div>
+                    <span style="font-family:'Sora',sans-serif;font-weight:800;font-size:1.0625rem;color:#f5f5f0;">Kyros Barber Cloud</span>
+                </a>
             </div>
 
-            <div class="bg-white rounded-2xl shadow-xl p-8 border border-gray-100">
-                <div class="mb-8">
-                    <h2 class="text-3xl font-bold text-gray-900 mb-2">Bienvenido</h2>
-                    <p class="text-gray-600">Ingresa tus credenciales para continuar</p>
-                </div>
+            <!-- Heading -->
+            <div class="fade-up" style="margin-bottom:28px;">
+                <h2 style="font-size:2rem;font-weight:900;color:#f5f5f0;margin-bottom:7px;letter-spacing:-.03em;">Bienvenido</h2>
+                <p style="font-size:.9375rem;color:#52525b;">Ingresa tus credenciales para acceder al panel</p>
+            </div>
 
-                <?php if ($error): ?>
-                <div class="mb-6 bg-red-50 border-l-4 border-red-500 p-4 rounded-r-lg">
-                    <div class="flex items-center">
-                        <svg class="w-5 h-5 text-red-500 mr-3 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
-                        </svg>
-                        <p class="text-sm font-medium text-red-700"><?php echo e($error); ?></p>
+            <!-- Error -->
+            <?php if ($error): ?>
+            <div class="fade-up" style="display:flex;align-items:flex-start;gap:11px;background:rgba(239,68,68,.07);border:1px solid rgba(239,68,68,.2);border-radius:12px;padding:14px 16px;margin-bottom:22px;">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#f87171" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;margin-top:1px;">
+                    <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+                </svg>
+                <p style="font-size:.875rem;color:#f87171;line-height:1.5;"><?php echo e($error); ?></p>
+            </div>
+            <?php endif; ?>
+
+            <!-- Form -->
+            <form method="POST" class="fade-up2" style="display:flex;flex-direction:column;gap:18px;">
+
+                <!-- Email -->
+                <div>
+                    <label for="email" style="display:block;font-size:.75rem;font-weight:700;color:#52525b;margin-bottom:9px;letter-spacing:.07em;text-transform:uppercase;">
+                        Correo Electrónico
+                    </label>
+                    <div class="field-wrap">
+                        <span class="field-icon">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/>
+                            </svg>
+                        </span>
+                        <input type="email" id="email" name="email" class="field-input"
+                               placeholder="tu@email.com" required autocomplete="email"
+                               value="<?php echo e($_POST['email'] ?? ''); ?>">
                     </div>
                 </div>
-                <?php endif; ?>
 
-                <form method="POST" class="space-y-6">
-                    <div>
-                        <label for="email" class="block text-sm font-semibold text-gray-700 mb-2">
-                            Correo Electrónico
-                        </label>
-                        <div class="relative">
-                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207"/>
-                                </svg>
-                            </div>
-                            <input type="email" id="email" name="email" required autocomplete="email"
-                                   class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition shadow-sm"
-                                   placeholder="tu@email.com"
-                                   value="<?php echo e($_POST['email'] ?? ''); ?>">
-                        </div>
+                <!-- Password -->
+                <div>
+                    <label for="password" style="display:block;font-size:.75rem;font-weight:700;color:#52525b;margin-bottom:9px;letter-spacing:.07em;text-transform:uppercase;">
+                        Contraseña
+                    </label>
+                    <div class="field-wrap">
+                        <span class="field-icon">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                            </svg>
+                        </span>
+                        <input type="password" id="password" name="password" class="field-input"
+                               placeholder="••••••••" required autocomplete="current-password">
                     </div>
+                </div>
 
-                    <div>
-                        <label for="password" class="block text-sm font-semibold text-gray-700 mb-2">
-                            Contraseña
-                        </label>
-                        <div class="relative">
-                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
-                                </svg>
-                            </div>
-                            <input type="password" id="password" name="password" required autocomplete="current-password"
-                                   class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition shadow-sm"
-                                   placeholder="••••••••">
-                        </div>
-                    </div>
+                <!-- Remember + forgot -->
+                <div style="display:flex;align-items:center;justify-content:space-between;">
+                    <label style="display:flex;align-items:center;gap:9px;cursor:pointer;user-select:none;">
+                        <input type="checkbox" name="remember" class="custom-check">
+                        <span style="font-size:.875rem;color:#52525b;">Recordarme</span>
+                    </label>
+                    <a href="#" style="font-size:.875rem;color:#c9901a;text-decoration:none;font-weight:500;transition:color .15s;"
+                       onmouseover="this.style.color='#e8b84b'" onmouseout="this.style.color='#c9901a'">
+                        ¿Olvidaste tu contraseña?
+                    </a>
+                </div>
 
-                    <div class="flex items-center justify-between">
-                        <div class="flex items-center">
-                            <input id="remember" name="remember" type="checkbox"
-                                   class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded">
-                            <label for="remember" class="ml-2 block text-sm text-gray-700">
-                                Recordarme
-                            </label>
-                        </div>
-
-                        <div class="text-sm">
-                            <a href="#" class="font-medium text-indigo-600 hover:text-indigo-500 transition">
-                                ¿Olvidaste tu contraseña?
-                            </a>
-                        </div>
-                    </div>
-
-                    <button type="submit"
-                            class="w-full flex justify-center py-3 px-4 border border-transparent rounded-xl shadow-lg text-sm font-semibold text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transform hover:scale-[1.02] transition duration-200">
-                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"/>
+                <!-- Submit -->
+                <div style="padding-top:4px;">
+                    <button type="submit" class="btn-gold">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/>
                         </svg>
                         Iniciar Sesión
                     </button>
-                </form>
+                </div>
+            </form>
 
-                <!-- Credenciales Demo -->
-                <div class="mt-8 pt-6 border-t border-gray-200">
-                    <p class="text-xs text-center text-gray-500 font-semibold uppercase tracking-wide mb-4">Credenciales de Prueba</p>
-                    <div class="space-y-3">
-                        <div class="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-3 border border-blue-100">
-                            <p class="text-xs font-semibold text-blue-900 mb-1">🔵 Super Admin</p>
-                            <p class="text-xs text-blue-700 font-mono">admin@kyrosbarbercloud.com</p>
-                            <p class="text-xs text-blue-700 font-mono">password123</p>
+            <!-- Demo credentials -->
+            <div class="fade-up3" style="margin-top:28px;padding-top:24px;border-top:1px solid #1a1a1a;">
+                <p style="font-size:.6875rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#2e2e2e;text-align:center;margin-bottom:14px;">Credenciales de Prueba</p>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+
+                    <!-- Owner -->
+                    <div style="background:#111;border:1px solid #1f1f1f;border-radius:11px;padding:13px 14px;cursor:pointer;transition:border-color .18s;"
+                         onmouseover="this.style.borderColor='rgba(201,144,26,.3)'" onmouseout="this.style.borderColor='#1f1f1f'"
+                         onclick="document.getElementById('email').value='demo@barberia.com';document.getElementById('password').value='password123'">
+                        <div style="display:flex;align-items:center;gap:7px;margin-bottom:8px;">
+                            <div style="width:7px;height:7px;background:#34d399;border-radius:50%;flex-shrink:0;"></div>
+                            <p style="font-size:.6875rem;font-weight:700;color:#34d399;text-transform:uppercase;letter-spacing:.05em;">Owner</p>
                         </div>
-                        <div class="bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg p-3 border border-green-100">
-                            <p class="text-xs font-semibold text-green-900 mb-1">🟢 Owner (Propietario)</p>
-                            <p class="text-xs text-green-700 font-mono">demo@barberia.com</p>
-                            <p class="text-xs text-green-700 font-mono">password123</p>
-                        </div>
-                        <div class="bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg p-3 border border-purple-100">
-                            <p class="text-xs font-semibold text-purple-900 mb-1">🟣 Barber (Barbero)</p>
-                            <p class="text-xs text-purple-700 font-mono">barbero@demo.com</p>
-                            <p class="text-xs text-purple-700 font-mono">password123</p>
-                        </div>
+                        <p style="font-size:.75rem;color:#52525b;font-family:monospace;line-height:1.6;">demo@barberia.com</p>
+                        <p style="font-size:.75rem;color:#52525b;font-family:monospace;">password123</p>
+                        <p style="font-size:.6875rem;color:#2e2e2e;margin-top:6px;">Click para rellenar</p>
                     </div>
+
+                    <!-- Barber -->
+                    <div style="background:#111;border:1px solid #1f1f1f;border-radius:11px;padding:13px 14px;cursor:pointer;transition:border-color .18s;"
+                         onmouseover="this.style.borderColor='rgba(96,165,250,.3)'" onmouseout="this.style.borderColor='#1f1f1f'"
+                         onclick="document.getElementById('email').value='barbero@demo.com';document.getElementById('password').value='password123'">
+                        <div style="display:flex;align-items:center;gap:7px;margin-bottom:8px;">
+                            <div style="width:7px;height:7px;background:#60a5fa;border-radius:50%;flex-shrink:0;"></div>
+                            <p style="font-size:.6875rem;font-weight:700;color:#60a5fa;text-transform:uppercase;letter-spacing:.05em;">Barbero</p>
+                        </div>
+                        <p style="font-size:.75rem;color:#52525b;font-family:monospace;line-height:1.6;">barbero@demo.com</p>
+                        <p style="font-size:.75rem;color:#52525b;font-family:monospace;">password123</p>
+                        <p style="font-size:.6875rem;color:#2e2e2e;margin-top:6px;">Click para rellenar</p>
+                    </div>
+
                 </div>
             </div>
 
-            <p class="mt-8 text-center text-sm text-gray-600">
-                ¿No tienes una cuenta? 
-                <a href="<?php echo BASE_URL; ?>/landing.php" class="font-medium text-indigo-600 hover:text-indigo-500 transition">
-                    Ver planes
-                </a>
+            <!-- Back link -->
+            <p style="margin-top:24px;text-align:center;font-size:.875rem;color:#3f3f46;">
+                ¿No tienes cuenta?
+                <a href="<?php echo BASE_URL; ?>/" style="color:#c9901a;font-weight:600;text-decoration:none;margin-left:4px;transition:color .15s;"
+                   onmouseover="this.style.color='#e8b84b'" onmouseout="this.style.color='#c9901a'">Ver planes</a>
             </p>
+
         </div>
     </div>
-</div>
 
-<?php include BASE_PATH . '/includes/footer.php'; ?>
+</div>
+</body>
+</html>

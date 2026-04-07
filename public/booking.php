@@ -628,7 +628,7 @@ foreach ($schedules as $schedule) {
                             <div>
                                 <label class="block text-sm font-bold text-gray-900 mb-3">Hora</label>
                                 <select name="start_time" x-model="selectedStartTime" required class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-gray-900 focus:border-gray-900 transition">
-                                    <option value="" x-text="availabilityLoading ? 'Cargando horarios...' : 'Selecciona fecha/barbero/servicio'"></option>
+                                    <option value="" x-text="availabilityLoading ? 'Cargando horarios...' : 'Selecciona servicio, barbero y fecha'"></option>
                                     <template x-for="slot in availableSlots" :key="slot.value">
                                         <option :value="slot.value" x-text="slot.time"></option>
                                     </template>
@@ -722,7 +722,10 @@ foreach ($schedules as $schedule) {
                     this.selectedStartTime = '';
                     this.availabilityMessage = '';
 
-                    if (!this.selectedBarber || !this.selectedDate) {
+                    if (!this.selectedService || !this.selectedBarber || !this.selectedDate) {
+                        if (this.selectedDate && this.selectedBarber && !this.selectedService) {
+                            this.availabilityMessage = 'Selecciona un servicio para calcular horarios exactos.';
+                        }
                         return;
                     }
 

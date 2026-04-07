@@ -421,7 +421,7 @@ $title = $barber['full_name'] . ' - ' . $barber['business_name'];
                         <div>
                             <label class="block text-sm font-bold text-gray-900 mb-2">Hora</label>
                             <select name="start_time" x-model="selectedStartTime" required class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-gray-900 focus:border-gray-900 transition">
-                                <option value="" x-text="availabilityLoading ? 'Cargando horarios...' : 'Selecciona fecha y servicio'"></option>
+                                <option value="" x-text="availabilityLoading ? 'Cargando horarios...' : 'Selecciona servicio y fecha'"></option>
                                 <template x-for="slot in availableSlots" :key="slot.value">
                                     <option :value="slot.value" x-text="slot.time"></option>
                                 </template>
@@ -493,7 +493,10 @@ function barberApp() {
             this.selectedStartTime = '';
             this.availabilityMessage = '';
 
-            if (!this.selectedDate) {
+            if (!this.selectedDate || !this.selectedService) {
+                if (this.selectedDate && !this.selectedService) {
+                    this.availabilityMessage = 'Selecciona un servicio para ver horas disponibles.';
+                }
                 return;
             }
 

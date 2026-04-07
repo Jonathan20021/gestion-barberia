@@ -27,7 +27,7 @@ if (!$barbershop || !isLicenseActive($barbershop['license_id'])) {
 
 // Obtener barberos activos
 $barbers = $db->fetchAll("
-    SELECT b.*, u.full_name, u.phone
+    SELECT b.*, u.full_name, u.phone, COALESCE(NULLIF(b.photo, ''), NULLIF(u.avatar, '')) as public_photo
     FROM barbers b
     JOIN users u ON b.user_id = u.id
     WHERE b.barbershop_id = ? AND b.status = 'active'
@@ -86,19 +86,32 @@ $title = $barbershop['business_name'] . ' - Reserva tu cita';
     <meta name="description" content="<?php echo htmlspecialchars($barbershop['description'] ?? ''); ?>">
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <style>
-        * { font-family: 'Inter', sans-serif; }
-        .gradient-dark { background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%); }
+        :root {
+            --brand-900: #102027;
+            --brand-700: #1f4b57;
+            --accent-500: #d9a441;
+        }
+        body { font-family: 'DM Sans', sans-serif; background: radial-gradient(circle at 15% 10%, #fdf8ee 0%, #f4efe6 40%, #eef2f4 100%); }
+        h1, h2, h3, h4 { font-family: 'Sora', sans-serif; }
+        .gradient-dark { background: linear-gradient(120deg, var(--brand-900) 0%, var(--brand-700) 55%, #2f626f 100%); }
         .glass { background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(10px); }
         .service-card { transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
         .service-card:hover { transform: translateY(-12px) scale(1.02); }
+        .section-title { letter-spacing: -0.02em; }
+        .ornament {
+            background-image: linear-gradient(135deg, rgba(217, 164, 65, 0.16) 25%, transparent 25%),
+                              linear-gradient(225deg, rgba(217, 164, 65, 0.14) 25%, transparent 25%);
+            background-size: 26px 26px;
+            background-position: 0 0, 13px 13px;
+        }
         @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-20px); } }
         .float { animation: float 6s ease-in-out infinite; }
     </style>
 </head>
-<body class="bg-white antialiased">
+<body class="antialiased">
     <div x-data="bookingApp()">
         
         <!-- Header Navigation -->
@@ -210,11 +223,11 @@ $title = $barbershop['business_name'] . ' - Reserva tu cita';
         </div>
 
         <!-- Services Section -->
-        <div class="py-24 bg-white">
+        <div class="py-24 bg-white/90 ornament">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div class="text-center mb-16">
-                    <span class="text-gray-600 font-semibold tracking-wider uppercase text-sm">Servicios</span>
-                    <h2 class="text-5xl font-black text-gray-900 mt-4 mb-6">Nuestros Servicios Premium</h2>
+                    <span class="text-amber-700 font-semibold tracking-wider uppercase text-sm">Servicios</span>
+                    <h2 class="section-title text-5xl font-black text-gray-900 mt-4 mb-6">Servicios De Barberia Con Estilo</h2>
                     <p class="text-xl text-gray-600 max-w-2xl mx-auto">
                         Servicios profesionales de barberia disenados para darte el mejor look
                     </p>
@@ -277,11 +290,11 @@ $title = $barbershop['business_name'] . ' - Reserva tu cita';
         </div>
 
         <!-- Barbers Section -->
-        <div class="py-24 bg-gray-50">
+        <div class="py-24 bg-[#f2f4f6]">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div class="text-center mb-16">
-                    <span class="text-gray-600 font-semibold tracking-wider uppercase text-sm">Nuestro Equipo</span>
-                    <h2 class="text-5xl font-black text-gray-900 mt-4 mb-6">Barberos Profesionales</h2>
+                    <span class="text-amber-700 font-semibold tracking-wider uppercase text-sm">Nuestro Equipo</span>
+                    <h2 class="section-title text-5xl font-black text-gray-900 mt-4 mb-6">Barberos Profesionales</h2>
                     <p class="text-xl text-gray-600 max-w-2xl mx-auto">
                         Expertos apasionados por su trabajo
                     </p>
@@ -289,9 +302,9 @@ $title = $barbershop['business_name'] . ' - Reserva tu cita';
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-<?php echo min(count($barbers), 3); ?> gap-10">
                     <?php foreach ($barbers as $barber): ?>
-                    <div class="bg-white rounded-3xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2 border-2 border-transparent hover:border-gray-900">
+                                        <div class="bg-white rounded-3xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2 border border-gray-200">
                         <div class="relative h-96">
-                               <img src="<?php echo $barber['photo'] ? imageUrl($barber['photo']) : getDefaultAvatar($barber['full_name']); ?>" 
+                                                             <img src="<?php echo !empty($barber['public_photo']) ? imageUrl($barber['public_photo']) : getDefaultAvatar($barber['full_name']); ?>" 
                                  class="w-full h-full object-cover" 
                                  alt="<?php echo htmlspecialchars($barber['full_name']); ?>">
                             
@@ -316,6 +329,13 @@ $title = $barbershop['business_name'] . ' - Reserva tu cita';
                         </div>
                         
                         <div class="p-6">
+                            <div class="flex items-center justify-between text-sm text-gray-500 mb-3">
+                                <span><?php echo intval($barber['experience_years'] ?? 0); ?> anos exp.</span>
+                                <?php if (!empty($barber['specialty'])): ?>
+                                <span class="truncate max-w-[180px]"><?php echo htmlspecialchars($barber['specialty']); ?></span>
+                                <?php endif; ?>
+                            </div>
+
                             <div class="flex items-center justify-between mb-6">
                                 <div class="flex items-center space-x-1">
                                     <?php for ($i = 1; $i <= 5; $i++): ?>

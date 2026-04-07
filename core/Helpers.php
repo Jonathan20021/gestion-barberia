@@ -586,6 +586,8 @@ function isValidDate($date, $format = 'Y-m-d') {
  *   - allowedTypes: Tipos MIME permitidos
  *   - maxWidth: Ancho máximo en pixels (default: 2000)
  *   - maxHeight: Alto máximo en pixels (default: 2000)
+ *   - forceSquare: Recorte cuadrado centrado (default: false)
+ *   - squareSize: Tamaño final cuadrado en pixels (default: 900)
  *   - oldFile: Ruta del archivo anterior para eliminarlo
  * @return array ['success' => bool, 'path' => string|null, 'message' => string|null]
  */
@@ -596,6 +598,8 @@ function uploadImage($file, $directory, $options = []) {
         'allowedTypes' => ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'],
         'maxWidth' => 2000,
         'maxHeight' => 2000,
+        'forceSquare' => false,
+        'squareSize' => 900,
         'oldFile' => null
     ];
     
@@ -674,9 +678,93 @@ function uploadImage($file, $directory, $options = []) {
     
     $uploadPath = $uploadDir . '/' . $fileName;
     
-    // Mover archivo
-    if (!move_uploaded_file($file['tmp_name'], $uploadPath)) {
-        return ['success' => false, 'path' => null, 'message' => 'Error al guardar el archivo'];
+    if (!empty($options['forceSquare'])) {
+        $sourceImage = null;
+        switch ($mimeType) {
+            case 'image/jpeg':
+            case 'image/jpg':
+                $sourceImage = @imagecreatefromjpeg($file['tmp_name']);
+                break;
+            case 'image/png':
+                $sourceImage = @imagecreatefrompng($file['tmp_name']);
+                break;
+            case 'image/gif':
+                $sourceImage = @imagecreatefromgif($file['tmp_name']);
+                break;
+            case 'image/webp':
+                if (function_exists('imagecreatefromwebp')) {
+                    $sourceImage = @imagecreatefromwebp($file['tmp_name']);
+                }
+                break;
+        }
+
+        if (!$sourceImage) {
+            return ['success' => false, 'path' => null, 'message' => 'No se pudo procesar la imagen. Verifique la extensión GD del servidor'];
+        }
+
+        $srcWidth = imagesx($sourceImage);
+        $srcHeight = imagesy($sourceImage);
+        $cropSide = min($srcWidth, $srcHeight);
+        $srcX = (int)(($srcWidth - $cropSide) / 2);
+        $srcY = (int)(($srcHeight - $cropSide) / 2);
+
+        $targetSize = intval($options['squareSize']);
+        if ($targetSize < 100) {
+            $targetSize = 900;
+        }
+
+        $destinationImage = imagecreatetruecolor($targetSize, $targetSize);
+
+        if ($mimeType === 'image/png' || $mimeType === 'image/webp') {
+            imagealphablending($destinationImage, false);
+            imagesavealpha($destinationImage, true);
+            $transparent = imagecolorallocatealpha($destinationImage, 0, 0, 0, 127);
+            imagefilledrectangle($destinationImage, 0, 0, $targetSize, $targetSize, $transparent);
+        }
+
+        imagecopyresampled(
+            $destinationImage,
+            $sourceImage,
+            0,
+            0,
+            $srcX,
+            $srcY,
+            $targetSize,
+            $targetSize,
+            $cropSide,
+            $cropSide
+        );
+
+        $saveOk = false;
+        switch ($mimeType) {
+            case 'image/jpeg':
+            case 'image/jpg':
+                $saveOk = imagejpeg($destinationImage, $uploadPath, 90);
+                break;
+            case 'image/png':
+                $saveOk = imagepng($destinationImage, $uploadPath, 6);
+                break;
+            case 'image/gif':
+                $saveOk = imagegif($destinationImage, $uploadPath);
+                break;
+            case 'image/webp':
+                if (function_exists('imagewebp')) {
+                    $saveOk = imagewebp($destinationImage, $uploadPath, 90);
+                }
+                break;
+        }
+
+        imagedestroy($sourceImage);
+        imagedestroy($destinationImage);
+
+        if (!$saveOk) {
+            return ['success' => false, 'path' => null, 'message' => 'Error al guardar la imagen procesada'];
+        }
+    } else {
+        // Mover archivo sin procesar
+        if (!move_uploaded_file($file['tmp_name'], $uploadPath)) {
+            return ['success' => false, 'path' => null, 'message' => 'Error al guardar el archivo'];
+        }
     }
     
     // Eliminar archivo anterior si existe

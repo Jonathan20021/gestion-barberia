@@ -71,7 +71,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $uploadResult = uploadImage($_FILES['photo'], 'barbers', [
                 'maxSize' => 2 * 1024 * 1024,
                 'maxWidth' => 1200,
-                'maxHeight' => 1200
+                'maxHeight' => 1200,
+                'forceSquare' => true,
+                'squareSize' => 900
             ]);
 
             if (!$uploadResult['success']) {
@@ -119,11 +121,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         $newPhotoPath = $barberCurrent['photo'] ?? null;
-        if (isset($_FILES['photo']) && $_FILES['photo']['error'] !== UPLOAD_ERR_NO_FILE) {
+        $removePhoto = intval(input('remove_photo', 0)) === 1;
+
+        if ($removePhoto && !empty($barberCurrent['photo'])) {
+            deleteImage($barberCurrent['photo']);
+            $newPhotoPath = null;
+        }
+
+        if (!$removePhoto && isset($_FILES['photo']) && $_FILES['photo']['error'] !== UPLOAD_ERR_NO_FILE) {
             $uploadResult = uploadImage($_FILES['photo'], 'barbers', [
                 'maxSize' => 2 * 1024 * 1024,
                 'maxWidth' => 1200,
                 'maxHeight' => 1200,
+                'forceSquare' => true,
+                'squareSize' => 900,
                 'oldFile' => $barberCurrent['photo'] ?? null
             ]);
 
@@ -179,7 +190,40 @@ $title = 'Gestión de Barberos - Dashboard';
 include BASE_PATH . '/includes/header.php';
 ?>
 
-<div class="min-h-screen bg-gray-100" x-data="{ sidebarOpen: false, showModal: false, showEditModal: <?php echo $editBarber ? 'true' : 'false'; ?> }">
+<div class="min-h-screen bg-gray-100" x-data="{
+    sidebarOpen: false,
+    showModal: false,
+    showEditModal: <?php echo $editBarber ? 'true' : 'false'; ?>,
+    createPreview: '',
+    editInitialPhoto: <?php echo htmlspecialchars(json_encode(!empty($editBarber['photo']) ? imageUrl($editBarber['photo']) : ''), ENT_QUOTES, 'UTF-8'); ?>,
+    editPreview: '',
+    setCreatePreview(event) {
+        const file = event.target.files && event.target.files[0] ? event.target.files[0] : null;
+        if (!file) {
+            this.createPreview = '';
+            return;
+        }
+        this.createPreview = URL.createObjectURL(file);
+    },
+    setEditPreview(event) {
+        const file = event.target.files && event.target.files[0] ? event.target.files[0] : null;
+        if (!file) {
+            this.editPreview = '';
+            return;
+        }
+        this.editPreview = URL.createObjectURL(file);
+    },
+    toggleRemovePhoto(event) {
+        if (event.target.checked) {
+            this.editPreview = '';
+            if (this.$refs.editPhotoInput) {
+                this.$refs.editPhotoInput.value = '';
+            }
+            return;
+        }
+        this.editPreview = '';
+    }
+}">
     <?php include BASE_PATH . '/includes/sidebar-owner.php'; ?>
 
     <!-- Main Content -->
@@ -334,16 +378,18 @@ include BASE_PATH . '/includes/header.php';
 
     <!-- Modal Nuevo Barbero -->
     <div x-show="showModal" class="fixed inset-0 z-50 overflow-y-auto" style="display: none;">
-        <div class="flex items-center justify-center min-h-screen px-4">
+        <div class="flex items-end sm:items-center justify-center min-h-screen sm:px-4">
             <div class="fixed inset-0 bg-gray-500 bg-opacity-75" @click="showModal = false"></div>
             
-            <div class="relative bg-white rounded-lg max-w-md w-full p-6">
-                <h3 class="text-lg font-medium text-gray-900 mb-4">Añadir Nuevo Barbero</h3>
+            <div class="relative bg-white w-full h-screen sm:h-auto sm:max-h-[90vh] sm:max-w-2xl shadow-2xl overflow-hidden sm:rounded-xl">
+                <div class="sticky top-0 z-10 px-6 py-4 border-b border-gray-200 bg-gray-50">
+                    <h3 class="text-lg font-semibold text-gray-900">Añadir Nuevo Barbero</h3>
+                </div>
                 
-                <form method="POST" enctype="multipart/form-data">
+                <form method="POST" enctype="multipart/form-data" class="h-[calc(100vh-73px)] sm:h-auto sm:max-h-[calc(90vh-73px)] overflow-y-auto p-6">
                     <input type="hidden" name="action" value="create">
                     
-                    <div class="space-y-4">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-2">Nombre Completo</label>
                             <input type="text" name="full_name" required class="w-full px-3 py-2 border border-gray-300 rounded-lg">
@@ -386,13 +432,16 @@ include BASE_PATH . '/includes/header.php';
                             <p class="text-xs text-gray-500 mt-1">Porcentaje del servicio que gana este barbero.</p>
                         </div>
 
-                        <div>
+                        <div class="md:col-span-2">
                             <label class="block text-sm font-medium text-gray-700 mb-2">Foto del barbero</label>
-                            <input type="file" name="photo" accept="image/*" class="w-full px-3 py-2 border border-gray-300 rounded-lg">
-                            <p class="text-xs text-gray-500 mt-1">JPG/PNG/GIF/WebP, máximo 2MB.</p>
+                            <div class="mb-3" x-show="createPreview">
+                                <img :src="createPreview" class="w-20 h-20 rounded-full object-cover border border-gray-200" alt="Vista previa foto barbero">
+                            </div>
+                            <input type="file" name="photo" accept="image/*" x-ref="createPhotoInput" @change="setCreatePreview($event)" class="w-full px-3 py-2 border border-gray-300 rounded-lg">
+                            <p class="text-xs text-gray-500 mt-1">JPG/PNG/GIF/WebP, máximo 2MB. Esta foto se mostrará en la página pública de la barbería.</p>
                         </div>
                         
-                        <div class="flex space-x-3 pt-4">
+                        <div class="md:col-span-2 flex space-x-3 pt-2 sticky bottom-0 bg-white border-t border-gray-100">
                             <button type="submit" class="flex-1 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">
                                 Crear Barbero
                             </button>
@@ -408,33 +457,41 @@ include BASE_PATH . '/includes/header.php';
 
     <!-- Modal Editar Barbero -->
     <div x-show="showEditModal" class="fixed inset-0 z-50 overflow-y-auto" style="display: none;">
-        <div class="flex items-center justify-center min-h-screen px-4">
+        <div class="flex items-end sm:items-center justify-center min-h-screen sm:px-4">
             <div class="fixed inset-0 bg-gray-500 bg-opacity-75" @click="window.location='barbers.php'"></div>
 
-            <div class="relative bg-white rounded-lg max-w-md w-full p-6">
-                <div class="flex items-center justify-between mb-4">
+            <div class="relative bg-white w-full h-screen sm:h-auto sm:max-h-[90vh] sm:max-w-3xl shadow-2xl overflow-hidden sm:rounded-xl">
+                <div class="sticky top-0 z-10 flex items-center justify-between px-6 py-4 border-b border-gray-200 bg-gray-50">
                     <h3 class="text-lg font-semibold text-gray-900">Editar Barbero</h3>
                     <a href="barbers.php" class="text-gray-500 hover:text-gray-700">Cerrar</a>
                 </div>
 
                 <?php if ($editBarber): ?>
-                <form method="POST" enctype="multipart/form-data" class="space-y-4">
+                <form method="POST" enctype="multipart/form-data" class="h-[calc(100vh-73px)] sm:h-auto sm:max-h-[calc(90vh-73px)] overflow-y-auto p-6">
                     <input type="hidden" name="action" value="update">
                     <input type="hidden" name="barber_id" value="<?php echo $editBarber['id']; ?>">
 
-                    <div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="md:col-span-2">
                         <label class="block text-sm font-medium text-gray-700 mb-1">Foto actual</label>
                         <div class="flex items-center gap-3">
-                            <?php if (!empty($editBarber['photo'])): ?>
-                            <img src="<?php echo imageUrl($editBarber['photo']); ?>" class="w-16 h-16 rounded-full object-cover border" alt="<?php echo e($editBarber['full_name']); ?>">
-                            <?php else: ?>
-                            <div class="w-16 h-16 rounded-full bg-gray-100 text-gray-600 flex items-center justify-center font-semibold">
-                                <?php echo strtoupper(substr($editBarber['full_name'], 0, 1)); ?>
-                            </div>
-                            <?php endif; ?>
-                            <input type="file" name="photo" accept="image/*" class="flex-1 px-3 py-2 border border-gray-300 rounded-lg">
+                            <template x-if="editPreview || editInitialPhoto">
+                                <img :src="editPreview || editInitialPhoto" class="w-16 h-16 rounded-full object-cover border" alt="Vista previa foto barbero">
+                            </template>
+                            <template x-if="!editPreview && !editInitialPhoto">
+                                <div class="w-16 h-16 rounded-full bg-gray-100 text-gray-600 flex items-center justify-center font-semibold">
+                                    <?php echo strtoupper(substr($editBarber['full_name'], 0, 1)); ?>
+                                </div>
+                            </template>
+                            <input type="file" name="photo" accept="image/*" x-ref="editPhotoInput" @change="setEditPreview($event)" class="flex-1 px-3 py-2 border border-gray-300 rounded-lg">
                         </div>
-                        <p class="text-xs text-gray-500 mt-1">Sube una nueva foto para reemplazar la actual.</p>
+                        <p class="text-xs text-gray-500 mt-1">Sube una nueva foto para reemplazar la actual. Esta imagen se verá en la página pública.</p>
+                        <?php if (!empty($editBarber['photo'])): ?>
+                        <label class="mt-2 inline-flex items-center gap-2 text-sm text-red-700">
+                            <input type="checkbox" name="remove_photo" value="1" @change="toggleRemovePhoto($event)">
+                            Quitar foto actual
+                        </label>
+                        <?php endif; ?>
                     </div>
 
                     <div>
@@ -473,9 +530,10 @@ include BASE_PATH . '/includes/header.php';
                         Marcar como destacado
                     </label>
 
-                    <div class="flex gap-3 pt-2">
+                    <div class="md:col-span-2 flex gap-3 pt-2 sticky bottom-0 bg-white border-t border-gray-100">
                         <button type="submit" class="flex-1 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">Guardar</button>
                         <a href="barbers.php" class="flex-1 text-center px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50">Cancelar</a>
+                    </div>
                     </div>
                 </form>
                 <?php endif; ?>

@@ -110,6 +110,7 @@
             <a href="#features" style="font-size:.875rem;font-weight:500;color:#52525b;text-decoration:none;transition:color .18s;" onmouseover="this.style.color='#0a0a0a'" onmouseout="this.style.color='#52525b'">Características</a>
             <a href="#pricing"  style="font-size:.875rem;font-weight:500;color:#52525b;text-decoration:none;transition:color .18s;" onmouseover="this.style.color='#0a0a0a'" onmouseout="this.style.color='#52525b'">Precios</a>
             <a href="#demo"     style="font-size:.875rem;font-weight:500;color:#52525b;text-decoration:none;transition:color .18s;" onmouseover="this.style.color='#0a0a0a'" onmouseout="this.style.color='#52525b'">Demo</a>
+            <a href="<?php echo BASE_URL; ?>/documentation" style="font-size:.875rem;font-weight:500;color:#52525b;text-decoration:none;transition:color .18s;" onmouseover="this.style.color='#0a0a0a'" onmouseout="this.style.color='#52525b'">Documentación</a>
             <a href="<?php echo BASE_URL; ?>/auth/login" style="font-size:.875rem;font-weight:500;color:#52525b;text-decoration:none;transition:color .18s;" onmouseover="this.style.color='#0a0a0a'" onmouseout="this.style.color='#52525b'">Iniciar Sesión</a>
             <a href="<?php echo BASE_URL; ?>/auth/register" class="btn-gold" style="padding:9px 20px;border-radius:10px;font-size:.875rem;">Empezar Gratis</a>
         </nav>
@@ -128,6 +129,7 @@
         <a href="#features"   style="font-size:.9375rem;font-weight:500;color:#3f3f46;text-decoration:none;padding:8px 0;">Características</a>
         <a href="#pricing"    style="font-size:.9375rem;font-weight:500;color:#3f3f46;text-decoration:none;padding:8px 0;">Precios</a>
         <a href="#demo"       style="font-size:.9375rem;font-weight:500;color:#3f3f46;text-decoration:none;padding:8px 0;">Demo</a>
+        <a href="<?php echo BASE_URL; ?>/documentation" style="font-size:.9375rem;font-weight:500;color:#3f3f46;text-decoration:none;padding:8px 0;">Documentación</a>
         <a href="<?php echo BASE_URL; ?>/auth/login" style="font-size:.9375rem;font-weight:500;color:#3f3f46;text-decoration:none;padding:8px 0;">Iniciar Sesión</a>
         <a href="<?php echo BASE_URL; ?>/auth/register" class="btn-gold" style="padding:12px 20px;border-radius:12px;font-size:.9375rem;text-align:center;">Empezar Gratis</a>
     </div>
@@ -278,10 +280,10 @@
             $features = [
                 ['Reservas Online 24/7','Tus clientes agendan citas desde cualquier lugar, a cualquier hora. Página personalizada para tu barbería con URL propia.','M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z','#c9901a','#fef9ee'],
                 ['Dashboard Completo','Visualiza estadísticas, ingresos y citas en tiempo real. Reportes detallados para tomar mejores decisiones de negocio.','M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z','#818cf8','#f0f9ff'],
-                ['Gestión de Clientes','Base de datos completa con historial de servicios, preferencias y recordatorios automáticos vía WhatsApp.','M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z','#22c55e','#f0fdf4'],
+                ['Gestión de Clientes','Base de datos completa con historial de servicios, preferencias, contacto por WhatsApp via wa.me y recordatorios por email.','M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z','#22c55e','#f0fdf4'],
                 ['Gestión de Barberos','Administra horarios, comisiones y rendimiento de tu equipo. Cada barbero con su propio perfil público y portal.','M14.121 14.121L19 19m-7-7l7-7m-7 7l-2.879 2.879M12 12L9.121 9.121m0 5.758a3 3 0 10-4.243 4.243 3 3 0 004.243-4.243zm0-5.758a3 3 0 10-4.243-4.243 3 3 0 004.243 4.243z','#0a0a0a','#f5f5f0'],
                 ['Control Financiero','Registra ingresos, gastos y comisiones. Reportes fiscales y análisis de rentabilidad por servicio o barbero.','M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z','#e8b84b','#fffbeb'],
-                ['WhatsApp Integrado','Recordatorios automáticos a clientes vía WhatsApp. Reduce ausencias hasta 80% y mantiene la comunicación fluida.','M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z','#22c55e','#f0fdf4'],
+                ['WhatsApp Integrado','Comunicación directa por WhatsApp con enlace wa.me y recordatorios automáticos por email. Reduce ausencias y mejora la puntualidad.','M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z','#22c55e','#f0fdf4'],
             ];
             foreach($features as $f): ?>
             <div class="card" style="background:#fff;border:1.5px solid #ebebeb;border-radius:20px;padding:28px;display:flex;flex-direction:column;gap:16px;">
@@ -370,7 +372,7 @@
                     <span style="color:#71717a;font-size:.875rem;">/mes</span>
                 </div>
                 <ul style="list-style:none;padding:0;margin:0 0 28px;display:flex;flex-direction:column;gap:10px;">
-                    <?php foreach(['Citas ilimitadas','Hasta 5 barberos','Notificaciones WhatsApp/SMS','Reportes avanzados','Soporte prioritario'] as $li): ?>
+                    <?php foreach(['Citas ilimitadas','Hasta 5 barberos','WhatsApp via wa.me + recordatorios por email','Reportes avanzados','Soporte prioritario'] as $li): ?>
                     <li style="display:flex;align-items:center;gap:8px;font-size:.875rem;color:#d4d4d4;">
                         <svg width="16" height="16" fill="#e8b84b" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
                         <?php echo $li; ?>
@@ -539,7 +541,7 @@
             <div>
                 <h4 style="font-size:.6875rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#52525b;margin:0 0 16px;">Soporte</h4>
                 <ul style="list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:10px;">
-                    <?php foreach([['Documentación','#'],['Tutoriales','#'],['Contacto','#']] as $l): ?>
+                    <?php foreach([['Documentación',BASE_URL.'/documentation'],['Tutoriales','#'],['Contacto','#']] as $l): ?>
                     <li><a href="<?php echo $l[1]; ?>" style="font-size:.875rem;color:#71717a;text-decoration:none;transition:color .18s;" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='#71717a'"><?php echo $l[0]; ?></a></li>
                     <?php endforeach; ?>
                 </ul>

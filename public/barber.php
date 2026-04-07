@@ -54,6 +54,16 @@ $services = $db->fetchAll("
     WHERE bs.barber_id = ? AND s.is_active = TRUE
     ORDER BY s.category, s.price
 ", [$barber['id']]);
+// Fallback: si el barbero no tiene asignaciones explícitas, usar servicios activos de la barbería.
+if (empty($services)) {
+    $services = $db->fetchAll(
+        "SELECT *
+         FROM services
+         WHERE barbershop_id = ? AND is_active = TRUE
+         ORDER BY category, price",
+        [$barber['barbershop_id']]
+    );
+}
 
 // Obtener reseñas del barbero
 $reviews = $db->fetchAll("

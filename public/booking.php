@@ -399,11 +399,15 @@ foreach ($schedules as $schedule) {
                                 <span class="text-xl font-bold text-gray-900"><?php echo number_format($barber['rating'], 1); ?></span>
                             </div>
 
-                            <div class="mt-auto">
-                            <button @click="selectBarber(<?php echo $barber['id']; ?>)" 
-                                    class="w-full px-6 py-4 bg-gray-900 hover:bg-gray-800 text-white rounded-xl font-bold transition">
-                                Reservar con <?php echo explode(' ', $barber['full_name'])[0]; ?>
-                            </button>
+                            <div class="mt-auto grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                <a href="<?php echo BASE_URL; ?>/public/barber.php?shop=<?php echo urlencode($barbershop['slug']); ?>&barber=<?php echo urlencode($barber['slug']); ?>"
+                                   class="w-full px-4 py-4 border-2 border-gray-200 hover:border-gray-300 text-gray-800 rounded-xl font-bold transition text-center">
+                                    Ver Perfil
+                                </a>
+                                <button @click="selectBarber(<?php echo $barber['id']; ?>)"
+                                        class="w-full px-4 py-4 bg-gray-900 hover:bg-gray-800 text-white rounded-xl font-bold transition">
+                                    Reservar con <?php echo explode(' ', $barber['full_name'])[0]; ?>
+                                </button>
                             </div>
                         </div>
                     </div>

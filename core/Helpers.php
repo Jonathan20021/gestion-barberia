@@ -679,6 +679,14 @@ function uploadImage($file, $directory, $options = []) {
     $uploadPath = $uploadDir . '/' . $fileName;
     
     if (!empty($options['forceSquare'])) {
+        $canCropSquare = function_exists('imagecreatetruecolor') && function_exists('imagecopyresampled');
+
+        if (!$canCropSquare) {
+            // Si GD no está disponible en producción, guarda el archivo sin recorte.
+            if (!move_uploaded_file($file['tmp_name'], $uploadPath)) {
+                return ['success' => false, 'path' => null, 'message' => 'Error al guardar el archivo'];
+            }
+        } else {
         $sourceImage = null;
         switch ($mimeType) {
             case 'image/jpeg':
@@ -699,8 +707,11 @@ function uploadImage($file, $directory, $options = []) {
         }
 
         if (!$sourceImage) {
-            return ['success' => false, 'path' => null, 'message' => 'No se pudo procesar la imagen. Verifique la extensión GD del servidor'];
-        }
+            // Fallback seguro: guardar sin recorte si no se puede abrir con GD.
+            if (!move_uploaded_file($file['tmp_name'], $uploadPath)) {
+                return ['success' => false, 'path' => null, 'message' => 'Error al guardar el archivo'];
+            }
+        } else {
 
         $srcWidth = imagesx($sourceImage);
         $srcHeight = imagesy($sourceImage);
@@ -754,11 +765,13 @@ function uploadImage($file, $directory, $options = []) {
                 break;
         }
 
-        imagedestroy($sourceImage);
-        imagedestroy($destinationImage);
+            imagedestroy($sourceImage);
+            imagedestroy($destinationImage);
 
-        if (!$saveOk) {
-            return ['success' => false, 'path' => null, 'message' => 'Error al guardar la imagen procesada'];
+            if (!$saveOk) {
+                return ['success' => false, 'path' => null, 'message' => 'Error al guardar la imagen procesada'];
+            }
+        }
         }
     } else {
         // Mover archivo sin procesar
@@ -809,6 +822,15 @@ function imageUrl($path, $default = 'default-avatar.png') {
     if (!$path) {
         return BASE_URL . '/assets/images/' . $default;
     }
-    
-    return BASE_URL . '/uploads/' . ltrim($path, '/');
+
+    $normalized = ltrim($path, '/');
+
+    // Compatibilidad: en este proyecto los uploads están en /public/uploads.
+    // Si en algún entorno existe /uploads en raíz, se respeta también.
+    $rootUploadsDir = BASE_PATH . '/uploads';
+    if (is_dir($rootUploadsDir)) {
+        return BASE_URL . '/uploads/' . $normalized;
+    }
+
+    return BASE_URL . '/public/uploads/' . $normalized;
 }

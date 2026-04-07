@@ -340,6 +340,29 @@ include BASE_PATH . '/includes/header.php';
                     </div>
                 </div>
             </div>
+
+            <div class="mt-6 bg-white rounded-lg shadow-md border border-gray-200 p-6">
+                <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+                    <div>
+                        <p class="text-sm text-gray-500">Difusión y reservas</p>
+                        <h3 class="text-xl font-semibold text-gray-900 mt-1">Administra todos tus enlaces públicos</h3>
+                        <p class="text-sm text-gray-600 mt-2">
+                            Consulta el link general de tu barbería y los perfiles públicos de cada barbero desde un solo lugar.
+                        </p>
+                    </div>
+                    <div class="flex flex-wrap gap-3">
+                        <a href="<?php echo BASE_URL; ?>/dashboard/public-links"
+                           class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition text-sm font-medium">
+                            Ver enlaces públicos
+                        </a>
+                        <a href="<?php echo BASE_URL; ?>/public/<?php echo e($barbershop['slug']); ?>"
+                           target="_blank"
+                           class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition text-sm font-medium">
+                            Abrir página pública
+                        </a>
+                    </div>
+                </div>
+            </div>
         </main>
     </div>
 </div>

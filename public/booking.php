@@ -645,46 +645,55 @@ foreach ($schedules as $schedule) {
      BOOKING MODAL
 ══════════════════════════════════════════════ -->
 <div x-show="showBookingModal"
-     x-transition:enter="transition ease-out duration-200"
+     x-transition:enter="transition ease-out duration-300"
      x-transition:enter-start="opacity-0"
      x-transition:enter-end="opacity-100"
-     x-transition:leave="transition ease-in duration-150"
+     x-transition:leave="transition ease-in duration-200"
      x-transition:leave-start="opacity-100"
      x-transition:leave-end="opacity-0"
-     style="position:fixed;inset:0;z-index:200;display:flex;align-items:flex-end;justify-content:center;padding:0;"
-     class="sm:items-center sm:p-4"
+     style="position:fixed;inset:0;z-index:200;display:flex;align-items:flex-end;justify-content:center;"
      @keydown.escape.window="closeBookingModal()"
      x-cloak>
 
     <!-- Backdrop -->
     <div @click="closeBookingModal()"
-         style="position:absolute;inset:0;background:rgba(0,0,0,.7);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);"></div>
+         style="position:absolute;inset:0;background:rgba(0,0,0,.75);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);"></div>
 
-    <!-- Panel -->
-    <div class="modal-anim" style="position:relative;background:#fff;width:100%;max-width:560px;border-radius:24px 24px 0 0;overflow:hidden;max-height:92vh;overflow-y:auto;">
+    <!-- Panel — bottom sheet on mobile, centered card on desktop -->
+    <div class="modal-panel modal-anim" style="position:relative;background:#fff;width:100%;max-width:560px;overflow:hidden;display:flex;flex-direction:column;">
+
+        <!-- Drag handle (mobile only) -->
+        <div class="modal-handle-wrap" style="display:flex;justify-content:center;padding:10px 0 0;flex-shrink:0;">
+            <div style="width:36px;height:4px;background:#e5e5e0;border-radius:2px;"></div>
+        </div>
 
         <!-- Gold accent bar -->
-        <div style="height:3px;background:linear-gradient(90deg,#c9901a 0%,#e8b84b 50%,#c9901a 100%);"></div>
+        <div style="height:3px;background:linear-gradient(90deg,#c9901a 0%,#e8b84b 50%,#c9901a 100%);flex-shrink:0;"></div>
 
         <!-- Modal header -->
-        <div style="padding:20px 24px 18px;border-bottom:1px solid #f0f0ec;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:#fff;z-index:10;">
+        <div style="padding:18px 20px 16px;border-bottom:1px solid #f0f0ec;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;background:#fff;">
             <div>
-                <h3 style="font-family:'Sora',sans-serif;font-size:1.1875rem;font-weight:800;color:#0a0a0a;margin:0;letter-spacing:-.02em;">Reserva tu Cita</h3>
-                <p style="font-size:.8125rem;color:#71717a;margin:3px 0 0;"><?php echo htmlspecialchars($barbershop['business_name']); ?></p>
+                <h3 style="font-family:'Sora',sans-serif;font-size:1.125rem;font-weight:800;color:#0a0a0a;margin:0;letter-spacing:-.02em;">Reserva tu Cita</h3>
+                <p style="font-size:.8125rem;color:#71717a;margin:2px 0 0;text-transform:uppercase;letter-spacing:.04em;font-weight:600;font-size:.6875rem;"><?php echo htmlspecialchars($barbershop['business_name']); ?></p>
             </div>
             <button @click="closeBookingModal()"
-                    style="width:32px;height:32px;background:#f5f5f0;border:none;border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#71717a;transition:background .18s;"
-                    onmouseover="this.style.background='#e5e5e0'" onmouseout="this.style.background='#f5f5f0'">
-                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+                    style="width:36px;height:36px;background:#f5f5f0;border:none;border-radius:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#71717a;flex-shrink:0;transition:background .15s,color .15s;"
+                    onmouseover="this.style.background='#e8e8e3';this.style.color='#0a0a0a'" onmouseout="this.style.background='#f5f5f0';this.style.color='#71717a'">
+                <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
             </button>
         </div>
 
-        <form action="book.php" method="POST" style="padding:24px;display:flex;flex-direction:column;gap:18px;">
+        <!-- Scrollable body -->
+        <div style="overflow-y:auto;flex:1;-webkit-overflow-scrolling:touch;">
+        <form action="book.php" method="POST" style="padding:20px;display:flex;flex-direction:column;gap:16px;">
             <input type="hidden" name="barbershop_id" value="<?php echo $barbershop['id']; ?>">
 
             <!-- Service -->
             <div>
-                <label style="display:block;font-size:.6875rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#71717a;margin-bottom:8px;">Servicio *</label>
+                <label style="display:flex;align-items:center;gap:6px;font-size:.6875rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#71717a;margin-bottom:8px;">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#c9901a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+                    Servicio <span style="color:#ef4444;">*</span>
+                </label>
                 <select name="service_id" x-model="selectedService" @change="loadAvailability()" required class="inp">
                     <option value="">Seleccionar servicio...</option>
                     <?php foreach ($services as $service): ?>
@@ -697,75 +706,135 @@ foreach ($schedules as $schedule) {
 
             <!-- Barber -->
             <div>
-                <label style="display:block;font-size:.6875rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#71717a;margin-bottom:8px;">Barbero *</label>
+                <label style="display:flex;align-items:center;gap:6px;font-size:.6875rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#71717a;margin-bottom:8px;">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#c9901a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                    Barbero <span style="color:#ef4444;">*</span>
+                </label>
                 <select name="barber_id" x-model="selectedBarber" @change="loadAvailability()" required class="inp">
                     <option value="">Seleccionar barbero...</option>
                     <?php foreach ($barbers as $barber): ?>
                     <option value="<?php echo $barber['id']; ?>"><?php echo htmlspecialchars($barber['full_name']); ?> — <?php echo number_format($barber['rating'], 1); ?> ★</option>
                     <?php endforeach; ?>
                 </select>
-                <p x-show="selectedBarber" style="font-size:.75rem;color:#16a34a;margin:6px 0 0;font-weight:500;">✓ Barbero preseleccionado</p>
+                <p x-show="selectedBarber" style="display:flex;align-items:center;gap:5px;font-size:.75rem;color:#16a34a;margin:6px 0 0;font-weight:600;">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                    Barbero seleccionado
+                </p>
             </div>
 
-            <!-- Date + Time -->
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+            <!-- Date + Time — stacked on very small screens -->
+            <div class="modal-dt-grid">
                 <div>
-                    <label style="display:block;font-size:.6875rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#71717a;margin-bottom:8px;">Fecha *</label>
+                    <label style="display:flex;align-items:center;gap:6px;font-size:.6875rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#71717a;margin-bottom:8px;">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#c9901a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                        Fecha <span style="color:#ef4444;">*</span>
+                    </label>
                     <input type="date" name="appointment_date" x-model="selectedDate" @change="loadAvailability()"
                            required min="<?php echo date('Y-m-d'); ?>" class="inp">
                 </div>
                 <div>
-                    <label style="display:block;font-size:.6875rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#71717a;margin-bottom:8px;">Hora *</label>
+                    <label style="display:flex;align-items:center;gap:6px;font-size:.6875rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#71717a;margin-bottom:8px;">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#c9901a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                        Hora <span style="color:#ef4444;">*</span>
+                    </label>
                     <select name="start_time" x-model="selectedStartTime" required class="inp">
-                        <option value="" x-text="availabilityLoading ? 'Cargando...' : 'Selecciona fecha'"></option>
+                        <option value="" x-text="availabilityLoading ? 'Cargando...' : 'Selecciona hora'"></option>
                         <template x-for="slot in availableSlots" :key="slot.value">
                             <option :value="slot.value" x-text="slot.time"></option>
                         </template>
                     </select>
-                    <p x-show="availabilityMessage" style="font-size:.75rem;color:#d97706;margin:5px 0 0;" x-text="availabilityMessage"></p>
+                    <p x-show="availabilityMessage" style="font-size:.75rem;color:#d97706;margin:5px 0 0;font-weight:500;" x-text="availabilityMessage"></p>
                     <div x-show="occupiedSlots.length > 0" style="display:flex;flex-wrap:wrap;gap:4px;margin-top:6px;">
                         <template x-for="slot in occupiedSlots" :key="slot.label">
-                            <span style="font-size:.625rem;padding:2px 8px;background:#fef2f2;color:#ef4444;border:1px solid #fecaca;border-radius:999px;" x-text="slot.label"></span>
+                            <span style="font-size:.625rem;padding:3px 8px;background:#fef2f2;color:#ef4444;border:1px solid #fecaca;border-radius:999px;font-weight:500;" x-text="slot.label"></span>
                         </template>
                     </div>
                 </div>
             </div>
 
-            <!-- Divider -->
-            <div style="border-top:1px solid #f0f0ec;padding-top:4px;">
-                <p style="font-size:.6875rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#71717a;margin:0 0 12px;">Tus datos</p>
+            <!-- Tus datos -->
+            <div style="border-top:1px solid #f0f0ec;padding-top:16px;">
+                <p style="display:flex;align-items:center;gap:6px;font-size:.6875rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#71717a;margin:0 0 14px;">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#c9901a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                    Tus datos
+                </p>
+                <div style="display:flex;flex-direction:column;gap:10px;">
+                    <input type="text" name="client_name" required placeholder="Nombre completo" class="inp">
+                    <input type="tel" name="client_phone" required placeholder="(809) 000-0000" class="inp">
+                    <textarea name="notes" rows="2" placeholder="Notas adicionales (opcional)" class="inp" style="resize:none;"></textarea>
+                </div>
             </div>
 
-            <input type="text" name="client_name" required placeholder="Nombre completo" class="inp">
-            <input type="tel" name="client_phone" required placeholder="(809) 000-0000" class="inp">
-            <textarea name="notes" rows="2" placeholder="Notas adicionales (opcional)" class="inp" style="resize:none;"></textarea>
-
             <!-- Actions -->
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;padding-top:4px;">
+            <div style="display:grid;grid-template-columns:1fr 2fr;gap:10px;padding-top:4px;">
                 <button type="button" @click="closeBookingModal()"
-                        style="padding:12px;border:1.5px solid #e5e5e2;background:#fff;border-radius:12px;font-family:inherit;font-size:.875rem;font-weight:600;color:#52525b;cursor:pointer;transition:background .18s;"
-                        onmouseover="this.style.background='#f5f5f0'" onmouseout="this.style.background='#fff'">
+                        style="padding:14px 12px;border:1.5px solid #e5e5e2;background:#fff;border-radius:13px;font-family:inherit;font-size:.9rem;font-weight:600;color:#52525b;cursor:pointer;transition:all .15s;"
+                        onmouseover="this.style.background='#f5f5f0';this.style.borderColor='#d0d0cb'" onmouseout="this.style.background='#fff';this.style.borderColor='#e5e5e2'">
                     Cancelar
                 </button>
-                <button type="submit"
-                        style="padding:12px;background:#0a0a0a;border:none;border-radius:12px;font-family:'Sora',sans-serif;font-size:.875rem;font-weight:700;color:#fff;cursor:pointer;transition:background .18s;"
-                        onmouseover="this.style.background='#1f1f1f'" onmouseout="this.style.background='#0a0a0a'">
+                <button type="submit" class="btn-gold"
+                        style="padding:14px 12px;border:none;border-radius:13px;font-family:'Sora',sans-serif;font-size:.9rem;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
                     Confirmar Reserva
                 </button>
             </div>
+
+            <!-- Safe area bottom (iOS notch) -->
+            <div class="modal-safe-bottom"></div>
         </form>
+        </div>
     </div>
 </div>
 
 <style>
-@media(min-width:640px){
-    .modal-anim div[style*="border-radius:24px 24px 0 0"] { border-radius:24px !important; }
+/* ── Modal panel: bottom sheet mobile / card desktop ── */
+.modal-panel {
+    border-radius: 24px 24px 0 0;
+    max-height: 94dvh;
+    max-height: 94vh;
 }
-@media(min-width:768px){
-    .hero-grid { grid-template-columns: 1fr 1fr !important; }
+.modal-dt-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+.modal-safe-bottom { height: env(safe-area-inset-bottom, 0px); }
+.modal-handle-wrap { display: flex; }
+
+@media (min-width: 640px) {
+    .modal-panel {
+        border-radius: 20px;
+        max-height: 90vh;
+        margin-bottom: 0;
+        box-shadow: 0 24px 64px rgba(0,0,0,.3);
+    }
+    .modal-handle-wrap { display: none; }
+}
+@media (max-width: 380px) {
+    .modal-dt-grid { grid-template-columns: 1fr; }
+}
+@media (min-width: 768px) {
+    .hero-grid   { grid-template-columns: 1fr 1fr !important; }
     .footer-grid { grid-template-columns: 2fr 1fr 1fr !important; }
 }
-[x-cloak] { display:none !important; }
+[x-cloak] { display: none !important; }
+
+/* ── Improved inp for mobile ── */
+.inp {
+    width: 100%; padding: 13px 14px;
+    background: #f7f7f4; border: 1.5px solid #e8e8e4; border-radius: 12px;
+    font-size: 1rem; /* 16px prevents iOS zoom */
+    color: #111; transition: border-color .18s, box-shadow .18s, background .18s;
+    font-family: inherit;
+    -webkit-appearance: none; appearance: none;
+}
+.inp:focus { outline: none; border-color: #c9901a; box-shadow: 0 0 0 3px rgba(201,144,26,.14); background: #fff; }
+.inp::placeholder { color: #b0b0a8; }
+select.inp {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%23aaa' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3E%3C/svg%3E");
+    background-repeat: no-repeat; background-position: right 12px center; background-size: 18px;
+    padding-right: 42px;
+}
 </style>
 
 <script>

@@ -9,7 +9,8 @@
       "Bash(php -l c:/xampp/htdocs/gestion-barberia/includes/header.php)",
       "Bash(php -l c:/xampp/htdocs/gestion-barberia/includes/sidebar-owner.php)",
       "Bash(php -l c:/xampp/htdocs/gestion-barberia/includes/sidebar-admin.php)",
-      "Bash(php -l c:/xampp/htdocs/gestion-barberia/includes/sidebar-barber.php)"
+      "Bash(php -l c:/xampp/htdocs/gestion-barberia/includes/sidebar-barber.php)",
+      "Bash(php -l c:/xampp/htdocs/gestion-barberia/public/booking.php)"
     ]
   }
 }

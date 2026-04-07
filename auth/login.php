@@ -356,8 +356,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <!-- Back link -->
             <p style="margin-top:24px;text-align:center;font-size:.875rem;color:#3f3f46;">
                 ¿No tienes cuenta?
-                <a href="<?php echo BASE_URL; ?>/" style="color:#c9901a;font-weight:600;text-decoration:none;margin-left:4px;transition:color .15s;"
-                   onmouseover="this.style.color='#e8b84b'" onmouseout="this.style.color='#c9901a'">Ver planes</a>
+                <a href="<?php echo BASE_URL; ?>/auth/register" style="color:#c9901a;font-weight:600;text-decoration:none;margin-left:4px;transition:color .15s;"
+                   onmouseover="this.style.color='#e8b84b'" onmouseout="this.style.color='#c9901a'">Crear cuenta</a>
             </p>
 
         </div>

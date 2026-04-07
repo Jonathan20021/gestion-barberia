@@ -111,7 +111,7 @@
             <a href="#pricing"  style="font-size:.875rem;font-weight:500;color:#52525b;text-decoration:none;transition:color .18s;" onmouseover="this.style.color='#0a0a0a'" onmouseout="this.style.color='#52525b'">Precios</a>
             <a href="#demo"     style="font-size:.875rem;font-weight:500;color:#52525b;text-decoration:none;transition:color .18s;" onmouseover="this.style.color='#0a0a0a'" onmouseout="this.style.color='#52525b'">Demo</a>
             <a href="<?php echo BASE_URL; ?>/auth/login" style="font-size:.875rem;font-weight:500;color:#52525b;text-decoration:none;transition:color .18s;" onmouseover="this.style.color='#0a0a0a'" onmouseout="this.style.color='#52525b'">Iniciar Sesión</a>
-            <a href="<?php echo BASE_URL; ?>/auth/login" class="btn-gold" style="padding:9px 20px;border-radius:10px;font-size:.875rem;">Empezar Gratis</a>
+            <a href="<?php echo BASE_URL; ?>/auth/register" class="btn-gold" style="padding:9px 20px;border-radius:10px;font-size:.875rem;">Empezar Gratis</a>
         </nav>
 
         <!-- Mobile toggle -->
@@ -129,7 +129,7 @@
         <a href="#pricing"    style="font-size:.9375rem;font-weight:500;color:#3f3f46;text-decoration:none;padding:8px 0;">Precios</a>
         <a href="#demo"       style="font-size:.9375rem;font-weight:500;color:#3f3f46;text-decoration:none;padding:8px 0;">Demo</a>
         <a href="<?php echo BASE_URL; ?>/auth/login" style="font-size:.9375rem;font-weight:500;color:#3f3f46;text-decoration:none;padding:8px 0;">Iniciar Sesión</a>
-        <a href="<?php echo BASE_URL; ?>/auth/login" class="btn-gold" style="padding:12px 20px;border-radius:12px;font-size:.9375rem;text-align:center;">Empezar Gratis</a>
+        <a href="<?php echo BASE_URL; ?>/auth/register" class="btn-gold" style="padding:12px 20px;border-radius:12px;font-size:.9375rem;text-align:center;">Empezar Gratis</a>
     </div>
 </header>
 
@@ -171,9 +171,9 @@
 
         <!-- CTA row -->
         <div class="fade-up2" style="display:flex;flex-wrap:wrap;gap:12px;justify-content:center;margin-bottom:16px;">
-            <a href="<?php echo BASE_URL; ?>/auth/login" class="btn-gold" style="padding:15px 32px;border-radius:14px;font-family:'Sora',sans-serif;font-size:1rem;">
+            <a href="<?php echo BASE_URL; ?>/auth/register" class="btn-gold" style="padding:15px 32px;border-radius:14px;font-family:'Sora',sans-serif;font-size:1rem;">
                 <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
-                Probar Gratis 30 Días
+                Probar Gratis 15 Días
             </a>
             <a href="#demo" class="btn-outline" style="padding:15px 28px;border-radius:14px;font-size:1rem;color:#fff;border-color:rgba(255,255,255,.2);"
                onmouseover="this.style.background='rgba(255,255,255,.07)';this.style.borderColor='rgba(255,255,255,.4)'"
@@ -308,11 +308,11 @@
         <div style="text-align:center;margin-bottom:64px;">
             <span style="display:inline-block;padding:5px 14px;background:#fef9ee;border:1px solid #f0d88a;border-radius:999px;font-size:.6875rem;font-weight:700;letter-spacing:.1em;color:#a16207;text-transform:uppercase;margin-bottom:14px;">Proceso</span>
             <h2 style="font-size:clamp(2rem,5vw,3rem);font-weight:900;color:#0a0a0a;letter-spacing:-.03em;margin:0 0 14px;">En funcionamiento en 15 minutos</h2>
-            <p style="font-size:1.0625rem;color:#71717a;margin:0 auto;max-width:440px;line-height:1.65;">Sin conocimientos técnicos. Sin instalaciones. Listo para usar desde el primer día.</p>
+            <p style="font-size:1.0625rem;color:#71717a;margin:0 auto;max-width:520px;line-height:1.65;">Regístrate, el sistema crea tu cuenta de owner y tu barbería, y recibes una licencia de prueba de 15 días automáticamente.</p>
         </div>
 
         <div class="steps-grid" style="display:grid;grid-template-columns:1fr;gap:24px;">
-            <?php $steps = [['Crea tu cuenta','Regístrate gratis con tu email. Configura el nombre, servicios y horarios de tu barbería en minutos.'],['Personaliza tu página','Tu barbería tendrá una URL única (kyros.app/tu-barberia). Agrega tus barberos, fotos y precios.'],['Empieza a recibir citas','Comparte tu link en WhatsApp e Instagram. Tus clientes agendan solos y tú gestionas todo desde el dashboard.']]; foreach($steps as $i => $s): ?>
+            <?php $steps = [['Registra tu barbería','Completa el formulario con tus datos y el nombre del negocio. Se crea tu cuenta de owner al instante.'],['Activa tu prueba gratis','El sistema genera automáticamente una licencia trial de 15 días con el plan que elijas para comenzar.'],['Entra y configura','Accede al dashboard, personaliza tu URL, agrega barberos, servicios y empieza a recibir citas online.']]; foreach($steps as $i => $s): ?>
             <div style="display:flex;gap:20px;align-items:flex-start;">
                 <div style="flex-shrink:0;width:44px;height:44px;border-radius:12px;background:<?php echo $i===1?'linear-gradient(135deg,#c9901a,#e8b84b)':'#0a0a0a'; ?>;display:flex;align-items:center;justify-content:center;font-family:'Sora',sans-serif;font-weight:900;font-size:1rem;color:<?php echo $i===1?'#0a0a0a':'#e8b84b'; ?>;">
                     0<?php echo $i+1; ?>
@@ -356,7 +356,7 @@
                     </li>
                     <?php endforeach; ?>
                 </ul>
-                <a href="<?php echo BASE_URL; ?>/auth/login" class="btn-dark" style="width:100%;padding:13px;border-radius:12px;font-size:.9375rem;">Comenzar</a>
+                <a href="<?php echo BASE_URL; ?>/auth/register" class="btn-dark" style="width:100%;padding:13px;border-radius:12px;font-size:.9375rem;">Comenzar</a>
             </div>
 
             <!-- Profesional -->
@@ -377,7 +377,7 @@
                     </li>
                     <?php endforeach; ?>
                 </ul>
-                <a href="<?php echo BASE_URL; ?>/auth/login" class="btn-gold" style="width:100%;padding:13px;border-radius:12px;font-size:.9375rem;">Comenzar Prueba Gratis</a>
+                <a href="<?php echo BASE_URL; ?>/auth/register" class="btn-gold" style="width:100%;padding:13px;border-radius:12px;font-size:.9375rem;">Comenzar Prueba Gratis</a>
             </div>
 
             <!-- Empresarial -->
@@ -489,8 +489,8 @@
         </div>
         <h2 style="font-size:clamp(2rem,5vw,3rem);font-weight:900;color:#0a0a0a;letter-spacing:-.03em;margin:0 0 16px;line-height:1.1;">¿Listo para Modernizar tu Barbería?</h2>
         <p style="font-size:1.0625rem;color:#71717a;margin:0 0 36px;line-height:1.65;">Únete a cientos de barberías que ya están creciendo con Kyros Barber Cloud</p>
-        <a href="<?php echo BASE_URL; ?>/auth/login" class="btn-gold" style="padding:16px 36px;border-radius:14px;font-family:'Sora',sans-serif;font-size:1.0625rem;">
-            Comenzar Gratis por 30 Días
+        <a href="<?php echo BASE_URL; ?>/auth/register" class="btn-gold" style="padding:16px 36px;border-radius:14px;font-family:'Sora',sans-serif;font-size:1.0625rem;">
+            Comenzar Gratis por 15 Días
         </a>
         <p style="font-size:.8125rem;color:#a1a1aa;margin:16px 0 0;">No requiere tarjeta de crédito · Cancela cuando quieras</p>
     </div>
@@ -528,7 +528,7 @@
             <div>
                 <h4 style="font-size:.6875rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#52525b;margin:0 0 16px;">Cuenta</h4>
                 <ul style="list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:10px;">
-                    <?php foreach([['Iniciar Sesión',BASE_URL.'/auth/login'],['Registrarse',BASE_URL.'/auth/login'],['Demo',BASE_URL.'/auth/login']] as $l): ?>
+                    <?php foreach([['Iniciar Sesión',BASE_URL.'/auth/login'],['Registrarse',BASE_URL.'/auth/register'],['Demo',BASE_URL.'/auth/login']] as $l): ?>
                     <li><a href="<?php echo $l[1]; ?>" style="font-size:.875rem;color:#71717a;text-decoration:none;transition:color .18s;" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='#71717a'"><?php echo $l[0]; ?></a></li>
                     <?php endforeach; ?>
                 </ul>

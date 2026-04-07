@@ -8,15 +8,17 @@ require_once BASE_PATH . '/core/Helpers.php';
 Auth::requireRole('superadmin');
 
 $db = Database::getInstance();
+$demoShopId = (int) ($db->fetch("SELECT id FROM barbershops WHERE slug = ?", [DEMO_BARBERSHOP_SLUG])['id'] ?? 0);
+$demoLicenseId = (int) ($db->fetch("SELECT license_id FROM barbershops WHERE slug = ?", [DEMO_BARBERSHOP_SLUG])['license_id'] ?? 0);
 
 // Obtener estadísticas generales
 $stats = [
-    'total_barbershops' => $db->fetch("SELECT COUNT(*) as count FROM barbershops WHERE status = 'active'")['count'],
-    'total_licenses' => $db->fetch("SELECT COUNT(*) as count FROM licenses WHERE status IN ('active', 'trial')")['count'],
-    'total_barbers' => $db->fetch("SELECT COUNT(*) as count FROM barbers WHERE status = 'active'")['count'],
-    'total_appointments' => $db->fetch("SELECT COUNT(*) as count FROM appointments WHERE appointment_date >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)")['count'],
-    'monthly_revenue' => $db->fetch("SELECT COALESCE(SUM(amount), 0) as total FROM transactions WHERE type = 'license_payment' AND transaction_date >= DATE_SUB(NOW(), INTERVAL 30 DAY)")['total'],
-    'pending_licenses' => $db->fetch("SELECT COUNT(*) as count FROM licenses WHERE ((status = 'active' AND end_date <= DATE_ADD(CURDATE(), INTERVAL 7 DAY)) OR (status = 'trial' AND trial_end_date <= DATE_ADD(CURDATE(), INTERVAL 7 DAY)))")['count']
+    'total_barbershops' => $db->fetch("SELECT COUNT(*) as count FROM barbershops WHERE status = 'active' AND slug != ?", [DEMO_BARBERSHOP_SLUG])['count'],
+    'total_licenses' => $db->fetch("SELECT COUNT(*) as count FROM licenses WHERE status IN ('active', 'trial') AND id != ?", [$demoLicenseId])['count'],
+    'total_barbers' => $db->fetch("SELECT COUNT(*) as count FROM barbers WHERE status = 'active' AND barbershop_id != ?", [$demoShopId])['count'],
+    'total_appointments' => $db->fetch("SELECT COUNT(*) as count FROM appointments WHERE appointment_date >= DATE_SUB(CURDATE(), INTERVAL 30 DAY) AND barbershop_id != ?", [$demoShopId])['count'],
+    'monthly_revenue' => $db->fetch("SELECT COALESCE(SUM(amount), 0) as total FROM transactions WHERE type = 'license_payment' AND transaction_date >= DATE_SUB(NOW(), INTERVAL 30 DAY) AND barbershop_id != ?", [$demoShopId])['total'],
+    'pending_licenses' => $db->fetch("SELECT COUNT(*) as count FROM licenses WHERE id != ? AND ((status = 'active' AND end_date <= DATE_ADD(CURDATE(), INTERVAL 7 DAY)) OR (status = 'trial' AND trial_end_date <= DATE_ADD(CURDATE(), INTERVAL 7 DAY)))", [$demoLicenseId])['count']
 ];
 
 // Licencias próximas a vencer
@@ -25,11 +27,12 @@ $expiring_licenses = $db->fetchAll("
     FROM licenses l
     LEFT JOIN barbershops b ON l.id = b.license_id
     LEFT JOIN users u ON b.owner_id = u.id
-    WHERE (l.status = 'active' AND l.end_date <= DATE_ADD(CURDATE(), INTERVAL 30 DAY))
-       OR (l.status = 'trial' AND l.trial_end_date <= DATE_ADD(CURDATE(), INTERVAL 30 DAY))
+    WHERE b.slug != ?
+      AND ((l.status = 'active' AND l.end_date <= DATE_ADD(CURDATE(), INTERVAL 30 DAY))
+       OR (l.status = 'trial' AND l.trial_end_date <= DATE_ADD(CURDATE(), INTERVAL 30 DAY)))
     ORDER BY CASE WHEN l.status = 'trial' THEN l.trial_end_date ELSE l.end_date END ASC
     LIMIT 10
-");
+", [DEMO_BARBERSHOP_SLUG]);
 
 // Barberías recientes
 $recent_barbershops = $db->fetchAll("
@@ -37,9 +40,10 @@ $recent_barbershops = $db->fetchAll("
     FROM barbershops b
     JOIN users u ON b.owner_id = u.id
     JOIN licenses l ON b.license_id = l.id
+    WHERE b.slug != ?
     ORDER BY b.created_at DESC
     LIMIT 5
-");
+", [DEMO_BARBERSHOP_SLUG]);
 
 // Ingresos mensuales últimos 6 meses
 $monthly_revenue_data = $db->fetchAll("
@@ -48,10 +52,11 @@ $monthly_revenue_data = $db->fetchAll("
         SUM(amount) as total
     FROM transactions
     WHERE type = 'license_payment'
+    AND barbershop_id != ?
     AND transaction_date >= DATE_SUB(CURDATE(), INTERVAL 6 MONTH)
     GROUP BY DATE_FORMAT(transaction_date, '%Y-%m')
     ORDER BY month ASC
-");
+", [$demoShopId]);
 
 $title = 'Panel Super Admin - Kyros Barber Cloud';
 include BASE_PATH . '/includes/header.php';

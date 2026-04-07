@@ -8,13 +8,15 @@ require_once BASE_PATH . '/core/Helpers.php';
 Auth::requireRole('superadmin');
 
 $db = Database::getInstance();
+$demoShopId = (int) ($db->fetch("SELECT id FROM barbershops WHERE slug = ?", [DEMO_BARBERSHOP_SLUG])['id'] ?? 0);
+$demoLicenseId = (int) ($db->fetch("SELECT license_id FROM barbershops WHERE slug = ?", [DEMO_BARBERSHOP_SLUG])['license_id'] ?? 0);
 
 // Estadísticas financieras
 $stats = [
-    'total_revenue' => $db->fetch("SELECT COALESCE(SUM(amount), 0) as total FROM transactions WHERE type = 'income'")['total'],
-    'monthly_revenue' => $db->fetch("SELECT COALESCE(SUM(amount), 0) as total FROM transactions WHERE type = 'income' AND MONTH(created_at) = MONTH(CURRENT_DATE())")['total'],
-    'pending_payments' => $db->fetch("SELECT COALESCE(SUM(price), 0) as total FROM licenses WHERE status = 'active'")['total'],
-    'total_licenses' => $db->fetch("SELECT COUNT(*) as count FROM licenses WHERE status = 'active'")['count']
+    'total_revenue' => $db->fetch("SELECT COALESCE(SUM(amount), 0) as total FROM transactions WHERE type = 'income' AND barbershop_id != ?", [$demoShopId])['total'],
+    'monthly_revenue' => $db->fetch("SELECT COALESCE(SUM(amount), 0) as total FROM transactions WHERE type = 'income' AND barbershop_id != ? AND MONTH(created_at) = MONTH(CURRENT_DATE()) AND YEAR(created_at) = YEAR(CURRENT_DATE())", [$demoShopId])['total'],
+    'pending_payments' => $db->fetch("SELECT COALESCE(SUM(price), 0) as total FROM licenses WHERE status = 'active' AND id != ?", [$demoLicenseId])['total'],
+    'total_licenses' => $db->fetch("SELECT COUNT(*) as count FROM licenses WHERE status = 'active' AND id != ?", [$demoLicenseId])['count']
 ];
 
 // Transacciones recientes
@@ -26,9 +28,10 @@ $transactions = $db->fetchAll("
     FROM transactions t
     LEFT JOIN barbershops b ON t.barbershop_id = b.id
     LEFT JOIN users u ON b.owner_id = u.id
+    WHERE t.barbershop_id != ?
     ORDER BY t.created_at DESC
     LIMIT 50
-");
+", [$demoShopId]);
 
 // Ingresos por mes (últimos 6 meses)
 $monthlyRevenue = $db->fetchAll("
@@ -39,9 +42,10 @@ $monthlyRevenue = $db->fetchAll("
     FROM transactions
     WHERE created_at >= DATE_SUB(CURRENT_DATE(), INTERVAL 6 MONTH)
     AND type = 'income'
+    AND barbershop_id != ?
     GROUP BY DATE_FORMAT(created_at, '%Y-%m')
     ORDER BY month DESC
-");
+", [$demoShopId]);
 
 $title = 'Finanzas - Super Admin';
 include BASE_PATH . '/includes/header.php';

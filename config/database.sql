@@ -342,7 +342,7 @@ VALUES (
 
 -- Crear Usuario Demo Owner
 INSERT INTO users (email, password, full_name, phone, role, status) 
-VALUES ('demo@barberia.com', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'Demo Barbería Owner', '809-123-4567', 'owner', 'active');
+VALUES ('demo@barberia.com', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'Demo Barberia Owner', '809-123-4567', 'owner', 'active');
 
 -- Crear Barbería Demo
 INSERT INTO barbershops (license_id, owner_id, business_name, slug, description, phone, email, address, city, province, theme_color) 
@@ -372,18 +372,18 @@ INSERT INTO barbershop_schedules (barbershop_id, day_of_week, open_time, close_t
 
 -- Servicios Demo
 INSERT INTO services (barbershop_id, name, description, duration, price, category, display_order) VALUES
-(1, 'Corte Clásico', 'Corte tradicional con máquina y tijera', 30, 250.00, 'Cortes', 1),
+(1, 'Corte Clasico', 'Corte tradicional con maquina y tijera', 30, 250.00, 'Cortes', 1),
 (1, 'Corte Moderno', 'Cortes modernos: fade, undercut, pompadour', 45, 400.00, 'Cortes', 2),
 (1, 'Corte + Barba', 'Combo completo: corte de cabello y arreglo de barba', 60, 550.00, 'Combos', 3),
-(1, 'Afeitado Clásico', 'Afeitado tradicional con navaja y toalla caliente', 30, 300.00, 'Barba', 4),
-(1, 'Diseño de Barba', 'Diseño y perfilado de barba', 20, 200.00, 'Barba', 5),
-(1, 'Tinte de Cabello', 'Aplicación de tinte profesional', 90, 800.00, 'Coloración', 6),
+(1, 'Afeitado Clasico', 'Afeitado tradicional con navaja y toalla caliente', 30, 300.00, 'Barba', 4),
+(1, 'Diseno de Barba', 'Diseno y perfilado de barba', 20, 200.00, 'Barba', 5),
+(1, 'Tinte de Cabello', 'Aplicacion de tinte profesional', 90, 800.00, 'Coloracion', 6),
 (1, 'Tratamiento Capilar', 'Tratamiento hidratante y reparador', 45, 600.00, 'Tratamientos', 7),
-(1, 'Corte Niño', 'Corte para niños hasta 12 años', 25, 200.00, 'Cortes', 8);
+(1, 'Corte Nino', 'Corte para ninos hasta 12 anos', 25, 200.00, 'Cortes', 8);
 
 -- Crear Usuario Barbero Demo
 INSERT INTO users (email, password, full_name, phone, role, status) 
-VALUES ('barbero@demo.com', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'Carlos Pérez', '809-987-6543', 'barber', 'active');
+VALUES ('barbero@demo.com', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'Carlos Perez', '809-987-6543', 'barber', 'active');
 
 -- Crear Barbero
 INSERT INTO barbers (barbershop_id, user_id, slug, specialty, bio, experience_years, commission_rate, is_featured) 

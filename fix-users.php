@@ -19,19 +19,22 @@ $hashedPassword = password_hash($demoPassword, PASSWORD_DEFAULT);
 echo "Generando hash de contraseña para: '$demoPassword'\n";
 echo "Hash generado: " . substr($hashedPassword, 0, 30) . "...\n\n";
 
-// Usuarios a actualizar
+// Usuarios demo a normalizar (password + datos base)
 $users = [
     [
         'email' => 'admin@kyrosbarbercloud.com',
-        'label' => 'Super Admin'
+        'label' => 'Super Admin',
+        'full_name' => 'Super Admin Kyros'
     ],
     [
         'email' => 'demo@barberia.com',
-        'label' => 'Owner'
+        'label' => 'Owner',
+        'full_name' => 'Demo Barberia Owner'
     ],
     [
         'email' => 'barbero@demo.com',
-        'label' => 'Barbero'
+        'label' => 'Barbero',
+        'full_name' => 'Carlos Perez'
     ]
 ];
 
@@ -42,12 +45,13 @@ foreach ($users as $user) {
     
     try {
         $result = $db->execute(
-            "UPDATE users SET password = ? WHERE email = ?",
-            [$hashedPassword, $user['email']]
+            "UPDATE users SET password = ?, full_name = ?, updated_at = NOW() WHERE email = ?",
+            [$hashedPassword, $user['full_name'], $user['email']]
         );
         
         if ($result) {
-            echo "├─ Estado: ✅ Contraseña actualizada\n\n";
+            echo "├─ Estado: ✅ Contraseña y nombre actualizados\n";
+            echo "└─ Nombre: {$user['full_name']}\n\n";
             $updated++;
         } else {
             echo "├─ Estado: ⚠️ No se actualizó (usuario no existe?)\n\n";

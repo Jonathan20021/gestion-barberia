@@ -42,6 +42,8 @@ $db = Database::getInstance();
 $pageError = null;
 $licenses = [];
 $freeBarbershops = [];
+$demoShopId = (int) ($db->fetch("SELECT id FROM barbershops WHERE slug = ?", [DEMO_BARBERSHOP_SLUG])['id'] ?? 0);
+$demoLicenseId = (int) ($db->fetch("SELECT license_id FROM barbershops WHERE slug = ?", [DEMO_BARBERSHOP_SLUG])['license_id'] ?? 0);
 $statsRow = [
     'total' => 0,
     'activas' => 0,
@@ -72,6 +74,13 @@ $supportsMaxLocationsOverride = $safeColumnExists('licenses', 'max_locations_ove
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     try {
         $action = isset($_POST['action']) ? $_POST['action'] : '';
+
+        if (in_array($action, ['edit', 'renovar', 'toggle_status', 'activate_trial', 'delete'], true)) {
+            $protectedLicenseId = intval($_POST['license_id'] ?? 0);
+            if ($demoLicenseId > 0 && $protectedLicenseId === $demoLicenseId) {
+                throw new Exception('La licencia demo del sistema está protegida y no puede modificarse desde esta pantalla.');
+            }
+        }
 
         if ($action === 'create') {
             $type         = isset($_POST['type']) ? $_POST['type'] : 'basic';
@@ -290,6 +299,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             header('Location: licenses.php');
             exit;
         }
+
+        if ($action === 'delete') {
+            $licenseId = intval($_POST['license_id'] ?? 0);
+            if ($licenseId <= 0) {
+                throw new Exception('Licencia inválida.');
+            }
+
+            $assignedBarbershop = $db->fetch(
+                "SELECT id, business_name FROM barbershops WHERE license_id = ? LIMIT 1",
+                [$licenseId]
+            );
+
+            if ($assignedBarbershop) {
+                throw new Exception('No puedes eliminar una licencia asignada a la barbería "' . $assignedBarbershop['business_name'] . '". Desasígnala primero.');
+            }
+
+            $db->query("DELETE FROM licenses WHERE id = ? LIMIT 1", [$licenseId]);
+            $_SESSION['success'] = 'Licencia eliminada exitosamente.';
+            header('Location: licenses.php');
+            exit;
+        }
     } catch (Exception $e) {
         error_log('Licenses page error: ' . $e->getMessage());
         $_SESSION['error'] = ENVIRONMENT === 'development'
@@ -330,22 +360,25 @@ try {
             SELECT bs.license_id, COUNT(*) AS total_appointments
             FROM appointments a
             INNER JOIN barbershops bs ON a.barbershop_id = bs.id
+            WHERE bs.slug != ?
             GROUP BY bs.license_id
         ) ap ON ap.license_id = l.id
+        WHERE l.id != ?
         ORDER BY l.created_at DESC
-    ");
+    ", [DEMO_BARBERSHOP_SLUG, $demoLicenseId]);
 
     $freeBarbershops = $db->fetchAll("
         SELECT bs.id, bs.business_name, u.full_name AS owner_name
         FROM barbershops bs
         LEFT JOIN users u ON bs.owner_id = u.id
-        WHERE NOT EXISTS (
+        WHERE bs.slug != ?
+        AND NOT EXISTS (
             SELECT 1
             FROM licenses l2
             WHERE l2.id = bs.license_id
         )
         ORDER BY bs.business_name
-    ");
+    ", [DEMO_BARBERSHOP_SLUG]);
 
     $trialStatsSelect = $supportsTrialDates ? "SUM(status = 'trial') AS pruebas," : "0 AS pruebas,";
     $statsRow = $db->fetch("
@@ -357,7 +390,8 @@ try {
             SUM(status = 'expired') AS vencidas,
             SUM(price) AS ingresos_totales
         FROM licenses
-    ") ?: $statsRow;
+        WHERE id != ?
+    ", [$demoLicenseId]) ?: $statsRow;
 } catch (Exception $e) {
     error_log('Licenses page load error: ' . $e->getMessage());
     $pageError = ENVIRONMENT === 'development'
@@ -561,6 +595,15 @@ include BASE_PATH . '/includes/header.php';
                                                 onclick="return confirm('<?php echo $lic['status'] === 'active' ? '¿Suspender esta licencia?' : '¿Activar esta licencia?'; ?>')"
                                                 class="<?php echo $lic['status'] === 'active' ? 'text-red-600 hover:text-red-900' : 'text-green-600 hover:text-green-900'; ?> text-sm font-medium">
                                             <?php echo $lic['status'] === 'active' ? 'Suspender' : 'Activar'; ?>
+                                        </button>
+                                    </form>
+                                    <form method="POST" class="inline">
+                                        <input type="hidden" name="action" value="delete">
+                                        <input type="hidden" name="license_id" value="<?php echo $lic['id']; ?>">
+                                        <button type="submit"
+                                                onclick="return confirm('¿Eliminar esta licencia? Esta acción no se puede deshacer.')"
+                                                class="text-rose-600 hover:text-rose-900 text-sm font-medium">
+                                            Eliminar
                                         </button>
                                     </form>
                                 </td>

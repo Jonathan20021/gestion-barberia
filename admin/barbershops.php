@@ -12,12 +12,14 @@ $db = Database::getInstance();
 // Manejar toggle de estado
 if (isset($_GET['toggle'])) {
     $shopId = $_GET['toggle'];
-    $shop = $db->fetch("SELECT status FROM barbershops WHERE id = ?", [$shopId]);
+    $shop = $db->fetch("SELECT status, slug FROM barbershops WHERE id = ?", [$shopId]);
     
-    if ($shop) {
+    if ($shop && $shop['slug'] !== DEMO_BARBERSHOP_SLUG) {
         $newStatus = $shop['status'] === 'active' ? 'suspended' : 'active';
         $db->query("UPDATE barbershops SET status = ? WHERE id = ?", [$newStatus, $shopId]);
         $_SESSION['success'] = 'Estado de la barbería actualizado';
+    } elseif ($shop && $shop['slug'] === DEMO_BARBERSHOP_SLUG) {
+        $_SESSION['error'] = 'La barbería demo está protegida y no se puede suspender';
     }
     
     header('Location: barbershops.php');
@@ -29,9 +31,13 @@ if (isset($_GET['delete'])) {
     $shopId = $_GET['delete'];
     
     try {
-        // Eliminar barbería (cascada eliminará barbers, services, etc.)
-        $db->query("DELETE FROM barbershops WHERE id = ?", [$shopId]);
-        $_SESSION['success'] = 'Barbería eliminada exitosamente';
+        $shop = $db->fetch("SELECT slug FROM barbershops WHERE id = ?", [$shopId]);
+        if ($shop && $shop['slug'] === DEMO_BARBERSHOP_SLUG) {
+            $_SESSION['error'] = 'La barbería demo está protegida y no se puede eliminar';
+        } else {
+            $db->query("DELETE FROM barbershops WHERE id = ?", [$shopId]);
+            $_SESSION['success'] = 'Barbería eliminada exitosamente';
+        }
     } catch (Exception $e) {
         $_SESSION['error'] = 'Error al eliminar la barbería';
     }
@@ -67,7 +73,6 @@ include BASE_PATH . '/includes/header.php';
 <div class="min-h-screen bg-gray-100" x-data="{ sidebarOpen: false }">
     <?php include BASE_PATH . '/includes/sidebar-admin.php'; ?>
 
-    <!-- Main Content -->
     <div class="lg:pl-64">
         <div class="sticky top-0 z-40 flex h-16 bg-white border-b border-gray-200 shadow-sm">
             <button @click="sidebarOpen = true" class="px-4 text-gray-500 lg:hidden">
@@ -83,7 +88,6 @@ include BASE_PATH . '/includes/header.php';
         </div>
 
         <main class="p-6">
-            <!-- Mensajes de feedback -->
             <?php if (isset($_SESSION['success'])): ?>
             <div class="mb-6 bg-green-50 border-l-4 border-green-500 p-4 rounded-lg">
                 <div class="flex items-center">
@@ -106,7 +110,6 @@ include BASE_PATH . '/includes/header.php';
             </div>
             <?php endif; ?>
             
-            <!-- Stats -->
             <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
                 <div class="bg-white rounded-lg shadow p-6">
                     <p class="text-sm text-gray-600">Total Barberías</p>
@@ -123,8 +126,7 @@ include BASE_PATH . '/includes/header.php';
                     <p class="text-3xl font-bold text-yellow-600">
                         <?php 
                         $expiring = array_filter($barbershops, function($b) {
-                            return $b['license_end_date'] && 
-                                   strtotime($b['license_end_date']) < strtotime('+7 days');
+                            return $b['license_end_date'] && strtotime($b['license_end_date']) < strtotime('+7 days');
                         });
                         echo count($expiring);
                         ?>
@@ -138,7 +140,6 @@ include BASE_PATH . '/includes/header.php';
                 </div>
             </div>
 
-            <!-- Tabla -->
             <div class="bg-white rounded-lg shadow-md overflow-hidden">
                 <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
                     <h2 class="text-lg font-semibold text-gray-900">Todas las Barberías</h2>
@@ -188,70 +189,56 @@ include BASE_PATH . '/includes/header.php';
                                     <span class="px-2 py-1 text-xs font-medium rounded-full
                                         <?php 
                                             echo $shop['license_type'] === 'enterprise' ? 'bg-purple-100 text-purple-800' :
-                                                ($shop['license_type'] === 'professional' ? 'bg-blue-100 text-blue-800' : 
+                                                ($shop['license_type'] === 'professional' ? 'bg-blue-100 text-blue-800' :
                                                 'bg-gray-100 text-gray-800'); 
                                         ?>">
                                         <?php echo ucfirst($shop['license_type']); ?>
                                     </span>
                                 </td>
                                 <td class="px-6 py-4">
-                                    <div class="text-sm text-gray-900">
-                                        <?php echo $shop['total_barbers']; ?> barberos
-                                    </div>
-                                    <div class="text-xs text-gray-500">
-                                        <?php echo $shop['total_services']; ?> servicios
-                                    </div>
+                                    <div class="text-sm text-gray-900"><?php echo $shop['total_barbers']; ?> barberos</div>
+                                    <div class="text-xs text-gray-500"><?php echo $shop['total_services']; ?> servicios</div>
                                 </td>
                                 <td class="px-6 py-4">
                                     <span class="px-2 py-1 text-xs font-medium rounded-full
-                                        <?php 
-                                            echo $shop['status'] === 'active' ? 'bg-green-100 text-green-800' : 
-                                                'bg-red-100 text-red-800'; 
-                                        ?>">
+                                        <?php echo $shop['status'] === 'active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'; ?>">
                                         <?php echo ucfirst($shop['status']); ?>
                                     </span>
                                 </td>
                                 <td class="px-6 py-4">
                                     <?php if ($shop['license_end_date']): ?>
                                     <p class="text-sm text-gray-900"><?php echo formatDate($shop['license_end_date']); ?></p>
-                                    <?php 
-                                    $daysLeft = floor((strtotime($shop['license_end_date']) - time()) / 86400);
-                                    if ($daysLeft < 7):
-                                    ?>
-                                    <p class="text-xs text-red-600">⚠️ <?php echo $daysLeft; ?> días</p>
+                                    <?php $daysLeft = floor((strtotime($shop['license_end_date']) - time()) / 86400); ?>
+                                    <?php if ($daysLeft < 7): ?>
+                                    <p class="text-xs text-red-600"><?php echo $daysLeft; ?> días</p>
                                     <?php endif; ?>
                                     <?php endif; ?>
                                 </td>
                                 <td class="px-6 py-4 text-right text-sm font-medium">
                                     <div class="flex justify-end gap-2">
-                                        <a href="edit-barbershop.php?id=<?php echo $shop['id']; ?>" 
-                                           class="px-3 py-1 bg-indigo-50 text-indigo-600 rounded hover:bg-indigo-100 text-xs font-medium">
+                                        <a href="edit-barbershop.php?id=<?php echo $shop['id']; ?>" class="px-3 py-1 bg-indigo-50 text-indigo-600 rounded hover:bg-indigo-100 text-xs font-medium">
                                             Editar
                                         </a>
-                                        <a href="manage-barbers.php?id=<?php echo $shop['id']; ?>" 
-                                           class="px-3 py-1 bg-green-50 text-green-600 rounded hover:bg-green-100 text-xs font-medium">
+                                        <a href="manage-barbers.php?id=<?php echo $shop['id']; ?>" class="px-3 py-1 bg-green-50 text-green-600 rounded hover:bg-green-100 text-xs font-medium">
                                             Barberos
                                         </a>
-                                        <a href="manage-services.php?id=<?php echo $shop['id']; ?>" 
-                                           class="px-3 py-1 bg-purple-50 text-purple-600 rounded hover:bg-purple-100 text-xs font-medium">
+                                        <a href="manage-services.php?id=<?php echo $shop['id']; ?>" class="px-3 py-1 bg-purple-50 text-purple-600 rounded hover:bg-purple-100 text-xs font-medium">
                                             Servicios
                                         </a>
-                                        <a href="manage-schedules.php?id=<?php echo $shop['id']; ?>" 
-                                           class="px-3 py-1 bg-yellow-50 text-yellow-700 rounded hover:bg-yellow-100 text-xs font-medium">
+                                        <a href="manage-schedules.php?id=<?php echo $shop['id']; ?>" class="px-3 py-1 bg-yellow-50 text-yellow-700 rounded hover:bg-yellow-100 text-xs font-medium">
                                             Horarios
                                         </a>
                                     </div>
                                     <div class="flex justify-end gap-2 mt-2">
-                                        <a href="../public/booking.php?shop=<?php echo $shop['slug']; ?>" 
-                                           target="_blank"
-                                           class="text-blue-600 hover:text-blue-900 text-xs">Ver</a>
-                                        <a href="?toggle=<?php echo $shop['id']; ?>" 
-                                           class="text-orange-600 hover:text-orange-900 text-xs">
+                                        <a href="../public/booking.php?shop=<?php echo $shop['slug']; ?>" target="_blank" class="text-blue-600 hover:text-blue-900 text-xs">Ver</a>
+                                        <?php if ($shop['slug'] !== DEMO_BARBERSHOP_SLUG): ?>
+                                        <a href="?toggle=<?php echo $shop['id']; ?>" class="text-orange-600 hover:text-orange-900 text-xs">
                                             <?php echo $shop['status'] === 'active' ? 'Suspender' : 'Activar'; ?>
                                         </a>
-                                        <a href="?delete=<?php echo $shop['id']; ?>" 
-                                           class="text-red-600 hover:text-red-900 text-xs"
-                                           onclick="return confirm('¿Estás seguro de eliminar esta barbería? Esta acción no se puede deshacer.')">Eliminar</a>
+                                        <a href="?delete=<?php echo $shop['id']; ?>" class="text-red-600 hover:text-red-900 text-xs" onclick="return confirm('¿Estás seguro de eliminar esta barbería? Esta acción no se puede deshacer.')">Eliminar</a>
+                                        <?php else: ?>
+                                        <span class="text-xs text-gray-500 font-medium">Demo protegido</span>
+                                        <?php endif; ?>
                                     </div>
                                 </td>
                             </tr>

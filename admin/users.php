@@ -13,12 +13,14 @@ $db = Database::getInstance();
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_user'])) {
     $userId = (int) ($_POST['delete_user'] ?? 0);
     $currentUserId = (int) ($_SESSION['user_id'] ?? 0);
-    $userToDelete = $db->fetch("SELECT id, full_name, role FROM users WHERE id = ?", [$userId]);
+    $userToDelete = $db->fetch("SELECT id, full_name, role, email FROM users WHERE id = ?", [$userId]);
 
     if (!$userToDelete) {
         $_SESSION['error'] = 'Usuario no encontrado';
     } elseif ($userToDelete['role'] === 'superadmin') {
         $_SESSION['error'] = 'No se puede eliminar un usuario superadmin';
+    } elseif (in_array($userToDelete['email'], PROTECTED_DEMO_EMAILS, true)) {
+        $_SESSION['error'] = 'Los usuarios demo del sistema están protegidos y no se pueden eliminar';
     } elseif ($userToDelete['id'] === $currentUserId) {
         $_SESSION['error'] = 'No puedes eliminar tu propia cuenta';
     } else {
@@ -66,12 +68,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_user'])) {
 // Manejar toggle de estado
 if (isset($_GET['toggle'])) {
     $userId = $_GET['toggle'];
-    $user = $db->fetch("SELECT status, role FROM users WHERE id = ?", [$userId]);
+    $user = $db->fetch("SELECT status, role, email FROM users WHERE id = ?", [$userId]);
     
-    if ($user && $user['role'] !== 'superadmin') {
+    if ($user && $user['role'] !== 'superadmin' && !in_array($user['email'], PROTECTED_DEMO_EMAILS, true)) {
         $newStatus = $user['status'] === 'active' ? 'suspended' : 'active';
         $db->query("UPDATE users SET status = ? WHERE id = ?", [$newStatus, $userId]);
         $_SESSION['success'] = 'Estado del usuario actualizado';
+    } elseif ($user && in_array($user['email'], PROTECTED_DEMO_EMAILS, true)) {
+        $_SESSION['error'] = 'Los usuarios demo del sistema están protegidos';
     }
     
     header('Location: users.php');
@@ -240,7 +244,7 @@ include BASE_PATH . '/includes/header.php';
                                             </svg>
                                             Editar
                                         </a>
-                                        <?php if ($user['role'] !== 'superadmin'): ?>
+                                        <?php if ($user['role'] !== 'superadmin' && !in_array($user['email'], PROTECTED_DEMO_EMAILS, true)): ?>
                                         <a href="?toggle=<?php echo $user['id']; ?>" class="text-orange-600 hover:text-orange-900">
                                             <?php echo $user['status'] === 'active' ? 'Suspender' : 'Activar'; ?>
                                         </a>
@@ -250,6 +254,8 @@ include BASE_PATH . '/includes/header.php';
                                                 Eliminar
                                             </button>
                                         </form>
+                                        <?php elseif (in_array($user['email'], PROTECTED_DEMO_EMAILS, true)): ?>
+                                        <span class="text-xs text-gray-500 font-medium">Demo protegido</span>
                                         <?php endif; ?>
                                     </div>
                                 </td>

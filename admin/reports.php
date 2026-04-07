@@ -40,6 +40,7 @@ if ($debugMode) {
 
 $db = Database::getInstance();
 $pageError = null;
+$demoShopId = (int) ($db->fetch("SELECT id FROM barbershops WHERE slug = ?", [DEMO_BARBERSHOP_SLUG])['id'] ?? 0);
 
 // Periodo de reporte (ultimos 30 dias por defecto)
 $startDate = input('start_date') ?: date('Y-m-d', strtotime('-30 days'));
@@ -78,19 +79,19 @@ try {
 
     $hasClientsTable = $safeTableExists('clients');
     $hasTransactionsTable = $safeTableExists('transactions');
-    $clientCountSelect = $hasClientsTable ? "(SELECT COUNT(*) FROM clients)" : "0";
-    $revenueSelect = $hasTransactionsTable ? "(SELECT COALESCE(SUM(amount), 0) FROM transactions WHERE type = 'income')" : "0";
+    $clientCountSelect = $hasClientsTable ? "(SELECT COUNT(*) FROM clients WHERE barbershop_id != {$demoShopId})" : "0";
+    $revenueSelect = $hasTransactionsTable ? "(SELECT COALESCE(SUM(amount), 0) FROM transactions WHERE type = 'income' AND barbershop_id != {$demoShopId})" : "0";
 
     $systemStats = $db->fetch("
         SELECT 
-            (SELECT COUNT(*) FROM barbershops WHERE status = 'active') as active_barbershops,
-            (SELECT COUNT(*) FROM barbershops) as total_barbershops,
-            (SELECT COUNT(*) FROM users WHERE role = 'owner') as total_owners,
-            (SELECT COUNT(*) FROM users WHERE role = 'barber') as total_barbers,
-            (SELECT COUNT(*) FROM barbers WHERE status = 'active') as active_barbers,
+            (SELECT COUNT(*) FROM barbershops WHERE status = 'active' AND slug != '" . DEMO_BARBERSHOP_SLUG . "') as active_barbershops,
+            (SELECT COUNT(*) FROM barbershops WHERE slug != '" . DEMO_BARBERSHOP_SLUG . "') as total_barbershops,
+            (SELECT COUNT(*) FROM users WHERE role = 'owner' AND email NOT IN ('" . DEMO_OWNER_EMAIL . "', '" . DEMO_BARBER_EMAIL . "')) as total_owners,
+            (SELECT COUNT(*) FROM users WHERE role = 'barber' AND email NOT IN ('" . DEMO_OWNER_EMAIL . "', '" . DEMO_BARBER_EMAIL . "')) as total_barbers,
+            (SELECT COUNT(*) FROM barbers WHERE status = 'active' AND barbershop_id != {$demoShopId}) as active_barbers,
             $clientCountSelect as total_clients,
-            (SELECT COUNT(*) FROM appointments) as total_appointments,
-            (SELECT COUNT(*) FROM appointments WHERE status = 'completed') as completed_appointments,
+            (SELECT COUNT(*) FROM appointments WHERE barbershop_id != {$demoShopId}) as total_appointments,
+            (SELECT COUNT(*) FROM appointments WHERE status = 'completed' AND barbershop_id != {$demoShopId}) as completed_appointments,
             $revenueSelect as total_revenue
     ") ?: $systemStats;
 
@@ -101,9 +102,10 @@ try {
             COUNT(DISTINCT CASE WHEN role = 'barber' THEN id END) as new_barbers
         FROM users
         WHERE created_at >= DATE_SUB(CURRENT_DATE(), INTERVAL 6 MONTH)
+        AND email NOT IN (?, ?)
         GROUP BY DATE_FORMAT(created_at, '%Y-%m')
         ORDER BY month DESC
-    ");
+    ", [DEMO_OWNER_EMAIL, DEMO_BARBER_EMAIL]);
 
     $topBarbershops = $db->fetchAll("
         SELECT 
@@ -119,10 +121,11 @@ try {
         LEFT JOIN licenses l ON bb.license_id = l.id
         LEFT JOIN appointments a ON bb.id = a.barbershop_id 
             AND a.appointment_date BETWEEN ? AND ?
+        WHERE bb.slug != ?
         GROUP BY bb.id
         ORDER BY total_revenue DESC
         LIMIT 10
-    ", [$startDate, $endDate]);
+    ", [$startDate, $endDate, DEMO_BARBERSHOP_SLUG]);
 
     $popularServices = $db->fetchAll("
         SELECT 
@@ -135,10 +138,11 @@ try {
         JOIN appointments a ON s.id = a.service_id
         WHERE a.appointment_date BETWEEN ? AND ?
         AND a.status = 'completed'
+        AND a.barbershop_id != ?
         GROUP BY s.id
         ORDER BY total_bookings DESC
         LIMIT 10
-    ", [$startDate, $endDate]);
+    ", [$startDate, $endDate, $demoShopId]);
 
     $expiringLicenses = $db->fetchAll("
         SELECT 
@@ -154,10 +158,11 @@ try {
         WHERE l.end_date <= DATE_ADD(CURRENT_DATE(), INTERVAL 30 DAY)
         AND l.end_date >= CURRENT_DATE()
         AND bb.status = 'active'
+        AND bb.slug != ?
         ORDER BY l.end_date ASC
-    ");
+    ", [DEMO_BARBERSHOP_SLUG]);
 
-    $periodAppointmentsRow = $db->fetch("SELECT COUNT(*) AS total FROM appointments WHERE appointment_date BETWEEN ? AND ?", [$startDate, $endDate]);
+    $periodAppointmentsRow = $db->fetch("SELECT COUNT(*) AS total FROM appointments WHERE appointment_date BETWEEN ? AND ? AND barbershop_id != ?", [$startDate, $endDate, $demoShopId]);
     $periodAppointmentsTotal = (int) ($periodAppointmentsRow ? $periodAppointmentsRow['total'] : 0);
 
     $appointmentStats = $db->fetchAll("
@@ -166,9 +171,10 @@ try {
             COUNT(*) as total
         FROM appointments
         WHERE appointment_date BETWEEN ? AND ?
+        AND barbershop_id != ?
         GROUP BY status
         ORDER BY total DESC
-    ", [$startDate, $endDate]);
+    ", [$startDate, $endDate, $demoShopId]);
 
     if (!empty($appointmentStats)) {
         foreach ($appointmentStats as $key => $stat) {

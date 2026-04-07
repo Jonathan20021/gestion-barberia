@@ -67,6 +67,10 @@ if (ENVIRONMENT === 'development') {
 
 // Configuración de licencias
 define('TRIAL_DAYS_DEFAULT', 15);
+define('DEMO_OWNER_EMAIL', 'demo@barberia.com');
+define('DEMO_BARBER_EMAIL', 'barbero@demo.com');
+define('DEMO_BARBERSHOP_SLUG', 'estilo-rd');
+define('PROTECTED_DEMO_EMAILS', [DEMO_OWNER_EMAIL, DEMO_BARBER_EMAIL]);
 
 define('LICENSE_TYPES', [
     'basic' => [

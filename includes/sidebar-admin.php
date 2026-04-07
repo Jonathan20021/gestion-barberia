@@ -1,99 +1,136 @@
+<?php
+$_activePage = basename($_SERVER['PHP_SELF'], '.php');
+
+if (!function_exists('_nav_admin')) {
+    function _nav_admin($page, $active) {
+        if ($page === $active) {
+            return 'style="display:flex;align-items:center;padding:9px 12px;border-radius:9px;text-decoration:none;'
+                 . 'background:rgba(201,144,26,.13);border-left:3px solid #c9901a;color:#e8b84b;font-weight:600;'
+                 . 'gap:11px;font-size:.875rem;margin-bottom:2px;"';
+        }
+        return 'style="display:flex;align-items:center;padding:9px 12px;border-radius:9px;text-decoration:none;'
+             . 'color:#52525b;gap:11px;font-size:.875rem;margin-bottom:2px;border-left:3px solid transparent;'
+             . 'transition:background .15s,color .15s;"'
+             . ' onmouseover="this.style.background=\'rgba(255,255,255,.05)\';this.style.color=\'#c4c4bf\'"'
+             . ' onmouseout="this.style.background=\'transparent\';this.style.color=\'#52525b\'"';
+    }
+}
+?>
 <!-- Sidebar Super Admin -->
-<div class="fixed inset-y-0 left-0 z-50 w-64 bg-gradient-to-b from-gray-900 to-gray-800 transform transition-transform duration-300 ease-in-out lg:translate-x-0"
-     :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full'">
-    
+<div class="fixed inset-y-0 left-0 z-50 w-64 transform transition-transform duration-300 ease-in-out lg:translate-x-0 flex flex-col"
+     :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full'"
+     style="background:#0d0d0d;border-right:1px solid #1c1c1c;">
+
     <!-- Logo -->
-    <div class="flex items-center justify-between h-16 px-6 bg-gray-900 border-b border-gray-700">
-        <div class="flex items-center">
-            <svg class="w-8 h-8 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.121 14.121L19 19m-7-7l7-7m-7 7l-2.879 2.879M12 12L9.121 9.121m0 5.758a3 3 0 10-4.243 4.243 3 3 0 004.243-4.243zm0-5.758a3 3 0 10-4.243-4.243 3 3 0 004.243 4.243z"/>
-            </svg>
-            <span class="ml-3 text-white font-bold text-lg">Kyros Barber Cloud</span>
-        </div>
-        <button @click="sidebarOpen = false" class="lg:hidden text-gray-400 hover:text-white">
-            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+    <div style="display:flex;align-items:center;justify-content:space-between;height:64px;padding:0 18px;border-bottom:1px solid #1c1c1c;flex-shrink:0;">
+        <a href="<?php echo BASE_URL; ?>/admin/dashboard" style="display:flex;align-items:center;gap:10px;text-decoration:none;">
+            <div style="width:32px;height:32px;background:linear-gradient(135deg,#c9901a,#e8b84b);border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 2px 10px rgba(201,144,26,.28);">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#0a0a0a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                </svg>
+            </div>
+            <div>
+                <p style="font-family:'Sora',sans-serif;font-weight:800;font-size:.875rem;color:#f0f0eb;line-height:1.1;letter-spacing:-.01em;">Kyros Barber</p>
+                <p style="font-size:.625rem;font-weight:700;color:#c9901a;letter-spacing:.07em;text-transform:uppercase;">Super Admin</p>
+            </div>
+        </a>
+        <button @click="sidebarOpen = false" class="lg:hidden"
+                style="color:#3f3f46;background:none;border:none;cursor:pointer;padding:6px;border-radius:6px;"
+                onmouseover="this.style.color='#a1a1aa'" onmouseout="this.style.color='#3f3f46'">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
             </svg>
         </button>
     </div>
 
-    <!-- Navigation -->
-    <nav class="mt-8 px-4 space-y-1">
-        <a href="<?php echo BASE_URL; ?>/admin/dashboard.php" 
-           class="flex items-center px-4 py-3 <?php echo basename($_SERVER['PHP_SELF']) == 'dashboard.php' ? 'text-white bg-indigo-600' : 'text-gray-300 hover:bg-gray-700 hover:text-white'; ?> rounded-lg transition">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
+    <!-- Nav -->
+    <nav style="flex:1;padding:14px 10px;overflow-y:auto;">
+
+        <p style="font-size:.625rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#272727;padding:0 12px;margin-bottom:8px;">General</p>
+
+        <a href="<?php echo BASE_URL; ?>/admin/dashboard" <?php echo _nav_admin('dashboard', $_activePage); ?>>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;">
+                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>
             </svg>
-            <span class="ml-3">Dashboard</span>
+            Dashboard
         </a>
-        
-        <a href="<?php echo BASE_URL; ?>/admin/barbershops.php" 
-           class="flex items-center px-4 py-3 <?php echo basename($_SERVER['PHP_SELF']) == 'barbershops.php' ? 'text-white bg-indigo-600' : 'text-gray-300 hover:bg-gray-700 hover:text-white'; ?> rounded-lg transition">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+
+        <a href="<?php echo BASE_URL; ?>/admin/barbershops" <?php echo _nav_admin('barbershops', $_activePage); ?>>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;">
+                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M9 22V12h6v10"/>
             </svg>
-            <span class="ml-3">Barberías</span>
+            Barberías
         </a>
-        
-        <a href="<?php echo BASE_URL; ?>/admin/users.php" 
-           class="flex items-center px-4 py-3 <?php echo basename($_SERVER['PHP_SELF']) == 'users.php' ? 'text-white bg-indigo-600' : 'text-gray-300 hover:bg-gray-700 hover:text-white'; ?> rounded-lg transition">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/>
+
+        <a href="<?php echo BASE_URL; ?>/admin/users" <?php echo _nav_admin('users', $_activePage); ?>>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;">
+                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
             </svg>
-            <span class="ml-3">Usuarios</span>
+            Usuarios
         </a>
-        
-        <a href="<?php echo BASE_URL; ?>/admin/licenses.php" 
-           class="flex items-center px-4 py-3 <?php echo basename($_SERVER['PHP_SELF']) == 'licenses.php' ? 'text-white bg-indigo-600' : 'text-gray-300 hover:bg-gray-700 hover:text-white'; ?> rounded-lg transition">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/>
+
+        <p style="font-size:.625rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#272727;padding:0 12px;margin:16px 0 8px;">Finanzas</p>
+
+        <a href="<?php echo BASE_URL; ?>/admin/licenses" <?php echo _nav_admin('licenses', $_activePage); ?>>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;">
+                <rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/>
             </svg>
-            <span class="ml-3">Licencias</span>
+            Licencias
         </a>
-        
-        <a href="<?php echo BASE_URL; ?>/admin/coupons.php" 
-           class="flex items-center px-4 py-3 <?php echo basename($_SERVER['PHP_SELF']) == 'coupons.php' ? 'text-white bg-indigo-600' : 'text-gray-300 hover:bg-gray-700 hover:text-white'; ?> rounded-lg transition">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/>
+
+        <a href="<?php echo BASE_URL; ?>/admin/coupons" <?php echo _nav_admin('coupons', $_activePage); ?>>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;">
+                <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/>
             </svg>
-            <span class="ml-3">Cupones</span>
+            Cupones
         </a>
-        
-        <a href="<?php echo BASE_URL; ?>/admin/finances.php" 
-           class="flex items-center px-4 py-3 <?php echo basename($_SERVER['PHP_SELF']) == 'finances.php' ? 'text-white bg-indigo-600' : 'text-gray-300 hover:bg-gray-700 hover:text-white'; ?> rounded-lg transition">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+
+        <a href="<?php echo BASE_URL; ?>/admin/finances" <?php echo _nav_admin('finances', $_activePage); ?>>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;">
+                <line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
             </svg>
-            <span class="ml-3">Finanzas</span>
+            Finanzas
         </a>
-        
-        <a href="<?php echo BASE_URL; ?>/admin/reports.php" 
-           class="flex items-center px-4 py-3 <?php echo basename($_SERVER['PHP_SELF']) == 'reports.php' ? 'text-white bg-indigo-600' : 'text-gray-300 hover:bg-gray-700 hover:text-white'; ?> rounded-lg transition">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+
+        <a href="<?php echo BASE_URL; ?>/admin/reports" <?php echo _nav_admin('reports', $_activePage); ?>>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;">
+                <line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/>
             </svg>
-            <span class="ml-3">Reportes</span>
+            Reportes
         </a>
 
     </nav>
 
-    <!-- User Profile -->
-    <div class="absolute bottom-0 left-0 right-0 p-4 bg-gray-900 border-t border-gray-700">
-        <div class="flex items-center">
-            <div class="w-10 h-10 rounded-full bg-indigo-600 flex items-center justify-center text-white font-semibold">
+    <!-- User card -->
+    <div style="padding:12px 14px;border-top:1px solid #1c1c1c;flex-shrink:0;">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+            <div style="width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,#c9901a,#e8b84b);display:flex;align-items:center;justify-content:center;color:#0a0a0a;font-weight:700;font-size:.75rem;flex-shrink:0;letter-spacing:.02em;">
                 SA
             </div>
-            <div class="ml-3 flex-1">
-                <p class="text-sm font-medium text-white">Super Admin</p>
-                <p class="text-xs text-gray-400"><?php echo e($_SESSION['user_email'] ?? ''); ?></p>
+            <div style="min-width:0;flex:1;">
+                <p style="font-size:.8125rem;font-weight:600;color:#d4d4ce;">Super Admin</p>
+                <p style="font-size:.6875rem;color:#3f3f46;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"><?php echo e($_SESSION['user_email'] ?? ''); ?></p>
             </div>
         </div>
-        <a href="<?php echo BASE_URL; ?>/auth/logout.php" 
-           class="mt-3 flex items-center justify-center px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg transition text-sm">
-            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+        <a href="<?php echo BASE_URL; ?>/auth/logout"
+           style="display:flex;align-items:center;justify-content:center;gap:7px;padding:8px;border-radius:8px;background:#141414;border:1px solid #222;color:#52525b;text-decoration:none;font-size:.8125rem;font-weight:500;transition:all .15s;"
+           onmouseover="this.style.background='#1e1e1e';this.style.borderColor='#2a2a2a';this.style.color='#a1a1aa'"
+           onmouseout="this.style.background='#141414';this.style.borderColor='#222';this.style.color='#52525b'">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>
             </svg>
             Cerrar Sesión
         </a>
     </div>
+</div>
+
+<!-- Mobile overlay -->
+<div x-show="sidebarOpen" x-cloak @click="sidebarOpen = false"
+     style="position:fixed;inset:0;z-index:40;background:rgba(0,0,0,.65);backdrop-filter:blur(3px);"
+     x-transition:enter="transition ease-out duration-200"
+     x-transition:enter-start="opacity-0"
+     x-transition:enter-end="opacity-100"
+     x-transition:leave="transition ease-in duration-150"
+     x-transition:leave-start="opacity-100"
+     x-transition:leave-end="opacity-0">
 </div>

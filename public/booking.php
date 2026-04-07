@@ -595,7 +595,7 @@ foreach ($schedules as $schedule) {
                         
                         <div>
                             <label class="block text-sm font-bold text-gray-900 mb-3">Servicio</label>
-                            <select name="service_id" x-model="selectedService" required class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-gray-900 focus:border-gray-900 transition">
+                            <select name="service_id" x-model="selectedService" @change="loadAvailability()" required class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-gray-900 focus:border-gray-900 transition">
                                 <option value="">Seleccionar servicio...</option>
                                 <?php foreach ($services as $service): ?>
                                     <option value="<?php echo $service['id']; ?>">
@@ -607,7 +607,7 @@ foreach ($schedules as $schedule) {
 
                         <div>
                             <label class="block text-sm font-bold text-gray-900 mb-3">Barbero</label>
-                            <select name="barber_id" x-model="selectedBarber" required class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-gray-900 focus:border-gray-900 transition">
+                            <select name="barber_id" x-model="selectedBarber" @change="loadAvailability()" required class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-gray-900 focus:border-gray-900 transition">
                                 <option value="">Seleccionar barbero...</option>
                                 <?php foreach ($barbers as $barber): ?>
                                     <option value="<?php echo $barber['id']; ?>">
@@ -621,14 +621,27 @@ foreach ($schedules as $schedule) {
                         <div class="grid grid-cols-2 gap-4">
                             <div>
                                 <label class="block text-sm font-bold text-gray-900 mb-3">Fecha</label>
-                                <input type="date" name="booking_date" required min="<?php echo date('Y-m-d'); ?>" 
+                                <input type="date" name="appointment_date" x-model="selectedDate" @change="loadAvailability()" required min="<?php echo date('Y-m-d'); ?>" 
                                        class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-gray-900 focus:border-gray-900 transition">
                             </div>
 
                             <div>
                                 <label class="block text-sm font-bold text-gray-900 mb-3">Hora</label>
-                                <input type="time" name="booking_time" required 
-                                       class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-gray-900 focus:border-gray-900 transition">
+                                <select name="start_time" x-model="selectedStartTime" required class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-gray-900 focus:border-gray-900 transition">
+                                    <option value="" x-text="availabilityLoading ? 'Cargando horarios...' : 'Selecciona fecha/barbero/servicio'"></option>
+                                    <template x-for="slot in availableSlots" :key="slot.value">
+                                        <option :value="slot.value" x-text="slot.time"></option>
+                                    </template>
+                                </select>
+                                <p x-show="availabilityMessage" class="text-xs mt-2 text-amber-700" x-text="availabilityMessage"></p>
+                                <div x-show="occupiedSlots.length > 0" class="mt-2">
+                                    <p class="text-xs text-gray-500 mb-1">Horas ocupadas:</p>
+                                    <div class="flex flex-wrap gap-1">
+                                        <template x-for="slot in occupiedSlots" :key="slot.label">
+                                            <span class="text-[11px] px-2 py-1 rounded-full bg-red-50 text-red-700 border border-red-100" x-text="slot.label"></span>
+                                        </template>
+                                    </div>
+                                </div>
                             </div>
                         </div>
 
@@ -676,6 +689,12 @@ foreach ($schedules as $schedule) {
                 showBookingModal: false,
                 selectedService: '',
                 selectedBarber: '',
+                selectedDate: '',
+                selectedStartTime: '',
+                availableSlots: [],
+                occupiedSlots: [],
+                availabilityLoading: false,
+                availabilityMessage: '',
 
                 openBookingModal() {
                     this.showBookingModal = true;
@@ -688,11 +707,53 @@ foreach ($schedules as $schedule) {
                 selectService(serviceId) {
                     this.selectedService = String(serviceId);
                     this.openBookingModal();
+                    this.loadAvailability();
                 },
                 
                 selectBarber(barberId) {
                     this.selectedBarber = String(barberId);
                     this.openBookingModal();
+                    this.loadAvailability();
+                },
+
+                async loadAvailability() {
+                    this.availableSlots = [];
+                    this.occupiedSlots = [];
+                    this.selectedStartTime = '';
+                    this.availabilityMessage = '';
+
+                    if (!this.selectedBarber || !this.selectedDate) {
+                        return;
+                    }
+
+                    this.availabilityLoading = true;
+
+                    try {
+                        const params = new URLSearchParams({
+                            barber_id: this.selectedBarber,
+                            date: this.selectedDate,
+                            service_id: this.selectedService || ''
+                        });
+
+                        const response = await fetch('<?php echo BASE_URL; ?>/api/availability.php?' + params.toString());
+                        const data = await response.json();
+
+                        if (!data.success) {
+                            this.availabilityMessage = data.message || 'No se pudo cargar la disponibilidad';
+                            return;
+                        }
+
+                        this.availableSlots = Array.isArray(data.available_slots) ? data.available_slots : [];
+                        this.occupiedSlots = Array.isArray(data.occupied_slots) ? data.occupied_slots : [];
+
+                        if (this.availableSlots.length === 0) {
+                            this.availabilityMessage = data.message || 'No hay horas disponibles para la fecha seleccionada';
+                        }
+                    } catch (error) {
+                        this.availabilityMessage = 'Error al consultar horarios';
+                    } finally {
+                        this.availabilityLoading = false;
+                    }
                 }
             }
         }

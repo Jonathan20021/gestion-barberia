@@ -189,7 +189,7 @@ include BASE_PATH . '/includes/header.php';
             </div>
             <?php endif; ?>
 
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 mb-6">
                 <a href="<?php echo BASE_URL; ?>/dashboard/barber/appointments.php" class="bg-white border border-gray-200 rounded-lg p-4 shadow-sm hover:shadow-md transition">
                     <p class="text-sm text-gray-500">Modulo dedicado</p>
                     <p class="text-lg font-semibold text-gray-900">Mis Citas</p>
@@ -204,6 +204,11 @@ include BASE_PATH . '/includes/header.php';
                     <p class="text-sm text-gray-500">Modulo dedicado</p>
                     <p class="text-lg font-semibold text-gray-900">Mi Perfil</p>
                     <p class="text-sm text-indigo-600 mt-1">Datos personales y barberia</p>
+                </a>
+                <a href="<?php echo BASE_URL; ?>/dashboard/barber/schedules.php" class="bg-white border border-gray-200 rounded-lg p-4 shadow-sm hover:shadow-md transition">
+                    <p class="text-sm text-gray-500">Modulo dedicado</p>
+                    <p class="text-lg font-semibold text-gray-900">Mis Horarios</p>
+                    <p class="text-sm text-indigo-600 mt-1">Disponibilidad y bloqueos de fechas</p>
                 </a>
             </div>
 

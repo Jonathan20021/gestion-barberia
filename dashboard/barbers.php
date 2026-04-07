@@ -237,9 +237,14 @@ include BASE_PATH . '/includes/header.php';
             
             <div class="flex items-center justify-between flex-1 px-4 sm:px-6">
                 <h1 class="text-2xl font-bold text-gray-900">Gestión de Barberos</h1>
-                <button @click="showModal = true" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">
-                    + Añadir Barbero
-                </button>
+                <div class="flex items-center gap-2">
+                    <a href="barber-schedules.php" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200">
+                        Horarios
+                    </a>
+                    <button @click="showModal = true" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">
+                        + Añadir Barbero
+                    </button>
+                </div>
             </div>
         </div>
 
@@ -347,14 +352,18 @@ include BASE_PATH . '/includes/header.php';
                         </div>
                         
                         <!-- Acciones -->
-                        <div class="flex space-x-2">
+                        <div class="grid grid-cols-3 gap-2">
                             <a href="../public/barber.php?shop=<?php echo $_SESSION['barbershop_slug']; ?>&barber=<?php echo $barber['slug']; ?>" 
                                target="_blank"
-                               class="flex-1 px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-center text-sm">
+                               class="px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-center text-sm">
                                 Ver Página
                             </a>
+                            <a href="barber-schedules.php?barber_id=<?php echo $barber['id']; ?>"
+                               class="px-3 py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-800 text-center text-sm">
+                                Horarios
+                            </a>
                             <a href="?edit=<?php echo $barber['id']; ?>" 
-                               class="flex-1 px-3 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 text-center text-sm">
+                               class="px-3 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 text-center text-sm">
                                 Editar
                             </a>
                         </div>

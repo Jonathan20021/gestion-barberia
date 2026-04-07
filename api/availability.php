@@ -14,90 +14,102 @@ require_once BASE_PATH . '/core/Helpers.php';
 
 try {
     $db = Database::getInstance();
-    
-    // Validar parámetros
-    $barberId = input('barber_id');
+
+    $barberId = (int) input('barber_id');
     $date = input('date');
     $serviceId = input('service_id');
-    
-    if (empty($barberId) || empty($date)) {
+
+    if ($barberId <= 0 || empty($date)) {
         jsonResponse(['success' => false, 'message' => 'Parámetros faltantes'], 400);
     }
-    
-    // Validar fecha
+
     if (!strtotime($date)) {
         jsonResponse(['success' => false, 'message' => 'Fecha inválida'], 400);
     }
-    
-    // Obtener duración del servicio
-    $serviceDuration = 30; // Por defecto
-    if ($serviceId) {
-        $service = $db->fetch("SELECT duration FROM services WHERE id = ?", [$serviceId]);
-        if ($service) {
-            $serviceDuration = $service['duration'];
+
+    $barberMeta = $db->fetch('SELECT id, barbershop_id FROM barbers WHERE id = ?', [$barberId]);
+    if (!$barberMeta) {
+        jsonResponse(['success' => false, 'message' => 'Barbero no encontrado'], 404);
+    }
+
+    $serviceDuration = 30;
+    if (!empty($serviceId)) {
+        $service = $db->fetch('SELECT duration FROM services WHERE id = ?', [$serviceId]);
+        if ($service && !empty($service['duration'])) {
+            $serviceDuration = (int) $service['duration'];
         }
     }
-    
-    // Obtener día de la semana (0 = domingo, 6 = sábado)
-    $dayOfWeek = date('w', strtotime($date));
-    
-    // Obtener horario del barbero para ese día
-    $schedule = $db->fetch("
-        SELECT start_time, end_time, is_available
-        FROM barber_schedules
-        WHERE barber_id = ? AND day_of_week = ?
-    ", [$barberId, $dayOfWeek]);
-    
-    if (!$schedule || !$schedule['is_available']) {
+
+    $dayOfWeek = (int) date('w', strtotime($date));
+
+    $schedule = $db->fetch(
+        'SELECT start_time, end_time, is_available FROM barber_schedules WHERE barber_id = ? AND day_of_week = ? LIMIT 1',
+        [$barberId, $dayOfWeek]
+    );
+
+    if (!$schedule) {
+        $shopSchedule = $db->fetch(
+            'SELECT open_time, close_time, is_closed FROM barbershop_schedules WHERE barbershop_id = ? AND day_of_week = ? LIMIT 1',
+            [$barberMeta['barbershop_id'], $dayOfWeek]
+        );
+
+        if ($shopSchedule) {
+            $schedule = [
+                'start_time' => $shopSchedule['open_time'],
+                'end_time' => $shopSchedule['close_time'],
+                'is_available' => (int) !$shopSchedule['is_closed']
+            ];
+        }
+    }
+
+    if (!$schedule || !(int) $schedule['is_available']) {
         jsonResponse([
             'success' => true,
             'available_slots' => [],
+            'occupied_slots' => [],
             'message' => 'Barbero no disponible este día'
         ]);
     }
-    
-    // Verificar si hay días libres/vacaciones
-    $timeOff = $db->fetch("
-        SELECT id FROM time_off
-        WHERE barber_id = ?
-        AND ? BETWEEN start_date AND end_date
-    ", [$barberId, $date]);
-    
+
+    $timeOff = $db->fetch(
+        'SELECT id FROM time_off WHERE barber_id = ? AND ? BETWEEN start_date AND end_date LIMIT 1',
+        [$barberId, $date]
+    );
+
     if ($timeOff) {
         jsonResponse([
             'success' => true,
             'available_slots' => [],
-            'message' => 'Barbero no disponible (vacaciones)'
+            'occupied_slots' => [],
+            'message' => 'Barbero no disponible (fecha bloqueada)'
         ]);
     }
-    
-    // Obtener citas existentes
-    $appointments = $db->fetchAll("
-        SELECT start_time, end_time
-        FROM appointments
-        WHERE barber_id = ?
-        AND appointment_date = ?
-        AND status NOT IN ('cancelled', 'no_show')
-    ", [$barberId, $date]);
-    
-    // Generar slots disponibles
+
+    $appointments = $db->fetchAll(
+        "SELECT start_time, end_time
+         FROM appointments
+         WHERE barber_id = ?
+           AND appointment_date = ?
+           AND status NOT IN ('cancelled', 'no_show')",
+        [$barberId, $date]
+    );
+
     $startTime = strtotime($schedule['start_time']);
     $endTime = strtotime($schedule['end_time']);
-    $interval = 15; // Intervalos de 15 minutos
-    
+    $interval = 15;
+
     $availableSlots = [];
     $currentTime = $startTime;
-    
+
     while ($currentTime + ($serviceDuration * 60) <= $endTime) {
         $slotStart = date('H:i:s', $currentTime);
         $slotEnd = date('H:i:s', $currentTime + ($serviceDuration * 60));
-        
-        // Verificar si hay conflicto con citas existentes
+
         $hasConflict = false;
         foreach ($appointments as $apt) {
             $aptStart = strtotime($apt['start_time']);
             $aptEnd = strtotime($apt['end_time']);
-            
+
             if (
                 ($currentTime >= $aptStart && $currentTime < $aptEnd) ||
                 ($currentTime + ($serviceDuration * 60) > $aptStart && $currentTime + ($serviceDuration * 60) <= $aptEnd) ||
@@ -107,9 +119,8 @@ try {
                 break;
             }
         }
-        
+
         if (!$hasConflict) {
-            // Verificar que no sea tiempo pasado
             $slotDateTime = strtotime($date . ' ' . $slotStart);
             if ($slotDateTime > time()) {
                 $availableSlots[] = [
@@ -119,18 +130,31 @@ try {
                 ];
             }
         }
-        
+
         $currentTime += $interval * 60;
     }
-    
+
+    $occupiedSlots = [];
+    foreach ($appointments as $apt) {
+        $occupiedSlots[] = [
+            'start' => substr($apt['start_time'], 0, 5),
+            'end' => substr($apt['end_time'], 0, 5),
+            'label' => date('g:i A', strtotime($apt['start_time'])) . ' - ' . date('g:i A', strtotime($apt['end_time']))
+        ];
+    }
+
     jsonResponse([
         'success' => true,
         'available_slots' => $availableSlots,
+        'occupied_slots' => $occupiedSlots,
         'date' => $date,
         'barber_id' => $barberId,
-        'service_duration' => $serviceDuration
+        'service_duration' => $serviceDuration,
+        'schedule' => [
+            'start_time' => $schedule['start_time'],
+            'end_time' => $schedule['end_time']
+        ]
     ]);
-    
 } catch (Exception $e) {
     jsonResponse([
         'success' => false,

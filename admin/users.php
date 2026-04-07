@@ -9,6 +9,60 @@ Auth::requireRole('superadmin');
 
 $db = Database::getInstance();
 
+// Manejar eliminación de usuario
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_user'])) {
+    $userId = (int) ($_POST['delete_user'] ?? 0);
+    $currentUserId = (int) ($_SESSION['user_id'] ?? 0);
+    $userToDelete = $db->fetch("SELECT id, full_name, role FROM users WHERE id = ?", [$userId]);
+
+    if (!$userToDelete) {
+        $_SESSION['error'] = 'Usuario no encontrado';
+    } elseif ($userToDelete['role'] === 'superadmin') {
+        $_SESSION['error'] = 'No se puede eliminar un usuario superadmin';
+    } elseif ($userToDelete['id'] === $currentUserId) {
+        $_SESSION['error'] = 'No puedes eliminar tu propia cuenta';
+    } else {
+        $ownedBarbershops = (int) $db->fetchColumn(
+            "SELECT COUNT(*) FROM barbershops WHERE owner_id = ?",
+            [$userId]
+        );
+
+        $barberAppointments = (int) $db->fetchColumn(
+            "SELECT COUNT(*)
+             FROM appointments a
+             INNER JOIN barbers b ON a.barber_id = b.id
+             WHERE b.user_id = ?",
+            [$userId]
+        );
+
+        if ($ownedBarbershops > 0) {
+            $_SESSION['error'] = 'No se puede eliminar este usuario porque tiene barberías asignadas como owner';
+        } elseif ($barberAppointments > 0) {
+            $_SESSION['error'] = 'No se puede eliminar este usuario porque tiene citas asociadas como barbero';
+        } else {
+            try {
+                $db->beginTransaction();
+                $stmt = $db->query("DELETE FROM users WHERE id = ? AND role != 'superadmin'", [$userId]);
+                $db->commit();
+
+                if ($stmt->rowCount() > 0) {
+                    $_SESSION['success'] = 'Usuario eliminado exitosamente';
+                } else {
+                    $_SESSION['error'] = 'No fue posible eliminar el usuario';
+                }
+            } catch (PDOException $e) {
+                if ($db->getConnection()->inTransaction()) {
+                    $db->rollBack();
+                }
+                $_SESSION['error'] = 'Error al eliminar el usuario. Verifica si tiene registros relacionados.';
+            }
+        }
+    }
+
+    header('Location: users.php');
+    exit;
+}
+
 // Manejar toggle de estado
 if (isset($_GET['toggle'])) {
     $userId = $_GET['toggle'];
@@ -179,17 +233,25 @@ include BASE_PATH . '/includes/header.php';
                                     <?php echo $user['last_login'] ? timeAgo($user['last_login']) : 'Nunca'; ?>
                                 </td>
                                 <td class="px-6 py-4 text-right text-sm font-medium space-x-2">
-                                    <a href="edit-user.php?id=<?php echo $user['id']; ?>" class="text-indigo-600 hover:text-indigo-900 font-medium">
-                                        <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
-                                        </svg>
-                                        Editar
-                                    </a>
-                                    <?php if ($user['role'] !== 'superadmin'): ?>
-                                    <a href="?toggle=<?php echo $user['id']; ?>" class="text-orange-600 hover:text-orange-900">
-                                        <?php echo $user['status'] === 'active' ? 'Suspender' : 'Activar'; ?>
-                                    </a>
-                                    <?php endif; ?>
+                                    <div class="flex items-center justify-end gap-3">
+                                        <a href="edit-user.php?id=<?php echo $user['id']; ?>" class="text-indigo-600 hover:text-indigo-900 font-medium">
+                                            <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                                            </svg>
+                                            Editar
+                                        </a>
+                                        <?php if ($user['role'] !== 'superadmin'): ?>
+                                        <a href="?toggle=<?php echo $user['id']; ?>" class="text-orange-600 hover:text-orange-900">
+                                            <?php echo $user['status'] === 'active' ? 'Suspender' : 'Activar'; ?>
+                                        </a>
+                                        <form method="POST" class="inline" onsubmit="return confirm('¿Estás seguro de eliminar este usuario? Esta acción no se puede deshacer.');">
+                                            <input type="hidden" name="delete_user" value="<?php echo $user['id']; ?>">
+                                            <button type="submit" class="text-red-600 hover:text-red-900">
+                                                Eliminar
+                                            </button>
+                                        </form>
+                                        <?php endif; ?>
+                                    </div>
                                 </td>
                             </tr>
                             <?php endforeach; ?>

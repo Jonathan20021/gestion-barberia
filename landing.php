@@ -474,6 +474,7 @@
                 <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
             </a>
         </div>
+
     </div>
 
     <style>@media(min-width:640px){#demo-grid{grid-template-columns:1fr 1fr !important;}}</style>

@@ -102,7 +102,7 @@ $title = $barber['full_name'] . ' - ' . $barber['business_name'];
                     <!-- Foto del Barbero -->
                     <div class="flex-shrink-0">
                         <?php if ($barber['photo']): ?>
-                        <img src="<?php echo asset($barber['photo']); ?>" 
+                            <img src="<?php echo imageUrl($barber['photo']); ?>" 
                              class="w-48 h-48 rounded-full border-8 border-white shadow-2xl object-cover" 
                              alt="<?php echo e($barber['full_name']); ?>">
                         <?php else: ?>

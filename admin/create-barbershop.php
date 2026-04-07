@@ -17,6 +17,13 @@ $licenses = $db->fetchAll("
     ORDER BY type ASC
 ");
 
+$supportsTrialDates = true;
+try {
+    $db->query("SELECT trial_end_date, trial_start_date, trial_days FROM licenses LIMIT 1");
+} catch (Exception $e) {
+    $supportsTrialDates = false;
+}
+
 $supportsMaxLocationsOverride = true;
 try {
     $db->query("SELECT max_locations_override FROM licenses LIMIT 1");
@@ -92,6 +99,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $cancellationHours = intval($_POST['cancellation_hours'] ?? 24);
         $status = $_POST['status'] ?? 'active';
         $licenseId = $_POST['license_id'] ?? null;
+        $planType = $_POST['plan_type'] ?? '';
         $ownerId = $_POST['owner_id'] ?? null;
         
         // Validaciones
@@ -110,8 +118,46 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             throw new Exception('El slug ya está en uso. Usa otro nombre único.');
         }
         
+        $validPlanTypes = array_keys(LICENSE_TYPES);
+        if (!empty($planType) && !in_array($planType, $validPlanTypes, true)) {
+            throw new Exception('Debe seleccionar un plan válido');
+        }
+
+        // Si no se selecciona una licencia existente, crear una nueva usando un plan del sistema.
         if (empty($licenseId)) {
-            throw new Exception('Debe seleccionar una licencia');
+            if (empty($planType)) {
+                throw new Exception('Debe seleccionar una licencia existente o un plan para crear una nueva');
+            }
+
+            $billingCycle = 'monthly';
+            $startDate = date('Y-m-d');
+            $months = ['monthly' => 1, 'quarterly' => 3, 'yearly' => 12];
+            $selectedMonths = isset($months[$billingCycle]) ? $months[$billingCycle] : 1;
+            $endDate = date('Y-m-d', strtotime($startDate . ' +' . $selectedMonths . ' months'));
+            $trialDays = defined('TRIAL_DAYS_DEFAULT') ? intval(TRIAL_DAYS_DEFAULT) : 15;
+            if ($trialDays <= 0) {
+                $trialDays = 15;
+            }
+            $trialEndDate = date('Y-m-d', strtotime($startDate . ' +' . $trialDays . ' days'));
+
+            $newLicenseKey = bin2hex(random_bytes(16));
+            $newLicensePrice = LICENSE_TYPES[$planType]['price'];
+
+            if ($supportsTrialDates) {
+                $db->query(
+                    "INSERT INTO licenses (license_key, type, status, price, billing_cycle, start_date, end_date, trial_days, trial_start_date, trial_end_date)
+                     VALUES (?, ?, 'trial', ?, ?, ?, ?, ?, ?, ?)",
+                    [$newLicenseKey, $planType, $newLicensePrice, $billingCycle, $startDate, $endDate, $trialDays, $startDate, $trialEndDate]
+                );
+            } else {
+                $db->query(
+                    "INSERT INTO licenses (license_key, type, status, price, billing_cycle, start_date, end_date)
+                     VALUES (?, ?, 'active', ?, ?, ?, ?)",
+                    [$newLicenseKey, $planType, $newLicensePrice, $billingCycle, $startDate, $endDate]
+                );
+            }
+
+            $licenseId = $db->lastInsertId();
         }
         
         if (empty($ownerId)) {
@@ -374,7 +420,7 @@ include BASE_PATH . '/includes/header.php';
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-2">Licencia *</label>
                             <select name="license_id" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent" required>
-                                <option value="">Seleccionar licencia...</option>
+                                <option value="">Crear nueva licencia desde plan...</option>
                                 <?php foreach ($licenses as $license): ?>
                                 <option value="<?php echo $license['id']; ?>" <?php echo $license['has_capacity'] ? '' : 'disabled'; ?>>
                                     <?php echo ucfirst($license['type']); ?> - Vence: <?php echo date('d/m/Y', strtotime($license['end_date'])); ?>
@@ -387,7 +433,20 @@ include BASE_PATH . '/includes/header.php';
                                 </option>
                                 <?php endforeach; ?>
                             </select>
-                            <p class="text-xs text-gray-500 mt-1">Las licencias sin cupo aparecen deshabilitadas.</p>
+                            <p class="text-xs text-gray-500 mt-1">Si eliges una licencia sin cupo, no podrá asignarse a la barbería.</p>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Plan del sistema (si crearás nueva licencia)</label>
+                            <select name="plan_type" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
+                                <option value="">Seleccionar plan...</option>
+                                <?php foreach (LICENSE_TYPES as $planKey => $planCfg): ?>
+                                <option value="<?php echo $planKey; ?>">
+                                    <?php echo $planCfg['name']; ?> - <?php echo formatPrice($planCfg['price']); ?>/mes
+                                </option>
+                                <?php endforeach; ?>
+                            </select>
+                            <p class="text-xs text-gray-500 mt-1">Si no seleccionas una licencia arriba, se creará una nueva con este plan y se asignará automáticamente.</p>
                         </div>
                         
                         <div>

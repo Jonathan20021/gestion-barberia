@@ -12,11 +12,48 @@ $barbershopId = $_SESSION['barbershop_id'];
 
 // Obtener información de la barbería
 $barbershop = $db->fetch("
-    SELECT b.*, l.type as license_type, l.end_date as license_end_date
+    SELECT 
+        b.*, 
+        l.type as license_type,
+        l.status as license_status,
+        l.billing_cycle as license_billing_cycle,
+        l.price as license_price,
+        l.start_date as license_start_date,
+        l.end_date as license_end_date
     FROM barbershops b
     JOIN licenses l ON b.license_id = l.id
     WHERE b.id = ?
 ", [$barbershopId]);
+
+$licenseType = $barbershop['license_type'] ?? 'basic';
+$licenseConfig = LICENSE_TYPES[$licenseType] ?? null;
+$maxBarbers = $licenseConfig['max_barbers'] ?? -1;
+$maxServices = $licenseConfig['max_services'] ?? -1;
+
+$activeBarbersCount = $db->fetch("SELECT COUNT(*) as count FROM barbers WHERE barbershop_id = ? AND status = 'active'", [$barbershopId])['count'];
+$activeServicesCount = $db->fetch("SELECT COUNT(*) as count FROM services WHERE barbershop_id = ? AND is_active = TRUE", [$barbershopId])['count'];
+
+$todayDate = new DateTime(date('Y-m-d'));
+$licenseEndDate = !empty($barbershop['license_end_date']) ? new DateTime($barbershop['license_end_date']) : null;
+$licenseDaysRemaining = null;
+
+if ($licenseEndDate) {
+    $licenseDaysRemaining = (int)$todayDate->diff($licenseEndDate)->format('%r%a');
+}
+
+$licenseStatus = $barbershop['license_status'] ?? 'inactive';
+$licenseStatusClasses = [
+    'active' => 'bg-green-100 text-green-800',
+    'suspended' => 'bg-yellow-100 text-yellow-800',
+    'expired' => 'bg-red-100 text-red-800',
+    'cancelled' => 'bg-gray-100 text-gray-800',
+    'inactive' => 'bg-gray-100 text-gray-800'
+];
+
+$licenseStatusClass = $licenseStatusClasses[$licenseStatus] ?? 'bg-gray-100 text-gray-800';
+
+$barbersUsageLabel = $maxBarbers === -1 ? "$activeBarbersCount / Ilimitado" : "$activeBarbersCount / $maxBarbers";
+$servicesUsageLabel = $maxServices === -1 ? "$activeServicesCount / Ilimitado" : "$activeServicesCount / $maxServices";
 
 // Estadísticas
 $stats = [
@@ -106,6 +143,50 @@ include BASE_PATH . '/includes/header.php';
 
         <!-- Content -->
         <main class="p-6">
+            <div class="bg-white rounded-lg shadow-md border border-gray-200 p-6 mb-8">
+                <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+                    <div>
+                        <p class="text-sm text-gray-500">Licencia Activa</p>
+                        <h2 class="text-2xl font-bold text-gray-900 mt-1"><?php echo e($licenseConfig['name'] ?? ucfirst($licenseType)); ?></h2>
+                        <div class="mt-2 flex items-center gap-2">
+                            <span class="inline-flex px-3 py-1 rounded-full text-xs font-semibold <?php echo $licenseStatusClass; ?>">
+                                <?php echo ucfirst($licenseStatus); ?>
+                            </span>
+                            <span class="text-sm text-gray-600">
+                                Ciclo: <?php echo e(ucfirst($barbershop['license_billing_cycle'] ?? 'monthly')); ?>
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 w-full lg:w-auto">
+                        <div class="bg-gray-50 rounded-lg px-4 py-3">
+                            <p class="text-xs text-gray-500">Precio</p>
+                            <p class="text-lg font-semibold text-gray-900"><?php echo formatPrice($barbershop['license_price'] ?? 0); ?></p>
+                        </div>
+                        <div class="bg-gray-50 rounded-lg px-4 py-3">
+                            <p class="text-xs text-gray-500">Vence</p>
+                            <p class="text-sm font-semibold text-gray-900"><?php echo !empty($barbershop['license_end_date']) ? formatDate($barbershop['license_end_date']) : 'N/D'; ?></p>
+                            <p class="text-xs <?php echo ($licenseDaysRemaining !== null && $licenseDaysRemaining <= 7) ? 'text-red-600' : 'text-gray-500'; ?>">
+                                <?php 
+                                if ($licenseDaysRemaining === null) {
+                                    echo 'Sin fecha de vencimiento';
+                                } elseif ($licenseDaysRemaining < 0) {
+                                    echo 'Vencida';
+                                } else {
+                                    echo $licenseDaysRemaining . ' dias restantes';
+                                }
+                                ?>
+                            </p>
+                        </div>
+                        <div class="bg-gray-50 rounded-lg px-4 py-3">
+                            <p class="text-xs text-gray-500">Uso del plan</p>
+                            <p class="text-sm font-semibold text-gray-900">Barberos: <?php echo e($barbersUsageLabel); ?></p>
+                            <p class="text-sm font-semibold text-gray-900">Servicios: <?php echo e($servicesUsageLabel); ?></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <!-- Stats -->
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 mb-8">
                 <div class="bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg shadow-lg p-6 text-white">
@@ -239,7 +320,7 @@ include BASE_PATH . '/includes/header.php';
                         <div class="space-y-3">
                             <?php foreach ($barbers as $barber): ?>
                                 <div class="flex items-center p-3 bg-gray-50 rounded-lg">
-                                    <img src="<?php echo $barber['photo'] ? asset($barber['photo']) : getDefaultAvatar($barber['full_name']); ?>" 
+                                     <img src="<?php echo $barber['photo'] ? imageUrl($barber['photo']) : getDefaultAvatar($barber['full_name']); ?>" 
                                          class="w-12 h-12 rounded-full" alt="<?php echo e($barber['full_name']); ?>">
                                     <div class="ml-3 flex-1">
                                         <p class="font-medium text-gray-900"><?php echo e($barber['full_name']); ?></p>

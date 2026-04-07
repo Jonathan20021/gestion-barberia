@@ -66,11 +66,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $commissionRate = 100;
         }
         $slug = generateUniqueBarberSlug($db, $barbershopId, $fullName);
+        $photoPath = null;
+        if (isset($_FILES['photo']) && $_FILES['photo']['error'] !== UPLOAD_ERR_NO_FILE) {
+            $uploadResult = uploadImage($_FILES['photo'], 'barbers', [
+                'maxSize' => 2 * 1024 * 1024,
+                'maxWidth' => 1200,
+                'maxHeight' => 1200
+            ]);
+
+            if (!$uploadResult['success']) {
+                setFlash('error', $uploadResult['message']);
+                redirect($_SERVER['PHP_SELF']);
+            }
+
+            $photoPath = $uploadResult['path'];
+        }
         
         $db->execute("
-            INSERT INTO barbers (user_id, barbershop_id, slug, specialty, experience_years, commission_rate, status, created_at)
-            VALUES (?, ?, ?, ?, ?, ?, 'active', NOW())
-        ", [$userId, $barbershopId, $slug, $specialty, $experience, $commissionRate]);
+            INSERT INTO barbers (user_id, barbershop_id, slug, photo, specialty, experience_years, commission_rate, status, created_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, 'active', NOW())
+        ", [$userId, $barbershopId, $slug, $photoPath, $specialty, $experience, $commissionRate]);
         
         setFlash('success', 'Barbero creado correctamente');
         redirect($_SERVER['PHP_SELF']);
@@ -94,13 +109,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $isFeatured = input('is_featured') ? 1 : 0;
 
         $barberCurrent = $db->fetch(
-            "SELECT user_id FROM barbers WHERE id = ? AND barbershop_id = ?",
+            "SELECT user_id, photo FROM barbers WHERE id = ? AND barbershop_id = ?",
             [$barberId, $barbershopId]
         );
 
         if (!$barberCurrent) {
             setFlash('error', 'Barbero no encontrado');
             redirect($_SERVER['PHP_SELF']);
+        }
+
+        $newPhotoPath = $barberCurrent['photo'] ?? null;
+        if (isset($_FILES['photo']) && $_FILES['photo']['error'] !== UPLOAD_ERR_NO_FILE) {
+            $uploadResult = uploadImage($_FILES['photo'], 'barbers', [
+                'maxSize' => 2 * 1024 * 1024,
+                'maxWidth' => 1200,
+                'maxHeight' => 1200,
+                'oldFile' => $barberCurrent['photo'] ?? null
+            ]);
+
+            if (!$uploadResult['success']) {
+                setFlash('error', $uploadResult['message']);
+                redirect($_SERVER['PHP_SELF']);
+            }
+
+            $newPhotoPath = $uploadResult['path'];
         }
 
         $db->execute(
@@ -111,9 +143,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         $db->execute(
             "UPDATE barbers
-             SET specialty = ?, experience_years = ?, commission_rate = ?, status = ?, is_featured = ?, updated_at = NOW()
+             SET photo = ?, specialty = ?, experience_years = ?, commission_rate = ?, status = ?, is_featured = ?, updated_at = NOW()
              WHERE id = ? AND barbershop_id = ?",
-            [$specialty, $experience, $commissionRate, $status, $isFeatured, $barberId, $barbershopId]
+            [$newPhotoPath, $specialty, $experience, $commissionRate, $status, $isFeatured, $barberId, $barbershopId]
         );
 
         setFlash('success', 'Barbero actualizado correctamente');
@@ -210,7 +242,7 @@ include BASE_PATH . '/includes/header.php';
                     <!-- Header con foto -->
                     <div class="bg-gradient-to-br from-indigo-500 to-purple-600 p-6 text-center">
                         <?php if ($barber['photo']): ?>
-                        <img src="<?php echo asset($barber['photo']); ?>" class="w-24 h-24 rounded-full mx-auto border-4 border-white shadow-lg" alt="<?php echo e($barber['full_name']); ?>">
+                        <img src="<?php echo imageUrl($barber['photo']); ?>" class="w-24 h-24 rounded-full mx-auto border-4 border-white shadow-lg object-cover" alt="<?php echo e($barber['full_name']); ?>">
                         <?php else: ?>
                         <div class="w-24 h-24 rounded-full mx-auto border-4 border-white shadow-lg bg-white text-indigo-600 flex items-center justify-center text-3xl font-bold">
                             <?php echo substr($barber['full_name'], 0, 1); ?>
@@ -308,7 +340,7 @@ include BASE_PATH . '/includes/header.php';
             <div class="relative bg-white rounded-lg max-w-md w-full p-6">
                 <h3 class="text-lg font-medium text-gray-900 mb-4">Añadir Nuevo Barbero</h3>
                 
-                <form method="POST">
+                <form method="POST" enctype="multipart/form-data">
                     <input type="hidden" name="action" value="create">
                     
                     <div class="space-y-4">
@@ -353,6 +385,12 @@ include BASE_PATH . '/includes/header.php';
                             <input type="number" name="commission_rate" value="100" min="0" max="100" step="0.1" class="w-full px-3 py-2 border border-gray-300 rounded-lg">
                             <p class="text-xs text-gray-500 mt-1">Porcentaje del servicio que gana este barbero.</p>
                         </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Foto del barbero</label>
+                            <input type="file" name="photo" accept="image/*" class="w-full px-3 py-2 border border-gray-300 rounded-lg">
+                            <p class="text-xs text-gray-500 mt-1">JPG/PNG/GIF/WebP, máximo 2MB.</p>
+                        </div>
                         
                         <div class="flex space-x-3 pt-4">
                             <button type="submit" class="flex-1 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">
@@ -380,9 +418,24 @@ include BASE_PATH . '/includes/header.php';
                 </div>
 
                 <?php if ($editBarber): ?>
-                <form method="POST" class="space-y-4">
+                <form method="POST" enctype="multipart/form-data" class="space-y-4">
                     <input type="hidden" name="action" value="update">
                     <input type="hidden" name="barber_id" value="<?php echo $editBarber['id']; ?>">
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Foto actual</label>
+                        <div class="flex items-center gap-3">
+                            <?php if (!empty($editBarber['photo'])): ?>
+                            <img src="<?php echo imageUrl($editBarber['photo']); ?>" class="w-16 h-16 rounded-full object-cover border" alt="<?php echo e($editBarber['full_name']); ?>">
+                            <?php else: ?>
+                            <div class="w-16 h-16 rounded-full bg-gray-100 text-gray-600 flex items-center justify-center font-semibold">
+                                <?php echo strtoupper(substr($editBarber['full_name'], 0, 1)); ?>
+                            </div>
+                            <?php endif; ?>
+                            <input type="file" name="photo" accept="image/*" class="flex-1 px-3 py-2 border border-gray-300 rounded-lg">
+                        </div>
+                        <p class="text-xs text-gray-500 mt-1">Sube una nueva foto para reemplazar la actual.</p>
+                    </div>
 
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Nombre</label>

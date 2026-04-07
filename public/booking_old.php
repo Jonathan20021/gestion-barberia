@@ -335,7 +335,7 @@ $title = $barbershop['business_name'] . ' - Reserva tu Cita';
                     <?php foreach ($barbers as $barber): ?>
                         <div class="group relative bg-white rounded-3xl shadow-xl overflow-hidden hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2">
                             <div class="relative h-80 overflow-hidden">
-                                <img src="<?php echo $barber['photo'] ? asset($barber['photo']) : getDefaultAvatar($barber['full_name']); ?>" 
+                                  <img src="<?php echo $barber['photo'] ? imageUrl($barber['photo']) : getDefaultAvatar($barber['full_name']); ?>" 
                                      class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" 
                                      alt="<?php echo e($barber['full_name']); ?>">
                                 <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent"></div>

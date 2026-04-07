@@ -1,6 +1,17 @@
 <IfModule mod_rewrite.c>
     RewriteEngine On
     RewriteBase /
+
+    # Si el recurso existe fisicamente, no reescribir.
+    RewriteCond %{REQUEST_FILENAME} -f [OR]
+    RewriteCond %{REQUEST_FILENAME} -d
+    RewriteRule ^ - [L]
+
+    # URL publica por barberia: /public/{slug}
+    RewriteRule ^public/([a-zA-Z0-9-]+)/?$ public/booking.php?shop=$1 [L,QSA,NC]
+
+    # URL publica por barbero: /public/{shop}/{barber}
+    RewriteRule ^public/([a-zA-Z0-9-]+)/([a-zA-Z0-9-]+)/?$ public/barber.php?shop=$1&barber=$2 [L,QSA,NC]
     
     # Forzar HTTPS en producción (comentado para desarrollo local)
     # RewriteCond %{HTTPS} off

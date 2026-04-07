@@ -437,6 +437,9 @@ $title = $barber['full_name'] . ' - ' . $barber['business_name'];
                                 </template>
                             </select>
                             <p x-show="availabilityMessage" class="text-xs mt-2 text-amber-700" x-text="availabilityMessage"></p>
+                            <p x-show="!availabilityMessage && availableSlots.length > 0" class="text-xs mt-2 text-gray-500">
+                                Se muestran solo horas disponibles y futuras en intervalos de <span x-text="intervalMinutes"></span> min.
+                            </p>
                             <div x-show="occupiedSlots.length > 0" class="mt-2">
                                 <p class="text-xs text-gray-500 mb-1">Horas ocupadas:</p>
                                 <div class="flex flex-wrap gap-1">
@@ -495,6 +498,7 @@ function barberApp() {
         occupiedSlots: [],
         availabilityLoading: false,
         availabilityMessage: '',
+        intervalMinutes: 15,
         openModal()  { this.showBookingModal = true;  },
         closeModal() { this.showBookingModal = false; },
         async loadAvailability() {
@@ -529,6 +533,7 @@ function barberApp() {
 
                 this.availableSlots = Array.isArray(data.available_slots) ? data.available_slots : [];
                 this.occupiedSlots = Array.isArray(data.occupied_slots) ? data.occupied_slots : [];
+                this.intervalMinutes = data.interval_minutes || 15;
 
                 if (this.availableSlots.length === 0) {
                     this.availabilityMessage = data.message || 'No hay horarios disponibles para esa fecha';

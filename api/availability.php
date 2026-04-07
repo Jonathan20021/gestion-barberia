@@ -96,7 +96,15 @@ try {
 
     $startTime = strtotime($schedule['start_time']);
     $endTime = strtotime($schedule['end_time']);
-    $interval = 15;
+
+    $intervalSetting = $db->fetch(
+        'SELECT setting_value FROM barbershop_settings WHERE barbershop_id = ? AND setting_key = ? LIMIT 1',
+        [$barberMeta['barbershop_id'], 'booking_interval_minutes']
+    );
+    $interval = $intervalSetting ? (int) $intervalSetting['setting_value'] : 15;
+    if (!in_array($interval, [5, 10, 15, 20, 30, 60], true)) {
+        $interval = 15;
+    }
 
     $availableSlots = [];
     $currentTime = $startTime;
@@ -150,6 +158,7 @@ try {
         'date' => $date,
         'barber_id' => $barberId,
         'service_duration' => $serviceDuration,
+        'interval_minutes' => $interval,
         'schedule' => [
             'start_time' => $schedule['start_time'],
             'end_time' => $schedule['end_time']

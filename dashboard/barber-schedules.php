@@ -38,6 +38,16 @@ if (!$selectedBarber) {
     $selectedBarber = $barbers[0];
 }
 
+$intervalOptions = [5, 10, 15, 20, 30, 60];
+$intervalSetting = $db->fetch(
+    'SELECT setting_value FROM barbershop_settings WHERE barbershop_id = ? AND setting_key = ? LIMIT 1',
+    [$barbershopId, 'booking_interval_minutes']
+);
+$bookingInterval = $intervalSetting ? (int) $intervalSetting['setting_value'] : 15;
+if (!in_array($bookingInterval, $intervalOptions, true)) {
+    $bookingInterval = 15;
+}
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $action = input('action');
     $postBarberId = (int) input('barber_id');
@@ -82,6 +92,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         setFlash('success', 'Horarios actualizados correctamente');
+        redirect(BASE_URL . '/dashboard/barber-schedules.php?barber_id=' . $postBarberId);
+    }
+
+    if ($action === 'save_interval') {
+        $newInterval = (int) input('booking_interval_minutes', 15);
+        if (!in_array($newInterval, $intervalOptions, true)) {
+            setFlash('error', 'Intervalo inválido');
+            redirect(BASE_URL . '/dashboard/barber-schedules.php?barber_id=' . $postBarberId);
+        }
+
+        $db->execute(
+            "INSERT INTO barbershop_settings (barbershop_id, setting_key, setting_value)
+             VALUES (?, 'booking_interval_minutes', ?)
+             ON DUPLICATE KEY UPDATE setting_value = VALUES(setting_value)",
+            [$barbershopId, (string) $newInterval]
+        );
+
+        setFlash('success', 'Intervalo de agenda actualizado');
         redirect(BASE_URL . '/dashboard/barber-schedules.php?barber_id=' . $postBarberId);
     }
 
@@ -210,16 +238,32 @@ include BASE_PATH . '/includes/header.php';
             <?php endif; ?>
 
             <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
-                <form method="GET" class="flex flex-col sm:flex-row items-center gap-3">
-                    <label class="text-sm font-semibold text-gray-700">Barbero</label>
-                    <select name="barber_id" onchange="this.form.submit()" class="w-full sm:w-80 px-3 py-2 border border-gray-300 rounded-lg">
-                        <?php foreach ($barbers as $item): ?>
-                            <option value="<?php echo (int) $item['id']; ?>" <?php echo (int) $item['id'] === (int) $selectedBarberId ? 'selected' : ''; ?>>
-                                <?php echo e($item['full_name']); ?> (<?php echo $item['status'] === 'active' ? 'Activo' : 'Inactivo'; ?>)
-                            </option>
-                        <?php endforeach; ?>
-                    </select>
-                </form>
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                    <form method="GET" class="flex flex-col sm:flex-row items-center gap-3">
+                        <label class="text-sm font-semibold text-gray-700">Barbero</label>
+                        <select name="barber_id" onchange="this.form.submit()" class="w-full sm:w-80 px-3 py-2 border border-gray-300 rounded-lg">
+                            <?php foreach ($barbers as $item): ?>
+                                <option value="<?php echo (int) $item['id']; ?>" <?php echo (int) $item['id'] === (int) $selectedBarberId ? 'selected' : ''; ?>>
+                                    <?php echo e($item['full_name']); ?> (<?php echo $item['status'] === 'active' ? 'Activo' : 'Inactivo'; ?>)
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+                    </form>
+
+                    <form method="POST" class="flex flex-col sm:flex-row items-center justify-start lg:justify-end gap-3">
+                        <input type="hidden" name="action" value="save_interval">
+                        <input type="hidden" name="barber_id" value="<?php echo (int) $selectedBarberId; ?>">
+                        <label class="text-sm font-semibold text-gray-700">Intervalo de agenda</label>
+                        <select name="booking_interval_minutes" class="w-full sm:w-44 px-3 py-2 border border-gray-300 rounded-lg">
+                            <?php foreach ($intervalOptions as $option): ?>
+                                <option value="<?php echo $option; ?>" <?php echo $bookingInterval === $option ? 'selected' : ''; ?>>
+                                    <?php echo $option; ?> minutos
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+                        <button type="submit" class="px-4 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800">Guardar</button>
+                    </form>
+                </div>
             </div>
 
             <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">

@@ -300,43 +300,33 @@ $title = $barbershop['business_name'] . ' - Reserva tu cita';
                     </p>
                 </div>
 
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-<?php echo min(count($barbers), 3); ?> gap-10">
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-<?php echo min(max(count($barbers), 1), 3); ?> gap-8 items-stretch">
                     <?php foreach ($barbers as $barber): ?>
-                                        <div class="bg-white rounded-3xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2 border border-gray-200">
-                        <div class="relative h-96">
-                                                             <img src="<?php echo !empty($barber['public_photo']) ? imageUrl($barber['public_photo']) : getDefaultAvatar($barber['full_name']); ?>" 
-                                 class="w-full h-full object-cover" 
+                    <div class="bg-white rounded-3xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-300 border border-gray-200 w-full max-w-xl mx-auto flex flex-col">
+                        <div class="relative h-72 md:h-80 bg-gray-100">
+                            <img src="<?php echo !empty($barber['public_photo']) ? imageUrl($barber['public_photo']) : getDefaultAvatar($barber['full_name']); ?>" 
+                                 class="w-full h-full object-cover object-center" 
                                  alt="<?php echo htmlspecialchars($barber['full_name']); ?>">
-                            
+
                             <?php if ($barber['is_featured']): ?>
-                            <div class="absolute top-4 right-4">
-                                <div class="bg-yellow-400 text-yellow-900 px-4 py-2 rounded-full text-sm font-bold shadow-lg">
-                                    Destacado
+                            <div class="absolute top-4 left-4">
+                                <div class="bg-yellow-400 text-yellow-900 px-3 py-1 rounded-full text-xs font-bold shadow-md">
+                                    Barbero destacado
                                 </div>
                             </div>
                             <?php endif; ?>
-                            
-                            <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent p-6">
-                                <h3 class="text-2xl font-bold text-white mb-1">
-                                    <?php echo htmlspecialchars($barber['full_name']); ?>
-                                </h3>
-                                <?php if ($barber['specialty']): ?>
-                                <p class="text-white/80 font-medium">
-                                    <?php echo htmlspecialchars($barber['specialty']); ?>
-                                </p>
-                                <?php endif; ?>
-                            </div>
                         </div>
                         
-                        <div class="p-6">
-                            <div class="flex items-center justify-between text-sm text-gray-500 mb-3">
+                        <div class="p-6 flex-1 flex flex-col">
+                            <h3 class="text-2xl font-extrabold text-gray-900 leading-tight mb-1"><?php echo htmlspecialchars($barber['full_name']); ?></h3>
+                            <div class="flex items-center justify-between text-sm text-gray-500 mb-4">
                                 <span><?php echo intval($barber['experience_years'] ?? 0); ?> anos exp.</span>
                                 <?php if (!empty($barber['specialty'])): ?>
-                                <span class="truncate max-w-[180px]"><?php echo htmlspecialchars($barber['specialty']); ?></span>
+                                <span class="truncate max-w-[200px] text-right"><?php echo htmlspecialchars($barber['specialty']); ?></span>
                                 <?php endif; ?>
                             </div>
 
-                            <div class="flex items-center justify-between mb-6">
+                            <div class="flex items-center justify-between mb-5">
                                 <div class="flex items-center space-x-1">
                                     <?php for ($i = 1; $i <= 5; $i++): ?>
                                         <svg class="w-5 h-5 <?php echo $i <= round($barber['rating']) ? 'text-yellow-400 fill-current' : 'text-gray-300 fill-current'; ?>" viewBox="0 0 20 20">
@@ -347,10 +337,12 @@ $title = $barbershop['business_name'] . ' - Reserva tu cita';
                                 <span class="text-xl font-bold text-gray-900"><?php echo number_format($barber['rating'], 1); ?></span>
                             </div>
 
+                            <div class="mt-auto">
                             <button @click="selectBarber(<?php echo $barber['id']; ?>)" 
                                     class="w-full px-6 py-4 bg-gray-900 hover:bg-gray-800 text-white rounded-xl font-bold transition">
                                 Reservar con <?php echo explode(' ', $barber['full_name'])[0]; ?>
                             </button>
+                            </div>
                         </div>
                     </div>
                     <?php endforeach; ?>

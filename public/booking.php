@@ -75,6 +75,19 @@ $avgRating = $db->fetch("
 ", [$barbershop['id']]);
 
 $title = $barbershop['business_name'] . ' - Reserva tu cita';
+
+// Verificar si la barberia esta abierta ahora
+$isOpenNow = false;
+$currentDayOfWeek = (int) date('w'); // 0=Domingo, 1=Lunes...
+$currentTime = date('H:i:s');
+foreach ($schedules as $schedule) {
+    if ((int)$schedule['day_of_week'] === $currentDayOfWeek && !$schedule['is_closed']) {
+        if ($currentTime >= $schedule['open_time'] && $currentTime <= $schedule['close_time']) {
+            $isOpenNow = true;
+            break;
+        }
+    }
+}
 ?>
 
 <!DOCTYPE html>
@@ -135,7 +148,7 @@ $title = $barbershop['business_name'] . ' - Reserva tu cita';
                             WhatsApp
                         </a>
                         <?php endif; ?>
-                        <button @click="showBookingModal = true" 
+                        <button @click="openBookingModal()" 
                                 class="px-6 py-2 bg-gray-900 hover:bg-gray-800 text-white rounded-lg font-semibold transition">
                             Reservar Cita
                         </button>
@@ -149,10 +162,17 @@ $title = $barbershop['business_name'] . ' - Reserva tu cita';
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
                     <div>
-                        <div class="inline-flex items-center px-4 py-2 bg-white/10 border border-white/20 rounded-full text-sm font-medium mb-6">
+                        <?php if ($isOpenNow): ?>
+                        <div class="inline-flex items-center px-4 py-2 bg-green-500/20 border border-green-400/40 rounded-full text-sm font-medium mb-6 text-green-300">
                             <span class="w-2 h-2 bg-green-400 rounded-full mr-2 animate-pulse"></span>
                             Abierto ahora
                         </div>
+                        <?php else: ?>
+                        <div class="inline-flex items-center px-4 py-2 bg-white/10 border border-white/20 rounded-full text-sm font-medium mb-6 text-gray-300">
+                            <span class="w-2 h-2 bg-gray-500 rounded-full mr-2"></span>
+                            Cerrado ahora
+                        </div>
+                        <?php endif; ?>
                         
                         <h1 class="text-5xl md:text-7xl font-black mb-6 leading-tight">
                             <?php echo htmlspecialchars($barbershop['business_name']); ?>
@@ -194,7 +214,7 @@ $title = $barbershop['business_name'] . ' - Reserva tu cita';
                         
                         <!-- CTA -->
                         <div class="flex flex-col sm:flex-row gap-4">
-                            <button @click="showBookingModal = true" 
+                            <button @click="openBookingModal()" 
                                     class="px-8 py-4 bg-white text-gray-900 rounded-xl font-bold text-lg hover:bg-gray-100 transition transform hover:scale-105">
                                 Reservar Ahora
                             </button>
@@ -217,6 +237,48 @@ $title = $barbershop['business_name'] . ' - Reserva tu cita';
                                 <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent"></div>
                             </div>
                         <?php endif; ?>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- How to Book Section -->
+        <div class="py-20 bg-white">
+            <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="text-center mb-12">
+                    <span class="text-amber-700 font-semibold tracking-wider uppercase text-sm">Sencillo y rápido</span>
+                    <h2 class="text-4xl font-black text-gray-900 mt-3" style="letter-spacing:-0.02em;">Reserva en 3 pasos</h2>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                    <div class="flex flex-col items-center text-center group">
+                        <div class="w-16 h-16 bg-gray-900 rounded-2xl flex items-center justify-center mb-5 group-hover:scale-110 transition-transform">
+                            <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                            </svg>
+                        </div>
+                        <div class="text-5xl font-black text-gray-100 mb-2" style="font-family:'Sora',sans-serif;">01</div>
+                        <h3 class="text-xl font-bold text-gray-900 mb-2">Elige tu servicio</h3>
+                        <p class="text-gray-500">Selecciona el corte o servicio que deseas de nuestro menú</p>
+                    </div>
+                    <div class="flex flex-col items-center text-center group">
+                        <div class="w-16 h-16 bg-[#d9a441] rounded-2xl flex items-center justify-center mb-5 group-hover:scale-110 transition-transform">
+                            <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+                            </svg>
+                        </div>
+                        <div class="text-5xl font-black text-gray-100 mb-2" style="font-family:'Sora',sans-serif;">02</div>
+                        <h3 class="text-xl font-bold text-gray-900 mb-2">Escoge tu barbero</h3>
+                        <p class="text-gray-500">Elige al profesional de confianza con quien quieres tu cita</p>
+                    </div>
+                    <div class="flex flex-col items-center text-center group">
+                        <div class="w-16 h-16 bg-gray-900 rounded-2xl flex items-center justify-center mb-5 group-hover:scale-110 transition-transform">
+                            <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                        </div>
+                        <div class="text-5xl font-black text-gray-100 mb-2" style="font-family:'Sora',sans-serif;">03</div>
+                        <h3 class="text-xl font-bold text-gray-900 mb-2">Confirma tu cita</h3>
+                        <p class="text-gray-500">Ingresa tus datos y recibirás confirmación inmediata</p>
                     </div>
                 </div>
             </div>
@@ -413,7 +475,7 @@ $title = $barbershop['business_name'] . ' - Reserva tu cita';
         </div>
         <?php endif; ?>
 
-        <!-- Footer --
+        <!-- Footer -->
         <footer class="gradient-dark text-white py-16">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div class="grid grid-cols-1 md:grid-cols-4 gap-12 mb-12">
@@ -514,13 +576,13 @@ $title = $barbershop['business_name'] . ' - Reserva tu cita';
         <!-- Booking Modal -->
         <div x-show="showBookingModal" class="fixed inset-0 z-50 overflow-y-auto" style="display: none;">
             <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center">
-                <div class="fixed inset-0 transition-opacity bg-gray-900 bg-opacity-75" @click="showBookingModal = false"></div>
+                <div class="fixed inset-0 transition-opacity bg-gray-900 bg-opacity-75" @click="closeBookingModal()"></div>
 
                 <div class="inline-block align-bottom bg-white rounded-3xl text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-2xl sm:w-full">
                     <div class="bg-gray-900 px-8 py-6">
                         <div class="flex items-center justify-between">
                             <h3 class="text-3xl font-black text-white">Reserva tu Cita</h3>
-                            <button @click="showBookingModal = false" class="text-white hover:text-gray-300">
+                            <button @click="closeBookingModal()" class="text-white hover:text-gray-300">
                                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
                                 </svg>
@@ -533,7 +595,7 @@ $title = $barbershop['business_name'] . ' - Reserva tu cita';
                         
                         <div>
                             <label class="block text-sm font-bold text-gray-900 mb-3">Servicio</label>
-                            <select name="service_id" required class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-gray-900 focus:border-gray-900 transition">
+                            <select name="service_id" x-model="selectedService" required class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-gray-900 focus:border-gray-900 transition">
                                 <option value="">Seleccionar servicio...</option>
                                 <?php foreach ($services as $service): ?>
                                     <option value="<?php echo $service['id']; ?>">
@@ -545,7 +607,7 @@ $title = $barbershop['business_name'] . ' - Reserva tu cita';
 
                         <div>
                             <label class="block text-sm font-bold text-gray-900 mb-3">Barbero</label>
-                            <select name="barber_id" required class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-gray-900 focus:border-gray-900 transition">
+                            <select name="barber_id" x-model="selectedBarber" required class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-gray-900 focus:border-gray-900 transition">
                                 <option value="">Seleccionar barbero...</option>
                                 <?php foreach ($barbers as $barber): ?>
                                     <option value="<?php echo $barber['id']; ?>">
@@ -553,6 +615,7 @@ $title = $barbershop['business_name'] . ' - Reserva tu cita';
                                     </option>
                                 <?php endforeach; ?>
                             </select>
+                            <p x-show="selectedBarber" class="text-xs text-green-700 mt-2">Barbero preseleccionado</p>
                         </div>
 
                         <div class="grid grid-cols-2 gap-4">
@@ -591,7 +654,7 @@ $title = $barbershop['business_name'] . ' - Reserva tu cita';
                         </div>
 
                         <div class="flex gap-4">
-                            <button type="button" @click="showBookingModal = false" 
+                            <button type="button" @click="closeBookingModal()" 
                                     class="flex-1 px-6 py-4 border-2 border-gray-200 text-gray-700 rounded-xl font-bold hover:bg-gray-50 transition">
                                 Cancelar
                             </button>
@@ -611,17 +674,25 @@ $title = $barbershop['business_name'] . ' - Reserva tu cita';
         function bookingApp() {
             return {
                 showBookingModal: false,
-                selectedService: null,
-                selectedBarber: null,
+                selectedService: '',
+                selectedBarber: '',
+
+                openBookingModal() {
+                    this.showBookingModal = true;
+                },
+
+                closeBookingModal() {
+                    this.showBookingModal = false;
+                },
                 
                 selectService(serviceId) {
-                    this.selectedService = serviceId;
-                    this.showBookingModal = true;
+                    this.selectedService = String(serviceId);
+                    this.openBookingModal();
                 },
                 
                 selectBarber(barberId) {
-                    this.selectedBarber = barberId;
-                    this.showBookingModal = true;
+                    this.selectedBarber = String(barberId);
+                    this.openBookingModal();
                 }
             }
         }

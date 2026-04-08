@@ -500,7 +500,53 @@ function truncate($text, $length = 100, $suffix = '...') {
  * Asset URL
  */
 function asset($path) {
-    return BASE_URL . '/assets/' . ltrim($path, '/');
+    if (!$path) {
+        return BASE_URL . '/assets/';
+    }
+
+    // Si ya es URL absoluta, devolverla tal cual.
+    if (preg_match('#^https?://#i', $path)) {
+        return $path;
+    }
+
+    $normalized = ltrim($path, '/');
+
+    // Soporte para archivos subidos por uploadImage() en /public/uploads.
+    if (strpos($normalized, 'barbershops/') === 0 || strpos($normalized, 'barbers/') === 0) {
+        return BASE_URL . '/public/uploads/' . $normalized;
+    }
+
+    if (file_exists(BASE_PATH . '/public/uploads/' . $normalized)) {
+        return BASE_URL . '/public/uploads/' . $normalized;
+    }
+
+    // Compatibilidad para rutas que ya incluyan el prefijo uploads/.
+    if (strpos($normalized, 'uploads/') === 0) {
+        $uploadsRelative = substr($normalized, strlen('uploads/'));
+        if (strpos($uploadsRelative, 'barbershops/') === 0 || strpos($uploadsRelative, 'barbers/') === 0) {
+            return BASE_URL . '/public/uploads/' . $uploadsRelative;
+        }
+        if (file_exists(BASE_PATH . '/public/uploads/' . $uploadsRelative)) {
+            return BASE_URL . '/public/uploads/' . $uploadsRelative;
+        }
+    }
+
+    // Compatibilidad para rutas ya persistidas con prefijo public/uploads/.
+    if (strpos($normalized, 'public/uploads/') === 0) {
+        return BASE_URL . '/' . $normalized;
+    }
+
+    // Assets estáticos tradicionales.
+    if (file_exists(BASE_PATH . '/assets/' . $normalized)) {
+        return BASE_URL . '/assets/' . $normalized;
+    }
+
+    // Fallback para archivos públicos directos.
+    if (file_exists(BASE_PATH . '/public/' . $normalized)) {
+        return BASE_URL . '/public/' . $normalized;
+    }
+
+    return BASE_URL . '/assets/' . $normalized;
 }
 
 /**

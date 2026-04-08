@@ -4,8 +4,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kyros Barber Cloud — Sistema de Gestión para Barberías RD</title>
-    <meta name="description" content="Sistema completo de gestión de citas, clientes y finanzas para barberías en República Dominicana. 100% en la nube, fácil de usar y con reservas online.">
+    <title>Kyros Barber Cloud — Sistema de Gestión para Barberías</title>
+    <meta name="description" content="Sistema completo de gestión de citas, clientes y finanzas para barberías. Funciona en cualquier país, 100% en la nube, fácil de usar y con reservas online.">
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Sora:wght@700;800;900&display=swap" rel="stylesheet">
@@ -102,7 +102,7 @@
                 <svg width="18" height="18" fill="none" stroke="white" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M14.121 14.121L19 19m-7-7l7-7m-7 7l-2.879 2.879M12 12L9.121 9.121m0 5.758a3 3 0 10-4.243 4.243 3 3 0 004.243-4.243zm0-5.758a3 3 0 10-4.243-4.243 3 3 0 004.243 4.243z"/></svg>
             </div>
             <span class="mobile-brand-text" style="font-family:'Sora',sans-serif;font-weight:800;font-size:1.0625rem;color:#0a0a0a;letter-spacing:-.02em;">Kyros Barber Cloud</span>
-            <span class="mobile-rd-badge" style="padding:2px 8px;background:#f0f9ff;border:1px solid #bae6fd;border-radius:999px;font-size:.625rem;font-weight:700;color:#0284c7;letter-spacing:.06em;">RD</span>
+            <span class="mobile-rd-badge" style="padding:2px 8px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:999px;font-size:.625rem;font-weight:700;color:#16a34a;letter-spacing:.06em;">GLOBAL</span>
         </a>
 
         <!-- Desktop nav -->
@@ -206,7 +206,7 @@
                 <span style="background:linear-gradient(135deg,#c9901a 0%,#e8b84b 60%,#c9901a 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;display:block;">Como un Profesional</span>
             </h1>
             <p style="font-size:clamp(1rem,2.5vw,1.1875rem);color:#9ca3af;line-height:1.7;margin:0 auto;max-width:560px;">
-                Sistema completo de gestión de citas, clientes y finanzas para barberías en República Dominicana. 100% en la nube y con reservas online.
+                Sistema completo de gestión de citas, clientes y finanzas para barberías. Funciona en cualquier país del mundo, 100% en la nube y con reservas online.
             </p>
         </div>
 
@@ -293,7 +293,7 @@
 <section style="background:#fff;border-bottom:1px solid #f0f0ec;padding:20px 0;overflow:hidden;">
     <div class="ticker-wrap">
         <div class="ticker-inner">
-            <?php $items = ['500+ Barberías Activas','50K+ Citas Mensuales','99.9% Uptime garantizado','4.8 Satisfacción promedio','República Dominicana #1','Soporte 24/7 en español']; for($r=0;$r<4;$r++): foreach($items as $it): ?>
+            <?php $items = ['500+ Barberías Activas','50K+ Citas Mensuales','99.9% Uptime garantizado','4.8 Satisfacción promedio','Disponible en todo el mundo','Soporte 24/7 en español']; for($r=0;$r<4;$r++): foreach($items as $it): ?>
             <div style="display:inline-flex;align-items:center;gap:12px;padding:0 32px;white-space:nowrap;">
                 <span style="width:6px;height:6px;border-radius:50%;background:linear-gradient(135deg,#c9901a,#e8b84b);display:block;flex-shrink:0;"></span>
                 <span style="font-size:.875rem;font-weight:500;color:#52525b;"><?php echo $it; ?></span>
@@ -311,7 +311,7 @@
         <div style="text-align:center;margin-bottom:64px;">
             <span style="display:inline-block;padding:5px 14px;background:#fef9ee;border:1px solid #f0d88a;border-radius:999px;font-size:.6875rem;font-weight:700;letter-spacing:.1em;color:#a16207;text-transform:uppercase;margin-bottom:14px;">Características</span>
             <h2 style="font-size:clamp(2rem,5vw,3rem);font-weight:900;color:#0a0a0a;letter-spacing:-.03em;margin:0 0 14px;">Todo lo que Necesitas</h2>
-            <p style="font-size:1.0625rem;color:#71717a;max-width:480px;margin:0 auto;line-height:1.65;">Herramientas profesionales diseñadas para barberías dominicanas</p>
+            <p style="font-size:1.0625rem;color:#71717a;max-width:480px;margin:0 auto;line-height:1.65;">Herramientas profesionales diseñadas para barberías en cualquier país</p>
         </div>
 
         <div class="feat-grid" style="display:grid;grid-template-columns:1fr;gap:16px;">
@@ -372,12 +372,35 @@
      PRICING
 ══════════════════════════════════════════════ -->
 <section id="pricing" style="background:#fafaf8;padding:96px 24px;">
-    <div style="max-width:1100px;margin:0 auto;">
-        <div style="text-align:center;margin-bottom:64px;">
+    <div x-data="currencySelector()" x-init="init()" style="max-width:1100px;margin:0 auto;">
+        <div style="text-align:center;margin-bottom:48px;">
             <span style="display:inline-block;padding:5px 14px;background:#fef9ee;border:1px solid #f0d88a;border-radius:999px;font-size:.6875rem;font-weight:700;letter-spacing:.1em;color:#a16207;text-transform:uppercase;margin-bottom:14px;">Precios</span>
             <h2 style="font-size:clamp(2rem,5vw,3rem);font-weight:900;color:#0a0a0a;letter-spacing:-.03em;margin:0 0 12px;">Planes Transparentes</h2>
-            <p style="font-size:1.0625rem;color:#71717a;margin:0;">Sin costos ocultos. Cancela cuando quieras.</p>
+            <p style="font-size:1.0625rem;color:#71717a;margin:0 0 28px;">Sin costos ocultos. Cancela cuando quieras.</p>
+
+            <!-- Currency selector -->
+            <div style="display:inline-flex;align-items:center;gap:10px;padding:8px 16px;background:#fff;border:1.5px solid #e5e5e2;border-radius:14px;box-shadow:0 2px 8px rgba(0,0,0,.05);">
+                <svg width="16" height="16" fill="none" stroke="#71717a" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                <span style="font-size:.8125rem;font-weight:600;color:#52525b;white-space:nowrap;">Ver precios en:</span>
+                <select x-model="selectedCountryCode" @change="onCountryChange()" style="border:none;outline:none;background:transparent;font-size:.875rem;font-weight:700;color:#0a0a0a;cursor:pointer;max-width:220px;">
+                    <template x-for="c in countries" :key="c.code">
+                        <option :value="c.code" x-text="c.flag + ' ' + c.name + ' (' + c.currency + ')'"></option>
+                    </template>
+                </select>
+                <span x-show="loading" style="font-size:.75rem;color:#a1a1aa;margin-left:4px;">
+                    <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="animation:spin .8s linear infinite;display:inline-block;"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                </span>
+            </div>
+            <p x-show="!loading && rateSource === 'live'" style="font-size:.6875rem;color:#a1a1aa;margin:8px 0 0;">
+                <svg width="10" height="10" fill="#22c55e" viewBox="0 0 10 10" style="display:inline-block;margin-right:3px;"><circle cx="5" cy="5" r="5"/></svg>
+                Tasas de cambio en tiempo real · <span x-text="rateDate"></span>
+            </p>
+            <p x-show="!loading && rateSource === 'fallback'" style="font-size:.6875rem;color:#a1a1aa;margin:8px 0 0;">
+                Tasas de cambio aproximadas
+            </p>
         </div>
+
+        <style>@keyframes spin{to{transform:rotate(360deg)}}</style>
 
         <div class="price-grid" style="display:grid;grid-template-columns:1fr;gap:16px;align-items:start;">
 
@@ -386,7 +409,7 @@
                 <h3 style="font-family:'Sora',sans-serif;font-size:1.25rem;font-weight:800;color:#0a0a0a;margin:0 0 4px;">Básico</h3>
                 <p style="font-size:.875rem;color:#71717a;margin:0 0 20px;">Ideal para empezar</p>
                 <div style="margin-bottom:24px;">
-                    <span style="font-family:'Sora',sans-serif;font-size:2.5rem;font-weight:900;color:#0a0a0a;">RD$1,500</span>
+                    <span style="font-family:'Sora',sans-serif;font-size:2.5rem;font-weight:900;color:#0a0a0a;" x-text="formatPrice(1500)"></span>
                     <span style="color:#71717a;font-size:.875rem;">/mes</span>
                 </div>
                 <ul style="list-style:none;padding:0;margin:0 0 28px;display:flex;flex-direction:column;gap:10px;">
@@ -407,7 +430,7 @@
                 <h3 style="font-family:'Sora',sans-serif;font-size:1.25rem;font-weight:800;color:#fff;margin:0 0 4px;">Profesional</h3>
                 <p style="font-size:.875rem;color:#71717a;margin:0 0 20px;">El más vendido</p>
                 <div style="margin-bottom:24px;">
-                    <span style="font-family:'Sora',sans-serif;font-size:2.5rem;font-weight:900;color:#fff;">RD$3,000</span>
+                    <span style="font-family:'Sora',sans-serif;font-size:2.5rem;font-weight:900;color:#fff;" x-text="formatPrice(3000)"></span>
                     <span style="color:#71717a;font-size:.875rem;">/mes</span>
                 </div>
                 <ul style="list-style:none;padding:0;margin:0 0 28px;display:flex;flex-direction:column;gap:10px;">
@@ -426,7 +449,7 @@
                 <h3 style="font-family:'Sora',sans-serif;font-size:1.25rem;font-weight:800;color:#0a0a0a;margin:0 0 4px;">Empresarial</h3>
                 <p style="font-size:.875rem;color:#71717a;margin:0 0 20px;">Múltiples sucursales</p>
                 <div style="margin-bottom:24px;">
-                    <span style="font-family:'Sora',sans-serif;font-size:2.5rem;font-weight:900;color:#0a0a0a;">RD$5,000</span>
+                    <span style="font-family:'Sora',sans-serif;font-size:2.5rem;font-weight:900;color:#0a0a0a;" x-text="formatPrice(5000)"></span>
                     <span style="color:#71717a;font-size:.875rem;">/mes</span>
                 </div>
                 <ul style="list-style:none;padding:0;margin:0 0 28px;display:flex;flex-direction:column;gap:10px;">
@@ -442,6 +465,94 @@
         </div>
     </div>
 </section>
+
+<script>
+function currencySelector() {
+    return {
+        selectedCountryCode: 'DO',
+        loading: false,
+        rates: {},
+        rateSource: '',
+        rateDate: '',
+        countries: [
+            { code: 'DO', name: 'República Dominicana', currency: 'DOP', symbol: 'RD$',  flag: '🇩🇴', decimals: 0 },
+            { code: 'US', name: 'Estados Unidos',       currency: 'USD', symbol: '$',    flag: '🇺🇸', decimals: 2 },
+            { code: 'MX', name: 'México',               currency: 'MXN', symbol: '$',    flag: '🇲🇽', decimals: 0 },
+            { code: 'CO', name: 'Colombia',             currency: 'COP', symbol: '$',    flag: '🇨🇴', decimals: 0 },
+            { code: 'AR', name: 'Argentina',            currency: 'ARS', symbol: '$',    flag: '🇦🇷', decimals: 0 },
+            { code: 'CL', name: 'Chile',                currency: 'CLP', symbol: '$',    flag: '🇨🇱', decimals: 0 },
+            { code: 'PE', name: 'Perú',                 currency: 'PEN', symbol: 'S/',   flag: '🇵🇪', decimals: 2 },
+            { code: 'VE', name: 'Venezuela',            currency: 'VES', symbol: 'Bs.',  flag: '🇻🇪', decimals: 2 },
+            { code: 'EC', name: 'Ecuador',              currency: 'USD', symbol: '$',    flag: '🇪🇨', decimals: 2 },
+            { code: 'PA', name: 'Panamá',               currency: 'USD', symbol: '$',    flag: '🇵🇦', decimals: 2 },
+            { code: 'GT', name: 'Guatemala',            currency: 'GTQ', symbol: 'Q',    flag: '🇬🇹', decimals: 2 },
+            { code: 'CR', name: 'Costa Rica',           currency: 'CRC', symbol: '₡',   flag: '🇨🇷', decimals: 0 },
+            { code: 'HN', name: 'Honduras',             currency: 'HNL', symbol: 'L',    flag: '🇭🇳', decimals: 2 },
+            { code: 'SV', name: 'El Salvador',          currency: 'USD', symbol: '$',    flag: '🇸🇻', decimals: 2 },
+            { code: 'PR', name: 'Puerto Rico',          currency: 'USD', symbol: '$',    flag: '🇵🇷', decimals: 2 },
+            { code: 'ES', name: 'España',               currency: 'EUR', symbol: '€',   flag: '🇪🇸', decimals: 2 },
+            { code: 'BR', name: 'Brasil',               currency: 'BRL', symbol: 'R$',  flag: '🇧🇷', decimals: 2 },
+            { code: 'GB', name: 'Reino Unido',          currency: 'GBP', symbol: '£',   flag: '🇬🇧', decimals: 2 },
+            { code: 'CA', name: 'Canadá',               currency: 'CAD', symbol: '$',    flag: '🇨🇦', decimals: 2 },
+        ],
+
+        get currentCountry() {
+            return this.countries.find(c => c.code === this.selectedCountryCode) || this.countries[0];
+        },
+
+        get rate() {
+            const c = this.currentCountry;
+            if (c.currency === 'DOP') return 1;
+            return this.rates[c.currency] || null;
+        },
+
+        formatPrice(dopAmount) {
+            const c = this.currentCountry;
+            let amount = dopAmount;
+            if (c.currency !== 'DOP' && this.rate) {
+                amount = dopAmount * this.rate;
+            }
+            const opts = {
+                minimumFractionDigits: c.decimals,
+                maximumFractionDigits: c.decimals,
+            };
+            const formatted = amount.toLocaleString('es', opts);
+            return c.symbol + formatted;
+        },
+
+        onCountryChange() {
+            // rates already loaded, just reactive update via Alpine
+        },
+
+        async init() {
+            this.loading = true;
+            try {
+                const res = await fetch('https://open.er-api.com/v6/latest/DOP');
+                if (!res.ok) throw new Error('network');
+                const data = await res.json();
+                if (data.result === 'success') {
+                    this.rates = data.rates;
+                    this.rateSource = 'live';
+                    this.rateDate = new Date(data.time_last_update_unix * 1000).toLocaleDateString('es', { day:'numeric', month:'short', year:'numeric' });
+                } else {
+                    throw new Error('api');
+                }
+            } catch (e) {
+                // Approximate fallback rates relative to 1 DOP
+                this.rates = {
+                    USD: 0.01695, EUR: 0.01567, MXN: 0.3392, COP: 67.4,
+                    ARS: 17.0,    CLP: 16.2,    PEN: 0.0641,  VES: 0.618,
+                    GTQ: 0.1312,  CRC: 8.67,    HNL: 0.4196,  BRL: 0.0970,
+                    GBP: 0.01338, CAD: 0.02361,
+                };
+                this.rateSource = 'fallback';
+                this.rateDate = '';
+            }
+            this.loading = false;
+        },
+    };
+}
+</script>
 
 <!-- ═══════════════════════════════════════════
      DEMO
@@ -553,7 +664,8 @@
                     </div>
                     <span style="font-family:'Sora',sans-serif;font-weight:800;font-size:1rem;color:#fff;">Kyros Barber Cloud</span>
                 </a>
-                <p style="font-size:.875rem;color:#52525b;line-height:1.65;margin:0;max-width:280px;">Sistema profesional de gestión para barberías en República Dominicana.</p>
+                <p style="font-size:.875rem;color:#52525b;line-height:1.65;margin:0;max-width:280px;">Sistema profesional de gestión para barberías en cualquier parte del mundo.</p>
+                <p style="font-size:.75rem;color:#3f3f46;line-height:1.6;margin:12px 0 0;max-width:280px;">Desarrollado por <span style="color:#e8b84b;font-weight:600;">Jonathan Sandoval</span>, CEO de Kyros · República Dominicana 🇩🇴</p>
             </div>
 
             <!-- Producto -->
@@ -589,7 +701,7 @@
 
         <div style="padding-top:24px;border-top:1px solid rgba(255,255,255,.05);display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:8px;">
             <p style="font-size:.8125rem;color:#3f3f46;margin:0;">&copy; <?php echo date('Y'); ?> Kyros Barber Cloud. Todos los derechos reservados.</p>
-            <p style="font-size:.8125rem;color:#3f3f46;margin:0;">Hecho con ♥ en República Dominicana</p>
+            <p style="font-size:.8125rem;color:#3f3f46;margin:0;">Hecho con ♥ en 🇩🇴 para el mundo · por <a href="https://kyrosrd.com" target="_blank" rel="noopener noreferrer" style="color:#e8b84b;text-decoration:none;font-weight:600;">Jonathan Sandoval</a></p>
         </div>
     </div>
 </footer>

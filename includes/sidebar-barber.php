@@ -8,7 +8,7 @@ if (!function_exists('_nav_link')) {
 }
 ?>
 <!-- Sidebar Barber -->
-<div class="fixed inset-y-0 left-0 z-50 w-64 transform transition-transform duration-300 ease-in-out lg:translate-x-0 flex flex-col"
+<div class="kyros-sidebar fixed inset-y-0 left-0 z-50 w-64 transform transition-transform duration-300 ease-in-out lg:translate-x-0 flex flex-col"
      :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full'"
      style="background:var(--c-sidebar);border-right:1px solid var(--c-sidebar-bd);">
 
@@ -20,11 +20,19 @@ if (!function_exists('_nav_link')) {
                     <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
                 </svg>
             </div>
-            <div>
+            <div class="kyros-brand-text">
                 <p style="font-family:'Sora',sans-serif;font-weight:800;font-size:.875rem;color:var(--c-text-1);line-height:1.1;letter-spacing:-.01em;">Kyros Barber</p>
                 <p style="font-size:.625rem;font-weight:700;color:var(--c-gold);letter-spacing:.07em;text-transform:uppercase;">Panel Barbero</p>
             </div>
         </a>
+        <button type="button" onclick="toggleKyrosSidebar()" class="kyros-sidebar-toggle hidden lg:flex" title="Ocultar menu">
+            <svg class="icon-collapse" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="15 18 9 12 15 6"/>
+            </svg>
+            <svg class="icon-expand" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="9 18 15 12 9 6"/>
+            </svg>
+        </button>
         <button @click="sidebarOpen = false" class="lg:hidden"
                 style="color:var(--c-text-4);background:none;border:none;cursor:pointer;padding:6px;border-radius:6px;">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -36,43 +44,43 @@ if (!function_exists('_nav_link')) {
     <!-- Nav -->
     <nav style="flex:1;padding:14px 10px;overflow-y:auto;">
 
-        <p style="font-size:.625rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--c-border-2);padding:0 12px;margin-bottom:8px;">Mi Panel</p>
+        <p class="kyros-section-label" style="font-size:.625rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--c-border-2);padding:0 12px;margin-bottom:8px;">Mi Panel</p>
 
         <a href="<?php echo BASE_URL; ?>/dashboard/barber" <?php echo _nav_link('index', $_activeBarberPage); ?>>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>
             </svg>
-            Dashboard
+            <span class="kyros-nav-label">Dashboard</span>
         </a>
 
         <a href="<?php echo BASE_URL; ?>/dashboard/barber/appointments" <?php echo _nav_link('appointments', $_activeBarberPage); ?>>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
             </svg>
-            Mis Citas
+            <span class="kyros-nav-label">Mis Citas</span>
         </a>
 
         <a href="<?php echo BASE_URL; ?>/dashboard/barber/earnings" <?php echo _nav_link('earnings', $_activeBarberPage); ?>>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
             </svg>
-            Ingresos
+            <span class="kyros-nav-label">Ingresos</span>
         </a>
 
-        <p style="font-size:.625rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--c-border-2);padding:0 12px;margin:16px 0 8px;">Configuración</p>
+        <p class="kyros-section-label" style="font-size:.625rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--c-border-2);padding:0 12px;margin:16px 0 8px;">Configuración</p>
 
         <a href="<?php echo BASE_URL; ?>/dashboard/barber/schedules" <?php echo _nav_link('schedules', $_activeBarberPage); ?>>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
             </svg>
-            Mis Horarios
+            <span class="kyros-nav-label">Mis Horarios</span>
         </a>
 
         <a href="<?php echo BASE_URL; ?>/dashboard/barber/profile" <?php echo _nav_link('profile', $_activeBarberPage); ?>>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
             </svg>
-            Mi Perfil
+            <span class="kyros-nav-label">Mi Perfil</span>
         </a>
 
         <?php if (!empty($barber['barbershop_slug']) && !empty($barber['slug'])): ?>
@@ -83,14 +91,14 @@ if (!function_exists('_nav_link')) {
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/>
             </svg>
-            Mi Página Pública
+            <span class="kyros-nav-label">Mi Página Pública</span>
         </a>
         <?php endif; ?>
 
     </nav>
 
     <!-- Bottom: theme toggle + user card -->
-    <div style="padding:12px 14px;border-top:1px solid var(--c-sidebar-bd);flex-shrink:0;display:flex;flex-direction:column;gap:10px;">
+    <div class="kyros-sidebar-footer" style="padding:12px 14px;border-top:1px solid var(--c-sidebar-bd);flex-shrink:0;display:flex;flex-direction:column;gap:10px;">
 
         <button onclick="toggleTheme()" class="kyros-theme-btn">
             <span class="icon-to-light" style="align-items:center;gap:8px;flex:1;">
@@ -107,15 +115,16 @@ if (!function_exists('_nav_link')) {
             </span>
         </button>
 
-        <div style="display:flex;align-items:center;gap:10px;">
+        <div class="kyros-user-row" style="display:flex;align-items:center;gap:10px;">
             <div style="width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,#c9901a,#e8b84b);display:flex;align-items:center;justify-content:center;color:#0a0a0a;font-weight:700;font-size:.8125rem;flex-shrink:0;">
                 <?php echo strtoupper(substr($barber['full_name'] ?? ($_SESSION['user_name'] ?? 'B'), 0, 1)); ?>
             </div>
-            <div style="min-width:0;flex:1;">
+            <div class="kyros-user-meta" style="min-width:0;flex:1;">
                 <p style="font-size:.8125rem;font-weight:600;color:var(--c-text-1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"><?php echo e($barber['full_name'] ?? ($_SESSION['user_name'] ?? 'Barbero')); ?></p>
                 <p style="font-size:.6875rem;color:var(--c-text-4);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"><?php echo e($barber['business_name'] ?? 'Barbero'); ?></p>
             </div>
             <a href="<?php echo BASE_URL; ?>/auth/logout" title="Cerrar sesión"
+               class="kyros-logout-link"
                style="color:var(--c-text-4);text-decoration:none;padding:5px;border-radius:6px;display:flex;transition:color .15s;">
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>

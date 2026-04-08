@@ -8,7 +8,7 @@ if (!function_exists('_nav_link')) {
 }
 ?>
 <!-- Sidebar Owner -->
-<div class="fixed inset-y-0 left-0 z-50 w-64 transform transition-transform duration-300 ease-in-out lg:translate-x-0 flex flex-col"
+<div class="kyros-sidebar fixed inset-y-0 left-0 z-50 w-64 transform transition-transform duration-300 ease-in-out lg:translate-x-0 flex flex-col"
      :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full'"
      style="background:var(--c-sidebar);border-right:1px solid var(--c-sidebar-bd);">
 
@@ -20,11 +20,19 @@ if (!function_exists('_nav_link')) {
                     <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
                 </svg>
             </div>
-            <div>
+            <div class="kyros-brand-text">
                 <p style="font-family:'Sora',sans-serif;font-weight:800;font-size:.875rem;color:var(--c-text-1);line-height:1.1;letter-spacing:-.01em;">Kyros Barber</p>
                 <p style="font-size:.625rem;font-weight:700;color:var(--c-gold);letter-spacing:.07em;text-transform:uppercase;">Propietario</p>
             </div>
         </a>
+        <button type="button" onclick="toggleKyrosSidebar()" class="kyros-sidebar-toggle hidden lg:flex" title="Ocultar menu">
+            <svg class="icon-collapse" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="15 18 9 12 15 6"/>
+            </svg>
+            <svg class="icon-expand" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="9 18 15 12 9 6"/>
+            </svg>
+        </button>
         <button @click="sidebarOpen = false" class="lg:hidden"
                 style="color:var(--c-text-4);background:none;border:none;cursor:pointer;padding:6px;border-radius:6px;">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -36,50 +44,50 @@ if (!function_exists('_nav_link')) {
     <!-- Nav -->
     <nav style="flex:1;padding:14px 10px;overflow-y:auto;">
 
-        <p style="font-size:.625rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--c-border-2);padding:0 12px;margin-bottom:8px;">Principal</p>
+        <p class="kyros-section-label" style="font-size:.625rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--c-border-2);padding:0 12px;margin-bottom:8px;">Principal</p>
 
         <a href="<?php echo BASE_URL; ?>/dashboard" <?php echo _nav_link('index', $_activePage); ?>>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>
             </svg>
-            Dashboard
+            <span class="kyros-nav-label">Dashboard</span>
         </a>
 
         <a href="<?php echo BASE_URL; ?>/dashboard/appointments" <?php echo _nav_link('appointments', $_activePage); ?>>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
             </svg>
-            Citas
+            <span class="kyros-nav-label">Citas</span>
         </a>
 
         <a href="<?php echo BASE_URL; ?>/dashboard/clients" <?php echo _nav_link('clients', $_activePage); ?>>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
             </svg>
-            Clientes
+            <span class="kyros-nav-label">Clientes</span>
         </a>
 
-        <p style="font-size:.625rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--c-border-2);padding:0 12px;margin:16px 0 8px;">Gestión</p>
+        <p class="kyros-section-label" style="font-size:.625rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--c-border-2);padding:0 12px;margin:16px 0 8px;">Gestión</p>
 
         <a href="<?php echo BASE_URL; ?>/dashboard/barbers" <?php echo _nav_link('barbers', $_activePage); ?>>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
             </svg>
-            Barberos
+            <span class="kyros-nav-label">Barberos</span>
         </a>
 
         <a href="<?php echo BASE_URL; ?>/dashboard/barber-schedules" <?php echo _nav_link('barber-schedules', $_activePage); ?>>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
             </svg>
-            Horarios
+            <span class="kyros-nav-label">Horarios</span>
         </a>
 
         <a href="<?php echo BASE_URL; ?>/dashboard/services" <?php echo _nav_link('services', $_activePage); ?>>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/>
             </svg>
-            Servicios
+            <span class="kyros-nav-label">Servicios</span>
         </a>
 
         <?php if (!empty($_SESSION['barbershop_id']) && hasBarbershopModuleAccess((int) $_SESSION['barbershop_id'], 'finanzas_avanzadas')): ?>
@@ -87,30 +95,30 @@ if (!function_exists('_nav_link')) {
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
             </svg>
-            Finanzas
+            <span class="kyros-nav-label">Finanzas</span>
         </a>
         <?php endif; ?>
 
-        <p style="font-size:.625rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--c-border-2);padding:0 12px;margin:16px 0 8px;">Publicación</p>
+        <p class="kyros-section-label" style="font-size:.625rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--c-border-2);padding:0 12px;margin:16px 0 8px;">Publicación</p>
 
         <a href="<?php echo BASE_URL; ?>/dashboard/public-links" <?php echo _nav_link('public-links', $_activePage); ?>>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/>
             </svg>
-            Enlaces Públicos
+            <span class="kyros-nav-label">Enlaces Públicos</span>
         </a>
 
         <a href="<?php echo BASE_URL; ?>/dashboard/settings" <?php echo _nav_link('settings', $_activePage); ?>>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h.01a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h.01a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v.01a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
             </svg>
-            Branding y Perfil
+            <span class="kyros-nav-label">Branding y Perfil</span>
         </a>
 
     </nav>
 
     <!-- Bottom: theme toggle + user card -->
-    <div style="padding:12px 14px;border-top:1px solid var(--c-sidebar-bd);flex-shrink:0;display:flex;flex-direction:column;gap:10px;">
+    <div class="kyros-sidebar-footer" style="padding:12px 14px;border-top:1px solid var(--c-sidebar-bd);flex-shrink:0;display:flex;flex-direction:column;gap:10px;">
 
         <!-- Theme toggle -->
         <button onclick="toggleTheme()" class="kyros-theme-btn">
@@ -131,15 +139,16 @@ if (!function_exists('_nav_link')) {
         </button>
 
         <!-- User info -->
-        <div style="display:flex;align-items:center;gap:10px;">
+        <div class="kyros-user-row" style="display:flex;align-items:center;gap:10px;">
             <div style="width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,#c9901a,#e8b84b);display:flex;align-items:center;justify-content:center;color:#0a0a0a;font-weight:700;font-size:.8125rem;flex-shrink:0;">
                 <?php echo strtoupper(substr($_SESSION['user_name'] ?? 'O', 0, 1)); ?>
             </div>
-            <div style="min-width:0;flex:1;">
+            <div class="kyros-user-meta" style="min-width:0;flex:1;">
                 <p style="font-size:.8125rem;font-weight:600;color:var(--c-text-1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"><?php echo e($_SESSION['user_name'] ?? 'Owner'); ?></p>
                 <p style="font-size:.6875rem;color:var(--c-text-4);">Propietario</p>
             </div>
             <a href="<?php echo BASE_URL; ?>/auth/logout" title="Cerrar sesión"
+               class="kyros-logout-link"
                style="color:var(--c-text-4);text-decoration:none;padding:5px;border-radius:6px;display:flex;transition:color .15s;"
                onmouseover="this.style.color='var(--c-red-text)'" onmouseout="this.style.color='var(--c-text-4)'">
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">

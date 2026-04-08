@@ -16,6 +16,10 @@
             } else {
                 document.documentElement.classList.add('dark');
             }
+
+            if (localStorage.getItem('kyros-sidebar-collapsed') === '1') {
+                document.documentElement.classList.add('kyros-sidebar-collapsed');
+            }
         })();
     </script>
 
@@ -173,6 +177,86 @@
             color: var(--c-gold-2);
         }
         .kyros-nav-link svg { flex-shrink: 0; }
+
+        .kyros-sidebar {
+            width: 16rem;
+            transition: width .2s ease, transform .3s ease;
+        }
+
+        .kyros-sidebar-toggle {
+            width: 30px;
+            height: 30px;
+            border: 1px solid var(--c-border);
+            border-radius: 8px;
+            align-items: center;
+            justify-content: center;
+            background: var(--c-elevated);
+            color: var(--c-text-3);
+            cursor: pointer;
+            transition: all .15s;
+            flex-shrink: 0;
+        }
+
+        .kyros-sidebar-toggle:hover {
+            background: var(--c-border);
+            color: var(--c-text-2);
+        }
+
+        .kyros-sidebar-toggle .icon-expand { display: none; }
+
+        @media (min-width: 1024px) {
+            .kyros-sidebar-collapsed .kyros-sidebar {
+                width: 5rem;
+            }
+
+            .kyros-sidebar-collapsed .kyros-sidebar .kyros-brand-text,
+            .kyros-sidebar-collapsed .kyros-sidebar .kyros-section-label,
+            .kyros-sidebar-collapsed .kyros-sidebar .kyros-nav-label,
+            .kyros-sidebar-collapsed .kyros-sidebar .kyros-user-meta,
+            .kyros-sidebar-collapsed .kyros-sidebar .label-to-light,
+            .kyros-sidebar-collapsed .kyros-sidebar .label-to-dark {
+                display: none !important;
+            }
+
+            .kyros-sidebar-collapsed .kyros-sidebar .kyros-nav-link {
+                justify-content: center;
+                gap: 0;
+                padding-left: 0;
+                padding-right: 0;
+                border-left-color: transparent;
+            }
+
+            .kyros-sidebar-collapsed .kyros-sidebar .kyros-theme-btn {
+                justify-content: center;
+                padding-left: 0;
+                padding-right: 0;
+            }
+
+            .kyros-sidebar-collapsed .kyros-sidebar .kyros-theme-btn .icon-to-light,
+            .kyros-sidebar-collapsed .kyros-sidebar .kyros-theme-btn .icon-to-dark {
+                justify-content: center;
+            }
+
+            .kyros-sidebar-collapsed .kyros-sidebar .kyros-user-row {
+                justify-content: center;
+            }
+
+            .kyros-sidebar-collapsed .kyros-sidebar .kyros-logout-link {
+                display: none !important;
+            }
+
+            .kyros-sidebar-collapsed .kyros-sidebar .kyros-sidebar-footer {
+                padding-left: 10px !important;
+                padding-right: 10px !important;
+            }
+
+            .kyros-sidebar-collapsed .lg\:pl-64 {
+                padding-left: 5rem !important;
+            }
+
+            .kyros-sidebar-collapsed .kyros-sidebar-toggle .icon-collapse { display: none; }
+            .kyros-sidebar-collapsed .kyros-sidebar-toggle .icon-expand { display: block; }
+        }
 
         /* ════════════════════════════════════════════════════════════
            THEME TOGGLE BUTTON
@@ -373,5 +457,11 @@
             html.classList.add('dark');
             localStorage.setItem('kyros-theme', 'dark');
         }
+    }
+
+    function toggleKyrosSidebar() {
+        var html = document.documentElement;
+        var collapsed = html.classList.toggle('kyros-sidebar-collapsed');
+        localStorage.setItem('kyros-sidebar-collapsed', collapsed ? '1' : '0');
     }
 </script>

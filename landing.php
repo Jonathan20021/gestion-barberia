@@ -111,6 +111,7 @@
             <a href="#pricing"  style="font-size:.875rem;font-weight:500;color:#52525b;text-decoration:none;transition:color .18s;" onmouseover="this.style.color='#0a0a0a'" onmouseout="this.style.color='#52525b'">Precios</a>
             <a href="#demo"     style="font-size:.875rem;font-weight:500;color:#52525b;text-decoration:none;transition:color .18s;" onmouseover="this.style.color='#0a0a0a'" onmouseout="this.style.color='#52525b'">Demo</a>
             <a href="<?php echo BASE_URL; ?>/documentation" style="font-size:.875rem;font-weight:500;color:#52525b;text-decoration:none;transition:color .18s;" onmouseover="this.style.color='#0a0a0a'" onmouseout="this.style.color='#52525b'">Documentación</a>
+            <a href="#contact" style="font-size:.875rem;font-weight:500;color:#52525b;text-decoration:none;transition:color .18s;" onmouseover="this.style.color='#0a0a0a'" onmouseout="this.style.color='#52525b'">Contacto</a>
             <a href="<?php echo BASE_URL; ?>/auth/login" style="font-size:.875rem;font-weight:500;color:#52525b;text-decoration:none;transition:color .18s;" onmouseover="this.style.color='#0a0a0a'" onmouseout="this.style.color='#52525b'">Iniciar Sesión</a>
             <a href="<?php echo BASE_URL; ?>/auth/register" class="btn-gold" style="padding:9px 20px;border-radius:10px;font-size:.875rem;">Empezar Gratis</a>
         </nav>
@@ -130,6 +131,7 @@
         <a href="#pricing" class="mobile-nav-link" @click="mobileOpen = false">Precios</a>
         <a href="#demo" class="mobile-nav-link" @click="mobileOpen = false">Demo</a>
         <a href="<?php echo BASE_URL; ?>/documentation" class="mobile-nav-link">Documentación</a>
+        <a href="#contact" class="mobile-nav-link" @click="mobileOpen = false">Contacto</a>
         <a href="<?php echo BASE_URL; ?>/auth/login" class="mobile-nav-link">Iniciar Sesión</a>
         <a href="<?php echo BASE_URL; ?>/auth/register" class="btn-gold" style="width:100%;padding:13px 20px;border-radius:12px;font-size:1rem;text-align:center;">Empezar Gratis</a>
     </div>
@@ -650,6 +652,73 @@ function currencySelector() {
 </section>
 
 <!-- ═══════════════════════════════════════════
+     CONTACT
+══════════════════════════════════════════════ -->
+<section id="contact" style="background:#fafaf8;padding:96px 24px;">
+    <div style="max-width:860px;margin:0 auto;">
+
+        <div style="text-align:center;margin-bottom:56px;">
+            <span style="display:inline-block;padding:5px 14px;background:#fef9ee;border:1px solid #f0d88a;border-radius:999px;font-size:.6875rem;font-weight:700;letter-spacing:.1em;color:#a16207;text-transform:uppercase;margin-bottom:14px;">Contacto</span>
+            <h2 style="font-size:clamp(2rem,5vw,3rem);font-weight:900;color:#0a0a0a;letter-spacing:-.03em;margin:0 0 14px;">¿Tienes preguntas?</h2>
+            <p style="font-size:1.0625rem;color:#71717a;line-height:1.65;margin:0 auto;max-width:520px;">
+                Operamos de forma remota para barberías en cualquier país. Escríbenos y te respondemos a la brevedad.
+            </p>
+        </div>
+
+        <!-- Cards de contacto -->
+        <div style="display:grid;grid-template-columns:1fr;gap:16px;margin-bottom:40px;" id="contact-cards">
+
+            <!-- WhatsApp -->
+            <a href="https://wa.me/18495024061?text=Hola%2C%20me%20interesa%20Kyros%20Barber%20Cloud" target="_blank" rel="noopener noreferrer"
+               style="display:flex;align-items:center;gap:20px;background:#fff;border:1.5px solid #ebebeb;border-radius:20px;padding:28px;text-decoration:none;transition:box-shadow .22s,transform .22s,border-color .22s;"
+               onmouseover="this.style.transform='translateY(-4px)';this.style.boxShadow='0 20px 44px rgba(0,0,0,.09)';this.style.borderColor='#25d366'"
+               onmouseout="this.style.transform='';this.style.boxShadow='';this.style.borderColor='#ebebeb'">
+                <div style="flex-shrink:0;width:56px;height:56px;border-radius:16px;background:#dcfce7;display:flex;align-items:center;justify-content:center;">
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="#25d366"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+                </div>
+                <div style="flex:1;">
+                    <p style="font-size:.6875rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#16a34a;margin:0 0 4px;">WhatsApp</p>
+                    <p style="font-family:'Sora',sans-serif;font-size:1.375rem;font-weight:800;color:#0a0a0a;margin:0 0 2px;">849-502-4061</p>
+                    <p style="font-size:.8125rem;color:#71717a;margin:0;">Respuesta rápida · Lun–Vie</p>
+                </div>
+                <svg width="20" height="20" fill="none" stroke="#d4d4d4" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+            </a>
+
+            <!-- Email -->
+            <a href="mailto:jonathansandoval@kyrosrd.com"
+               style="display:flex;align-items:center;gap:20px;background:#fff;border:1.5px solid #ebebeb;border-radius:20px;padding:28px;text-decoration:none;transition:box-shadow .22s,transform .22s,border-color .22s;"
+               onmouseover="this.style.transform='translateY(-4px)';this.style.boxShadow='0 20px 44px rgba(0,0,0,.09)';this.style.borderColor='#c9901a'"
+               onmouseout="this.style.transform='';this.style.boxShadow='';this.style.borderColor='#ebebeb'">
+                <div style="flex-shrink:0;width:56px;height:56px;border-radius:16px;background:#fef9ee;display:flex;align-items:center;justify-content:center;">
+                    <svg width="26" height="26" fill="none" stroke="#c9901a" stroke-width="1.75" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+                </div>
+                <div style="flex:1;min-width:0;">
+                    <p style="font-size:.6875rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#a16207;margin:0 0 4px;">Correo electrónico</p>
+                    <p style="font-family:'Sora',sans-serif;font-size:1.0625rem;font-weight:800;color:#0a0a0a;margin:0 0 2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">jonathansandoval@kyrosrd.com</p>
+                    <p style="font-size:.8125rem;color:#71717a;margin:0;">Respuesta en menos de 24 h</p>
+                </div>
+                <svg width="20" height="20" fill="none" stroke="#d4d4d4" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+            </a>
+        </div>
+
+        <!-- Remote notice -->
+        <div style="display:flex;align-items:flex-start;gap:14px;background:#fff;border:1.5px solid #e0f2fe;border-radius:16px;padding:20px 24px;">
+            <div style="flex-shrink:0;width:40px;height:40px;border-radius:12px;background:#f0f9ff;display:flex;align-items:center;justify-content:center;margin-top:1px;">
+                <svg width="20" height="20" fill="none" stroke="#0284c7" stroke-width="1.75" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            </div>
+            <div>
+                <p style="font-size:.9375rem;font-weight:700;color:#0a0a0a;margin:0 0 4px;">Operamos 100% de forma remota</p>
+                <p style="font-size:.875rem;color:#52525b;line-height:1.6;margin:0;">
+                    Kyros Barber Cloud está disponible para barberías en cualquier país del mundo. No importa dónde estés, nuestro equipo te atiende de manera remota desde República Dominicana 🇩🇴.
+                </p>
+            </div>
+        </div>
+
+    </div>
+    <style>@media(min-width:640px){#contact-cards{grid-template-columns:1fr 1fr !important;}}</style>
+</section>
+
+<!-- ═══════════════════════════════════════════
      FOOTER
 ══════════════════════════════════════════════ -->
 <footer style="background:#0a0a0a;color:#fff;padding:64px 24px 32px;">
@@ -692,7 +761,7 @@ function currencySelector() {
             <div>
                 <h4 style="font-size:.6875rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#52525b;margin:0 0 16px;">Soporte</h4>
                 <ul style="list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:10px;">
-                    <?php foreach([['Documentación',BASE_URL.'/documentation'],['Tutoriales','#'],['Contacto','#']] as $l): ?>
+                    <?php foreach([['Documentación',BASE_URL.'/documentation'],['Tutoriales','#'],['Contacto','#contact']] as $l): ?>
                     <li><a href="<?php echo $l[1]; ?>" style="font-size:.875rem;color:#71717a;text-decoration:none;transition:color .18s;" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='#71717a'"><?php echo $l[0]; ?></a></li>
                     <?php endforeach; ?>
                 </ul>

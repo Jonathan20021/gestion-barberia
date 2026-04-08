@@ -101,8 +101,8 @@
             <div style="width:32px;height:32px;background:linear-gradient(135deg,#c9901a,#e8b84b);border-radius:8px;display:flex;align-items:center;justify-content:center;">
                 <svg width="18" height="18" fill="none" stroke="white" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M14.121 14.121L19 19m-7-7l7-7m-7 7l-2.879 2.879M12 12L9.121 9.121m0 5.758a3 3 0 10-4.243 4.243 3 3 0 004.243-4.243zm0-5.758a3 3 0 10-4.243-4.243 3 3 0 004.243 4.243z"/></svg>
             </div>
-            <span style="font-family:'Sora',sans-serif;font-weight:800;font-size:1.0625rem;color:#0a0a0a;letter-spacing:-.02em;">Kyros Barber Cloud</span>
-            <span style="padding:2px 8px;background:#f0f9ff;border:1px solid #bae6fd;border-radius:999px;font-size:.625rem;font-weight:700;color:#0284c7;letter-spacing:.06em;">RD</span>
+            <span class="mobile-brand-text" style="font-family:'Sora',sans-serif;font-weight:800;font-size:1.0625rem;color:#0a0a0a;letter-spacing:-.02em;">Kyros Barber Cloud</span>
+            <span class="mobile-rd-badge" style="padding:2px 8px;background:#f0f9ff;border:1px solid #bae6fd;border-radius:999px;font-size:.625rem;font-weight:700;color:#0284c7;letter-spacing:.06em;">RD</span>
         </a>
 
         <!-- Desktop nav -->
@@ -125,13 +125,13 @@
     </div>
 
     <!-- Mobile menu -->
-    <div x-show="mobileOpen" style="background:#fff;border-top:1px solid #f0f0ec;padding:16px 24px;display:flex;flex-direction:column;gap:12px;" x-cloak>
-        <a href="#features"   style="font-size:.9375rem;font-weight:500;color:#3f3f46;text-decoration:none;padding:8px 0;">Características</a>
-        <a href="#pricing"    style="font-size:.9375rem;font-weight:500;color:#3f3f46;text-decoration:none;padding:8px 0;">Precios</a>
-        <a href="#demo"       style="font-size:.9375rem;font-weight:500;color:#3f3f46;text-decoration:none;padding:8px 0;">Demo</a>
-        <a href="<?php echo BASE_URL; ?>/documentation" style="font-size:.9375rem;font-weight:500;color:#3f3f46;text-decoration:none;padding:8px 0;">Documentación</a>
-        <a href="<?php echo BASE_URL; ?>/auth/login" style="font-size:.9375rem;font-weight:500;color:#3f3f46;text-decoration:none;padding:8px 0;">Iniciar Sesión</a>
-        <a href="<?php echo BASE_URL; ?>/auth/register" class="btn-gold" style="padding:12px 20px;border-radius:12px;font-size:.9375rem;text-align:center;">Empezar Gratis</a>
+    <div x-show="mobileOpen" class="mobile-menu-wrap" style="background:#fff;border-top:1px solid #f0f0ec;padding:16px 24px;display:flex;flex-direction:column;gap:12px;" x-cloak>
+        <a href="#features" class="mobile-nav-link" @click="mobileOpen = false">Características</a>
+        <a href="#pricing" class="mobile-nav-link" @click="mobileOpen = false">Precios</a>
+        <a href="#demo" class="mobile-nav-link" @click="mobileOpen = false">Demo</a>
+        <a href="<?php echo BASE_URL; ?>/documentation" class="mobile-nav-link">Documentación</a>
+        <a href="<?php echo BASE_URL; ?>/auth/login" class="mobile-nav-link">Iniciar Sesión</a>
+        <a href="<?php echo BASE_URL; ?>/auth/register" class="btn-gold" style="width:100%;padding:13px 20px;border-radius:12px;font-size:1rem;text-align:center;">Empezar Gratis</a>
     </div>
 </header>
 
@@ -139,6 +139,45 @@
 @media(min-width:768px){
     #desk-nav  { display:flex !important; }
     #mob-toggle{ display:none !important; }
+}
+
+@media(max-width:767px){
+    .mobile-nav-link {
+        display:block;
+        width:100%;
+        padding:12px 14px;
+        border-radius:10px;
+        background:#fafaf8;
+        border:1px solid #ecece6;
+        font-size:1rem;
+        font-weight:600;
+        color:#27272a;
+        text-decoration:none;
+        line-height:1.25;
+    }
+
+    .mobile-nav-link:active {
+        background:#f5f5f0;
+    }
+
+    .mobile-menu-wrap {
+        padding:14px 16px !important;
+        gap:10px !important;
+    }
+
+    .mobile-brand-text {
+        font-size:.95rem !important;
+    }
+}
+
+@media(max-width:430px){
+    .mobile-brand-text {
+        font-size:.88rem !important;
+    }
+
+    .mobile-rd-badge {
+        display:none;
+    }
 }
 [x-cloak]{ display:none !important; }
 </style>

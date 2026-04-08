@@ -411,7 +411,7 @@
                     <span style="color:#71717a;font-size:.875rem;">/mes</span>
                 </div>
                 <ul style="list-style:none;padding:0;margin:0 0 28px;display:flex;flex-direction:column;gap:10px;">
-                    <?php foreach(['Citas ilimitadas','Hasta 5 barberos','WhatsApp via wa.me + recordatorios por email','Reportes avanzados','Soporte prioritario'] as $li): ?>
+                    <?php foreach(['Citas ilimitadas','Hasta 5 barberos','Finanzas avanzadas','WhatsApp via wa.me + recordatorios por email','Reportes avanzados','Soporte prioritario'] as $li): ?>
                     <li style="display:flex;align-items:center;gap:8px;font-size:.875rem;color:#d4d4d4;">
                         <svg width="16" height="16" fill="#e8b84b" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
                         <?php echo $li; ?>

@@ -328,6 +328,183 @@ function getLicenseConfigForBarbershop($barbershopId) {
 }
 
 /**
+ * Verificar si un modulo esta habilitado para un tipo de licencia
+ */
+function isModuleEnabledForLicenseType($licenseType, $moduleKey) {
+    static $cachedOverrides = null;
+
+    if (!defined('LICENSE_MODULES') || !isset(LICENSE_MODULES[$moduleKey])) {
+        return false;
+    }
+
+    $defaultEnabled = (int) (LICENSE_MODULES[$moduleKey]['default'][$licenseType] ?? 0) === 1;
+
+    $db = Database::getInstance();
+    if (!$db->tableExists('license_type_modules')) {
+        return $defaultEnabled;
+    }
+
+    if ($cachedOverrides === null) {
+        $cachedOverrides = [];
+        $rows = $db->fetchAll("SELECT license_type, module_key, is_enabled FROM license_type_modules");
+        foreach ($rows as $row) {
+            $cachedOverrides[$row['license_type']][$row['module_key']] = (int) $row['is_enabled'];
+        }
+    }
+
+    if (isset($cachedOverrides[$licenseType]) && array_key_exists($moduleKey, $cachedOverrides[$licenseType])) {
+        return (int) $cachedOverrides[$licenseType][$moduleKey] === 1;
+    }
+
+    return $defaultEnabled;
+}
+
+/**
+ * Verificar acceso a modulo por barberia
+ */
+function hasBarbershopModuleAccess($barbershopId, $moduleKey) {
+    $cfg = getLicenseConfigForBarbershop($barbershopId);
+    if (!$cfg) {
+        return false;
+    }
+
+    return isModuleEnabledForLicenseType($cfg['license_type'], $moduleKey);
+}
+
+/**
+ * Forzar acceso por modulo para una barberia
+ */
+function requireBarbershopModuleAccess($barbershopId, $moduleKey, $fallbackPath = '/dashboard') {
+    if (hasBarbershopModuleAccess($barbershopId, $moduleKey)) {
+        return;
+    }
+
+    setFlash('error', 'Tu plan actual no tiene acceso a este modulo. Contacta al Super Admin para habilitarlo.');
+    redirect(BASE_URL . $fallbackPath);
+}
+
+/**
+ * Sincronizar transaccion automatica de ingreso para una cita
+ */
+function syncAppointmentIncomeTransaction($appointmentId) {
+    $db = Database::getInstance();
+
+    if (!$db->tableExists('transactions')) {
+        return;
+    }
+
+    $appointment = $db->fetch(
+        "SELECT a.id, a.barbershop_id, a.price, a.status, a.payment_status, a.payment_method,
+                a.appointment_date, a.start_time, a.client_name,
+                s.name AS service_name,
+                u.full_name AS barber_name
+         FROM appointments a
+         LEFT JOIN services s ON s.id = a.service_id
+         LEFT JOIN barbers b ON b.id = a.barber_id
+         LEFT JOIN users u ON u.id = b.user_id
+         WHERE a.id = ?
+         LIMIT 1",
+        [$appointmentId]
+    );
+
+    if (!$appointment) {
+        return;
+    }
+
+    $eligible = $appointment['status'] === 'completed'
+        && $appointment['payment_status'] === 'paid'
+        && (float) $appointment['price'] > 0;
+
+    $existing = $db->fetch(
+        "SELECT id FROM transactions WHERE appointment_id = ? AND type = 'income' LIMIT 1",
+        [$appointmentId]
+    );
+
+    if (!$eligible) {
+        if ($existing) {
+            $db->execute("DELETE FROM transactions WHERE id = ?", [$existing['id']]);
+        }
+        return;
+    }
+
+    $transactionDate = !empty($appointment['appointment_date'])
+        ? $appointment['appointment_date'] . ' ' . (!empty($appointment['start_time']) ? $appointment['start_time'] : '00:00:00')
+        : date('Y-m-d H:i:s');
+
+    $description = 'Ingreso automatico cita #' . $appointment['id'];
+    if (!empty($appointment['client_name'])) {
+        $description .= ' - ' . $appointment['client_name'];
+    }
+
+    $category = !empty($appointment['service_name']) ? $appointment['service_name'] : 'Servicio';
+    $referenceNumber = 'APT-' . str_pad((string) $appointment['id'], 6, '0', STR_PAD_LEFT);
+    $paymentMethod = !empty($appointment['payment_method']) ? $appointment['payment_method'] : 'cash';
+
+    if ($existing) {
+        $db->execute(
+            "UPDATE transactions
+             SET barbershop_id = ?,
+                 amount = ?,
+                 description = ?,
+                 category = ?,
+                 payment_method = ?,
+                 reference_number = ?,
+                 transaction_date = ?
+             WHERE id = ?",
+            [
+                $appointment['barbershop_id'],
+                $appointment['price'],
+                $description,
+                $category,
+                $paymentMethod,
+                $referenceNumber,
+                $transactionDate,
+                $existing['id'],
+            ]
+        );
+        return;
+    }
+
+    $db->execute(
+        "INSERT INTO transactions (
+            barbershop_id, appointment_id, type, amount, description, category,
+            payment_method, reference_number, created_by, transaction_date
+        ) VALUES (?, ?, 'income', ?, ?, ?, ?, ?, ?, ?)",
+        [
+            $appointment['barbershop_id'],
+            $appointment['id'],
+            $appointment['price'],
+            $description,
+            $category,
+            $paymentMethod,
+            $referenceNumber,
+            null,
+            $transactionDate,
+        ]
+    );
+}
+
+/**
+ * Sincronizar transacciones de todas las citas de una barberia
+ */
+function syncBarbershopAppointmentTransactions($barbershopId) {
+    $db = Database::getInstance();
+
+    if (!$db->tableExists('transactions')) {
+        return;
+    }
+
+    $appointments = $db->fetchAll(
+        "SELECT id FROM appointments WHERE barbershop_id = ?",
+        [$barbershopId]
+    );
+
+    foreach ($appointments as $appointment) {
+        syncAppointmentIncomeTransaction((int) $appointment['id']);
+    }
+}
+
+/**
  * Validar límite de barberos por barbería
  */
 function canAddBarberToBarbershop($barbershopId, &$message = null) {

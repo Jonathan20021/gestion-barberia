@@ -102,6 +102,54 @@ define('LICENSE_TYPES', [
     ]
 ]);
 
+define('LICENSE_MODULES', [
+    'finanzas_avanzadas' => [
+        'name' => 'Finanzas Avanzadas',
+        'description' => 'Contabilidad completa, flujo de caja y estados por categoria.',
+        'default' => [
+            'basic' => 0,
+            'professional' => 1,
+            'enterprise' => 1,
+        ],
+    ],
+    'reportes_avanzados' => [
+        'name' => 'Reportes Avanzados',
+        'description' => 'Reportes operativos y financieros extendidos.',
+        'default' => [
+            'basic' => 0,
+            'professional' => 1,
+            'enterprise' => 1,
+        ],
+    ],
+    'notificaciones_sms' => [
+        'name' => 'Notificaciones SMS',
+        'description' => 'Envio de recordatorios y notificaciones por SMS.',
+        'default' => [
+            'basic' => 0,
+            'professional' => 1,
+            'enterprise' => 1,
+        ],
+    ],
+    'api_acceso' => [
+        'name' => 'Acceso API',
+        'description' => 'Integraciones externas via API.',
+        'default' => [
+            'basic' => 0,
+            'professional' => 0,
+            'enterprise' => 1,
+        ],
+    ],
+    'multi_sucursal' => [
+        'name' => 'Multi Sucursal',
+        'description' => 'Gestion de multiples sucursales bajo una misma licencia.',
+        'default' => [
+            'basic' => 0,
+            'professional' => 0,
+            'enterprise' => 1,
+        ],
+    ],
+]);
+
 // Autoload de clases
 spl_autoload_register(function ($class) {
     $paths = [

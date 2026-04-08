@@ -160,13 +160,33 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
     
     if ($action === 'update_status') {
-        $appointmentId = input('appointment_id');
+        $appointmentId = intval(input('appointment_id'));
         $newStatus = input('new_status');
-        
+
+        $allowedStatuses = ['pending', 'confirmed', 'in_progress', 'completed', 'cancelled', 'no_show'];
+        if (!in_array($newStatus, $allowedStatuses, true)) {
+            setFlash('error', 'Estado de cita no valido.');
+            redirect($_SERVER['PHP_SELF']);
+        }
+
+        $paymentStatus = null;
+        if ($newStatus === 'completed') {
+            $paymentStatus = 'paid';
+        } elseif (in_array($newStatus, ['cancelled', 'no_show'], true)) {
+            $paymentStatus = 'pending';
+        }
+
         $db->execute(
-            "UPDATE appointments SET status = ? WHERE id = ? AND barbershop_id = ?",
-            [$newStatus, $appointmentId, $barbershopId]
+            "UPDATE appointments
+             SET status = ?,
+                 payment_status = CASE WHEN ? IS NULL THEN payment_status ELSE ? END
+             WHERE id = ? AND barbershop_id = ?",
+            [$newStatus, $paymentStatus, $paymentStatus, $appointmentId, $barbershopId]
         );
+
+        if ($appointmentId > 0) {
+            syncAppointmentIncomeTransaction($appointmentId);
+        }
         
         setFlash('success', 'Estado de cita actualizado');
         redirect($_SERVER['PHP_SELF']);

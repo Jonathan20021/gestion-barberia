@@ -82,6 +82,15 @@ if (!function_exists('_nav_link')) {
             Servicios
         </a>
 
+        <?php if (!empty($_SESSION['barbershop_id']) && hasBarbershopModuleAccess((int) $_SESSION['barbershop_id'], 'finanzas_avanzadas')): ?>
+        <a href="<?php echo BASE_URL; ?>/dashboard/finances" <?php echo _nav_link('finances', $_activePage); ?>>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+            </svg>
+            Finanzas
+        </a>
+        <?php endif; ?>
+
         <p style="font-size:.625rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--c-border-2);padding:0 12px;margin:16px 0 8px;">Publicación</p>
 
         <a href="<?php echo BASE_URL; ?>/dashboard/public-links" <?php echo _nav_link('public-links', $_activePage); ?>>

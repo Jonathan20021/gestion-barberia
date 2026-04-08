@@ -41,7 +41,7 @@ if ($debugMode) {
 $db = Database::getInstance();
 $pageError = null;
 $licenses = [];
-$freeBarbershops = [];
+$assignableBarbershops = [];
 $demoShopId = (int) ($db->fetch("SELECT id FROM barbershops WHERE slug = ?", [DEMO_BARBERSHOP_SLUG])['id'] ?? 0);
 $demoLicenseId = (int) ($db->fetch("SELECT license_id FROM barbershops WHERE slug = ?", [DEMO_BARBERSHOP_SLUG])['license_id'] ?? 0);
 $statsRow = [
@@ -69,6 +69,88 @@ $safeColumnExists = function ($tableName, $columnName) use ($db) {
 $supportsTrialDates = $safeColumnExists('licenses', 'trial_end_date');
 $supportsActivatedAt = $safeColumnExists('licenses', 'activated_at');
 $supportsMaxLocationsOverride = $safeColumnExists('licenses', 'max_locations_override');
+$supportsTrialStatus = false;
+try {
+    $statusColumn = $db->fetch("SHOW COLUMNS FROM licenses LIKE 'status'");
+    $supportsTrialStatus = isset($statusColumn['Type']) && stripos((string) $statusColumn['Type'], "'trial'") !== false;
+} catch (Exception $e) {
+    $supportsTrialStatus = false;
+}
+
+if ($supportsActivatedAt) {
+    try {
+        // Normaliza datos heredados incompatibles con SQL strict mode.
+        $db->query(
+            "UPDATE licenses
+             SET activated_at = NULL
+             WHERE CAST(activated_at AS CHAR(19)) = '0000-00-00 00:00:00'"
+        );
+    } catch (Exception $e) {
+        // No bloquear pantalla si la normalización falla en algún hosting.
+    }
+}
+
+$assignLicenseToBarbershop = function ($licenseId, $targetBarbershopId) use ($db, $demoShopId) {
+    $licenseId = (int) $licenseId;
+    $targetBarbershopId = (int) $targetBarbershopId;
+
+    if ($licenseId <= 0 || $targetBarbershopId <= 0) {
+        throw new Exception('Debes seleccionar una licencia y una barbería válidas.');
+    }
+
+    if ($targetBarbershopId === $demoShopId) {
+        throw new Exception('La barbería demo está protegida y no puede reasignarse desde esta pantalla.');
+    }
+
+    $licenseExists = $db->fetch("SELECT id FROM licenses WHERE id = ? LIMIT 1", [$licenseId]);
+    if (!$licenseExists) {
+        throw new Exception('La licencia seleccionada no existe o fue eliminada.');
+    }
+
+    $currentAssignment = $db->fetch("SELECT id FROM barbershops WHERE license_id = ? LIMIT 1", [$licenseId]);
+    $targetShop = $db->fetch("SELECT id, license_id FROM barbershops WHERE id = ? LIMIT 1", [$targetBarbershopId]);
+
+    if (!$targetShop) {
+        throw new Exception('La barbería seleccionada no existe.');
+    }
+
+    if ((int) $targetShop['license_id'] === $licenseId) {
+        return;
+    }
+
+    $targetCurrentLicenseId = (int) $targetShop['license_id'];
+    if ($targetCurrentLicenseId > 0) {
+        $targetLicenseExists = $db->fetch("SELECT id FROM licenses WHERE id = ? LIMIT 1", [$targetCurrentLicenseId]);
+        if (!$targetLicenseExists) {
+            throw new Exception('La barbería destino tiene una licencia inválida. Corrige esa barbería antes de reasignar.');
+        }
+    }
+
+    $db->beginTransaction();
+    try {
+        // Asignar la licencia seleccionada a la barbería destino.
+        $db->query("UPDATE barbershops SET license_id = ? WHERE id = ?", [$licenseId, $targetBarbershopId]);
+
+        // Si la licencia ya estaba asignada, intercambiar para no dejar la barbería origen sin licencia.
+        if ($currentAssignment && (int) $currentAssignment['id'] !== $targetBarbershopId) {
+            if ($targetCurrentLicenseId <= 0) {
+                throw new Exception('No se puede mover la licencia porque la barbería destino no tiene licencia previa para intercambiar.');
+            }
+
+            $db->query(
+                "UPDATE barbershops SET license_id = ? WHERE id = ?",
+                [$targetCurrentLicenseId, (int) $currentAssignment['id']]
+            );
+        }
+
+        $db->commit();
+    } catch (Exception $e) {
+        if ($db->getConnection()->inTransaction()) {
+            $db->rollBack();
+        }
+        throw $e;
+    }
+};
 
 // Procesar acciones POST
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -107,7 +189,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $trialEndDate = date('Y-m-d', strtotime($startDate . ' +' . $trialDays . ' days'));
             $licenseKey = bin2hex(random_bytes(16));
 
-            if ($supportsTrialDates) {
+            if ($supportsTrialDates && $supportsTrialStatus) {
                 if ($supportsMaxLocationsOverride) {
                     $db->query(
                         "INSERT INTO licenses (license_key, type, status, price, billing_cycle, start_date, end_date, trial_days, trial_start_date, trial_end_date, max_locations_override) VALUES (?, ?, 'trial', ?, ?, ?, ?, ?, ?, ?, ?)",
@@ -133,11 +215,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     );
                 }
                 $_SESSION['success'] = 'Licencia creada exitosamente como plan activo.';
+                if ($supportsTrialDates && !$supportsTrialStatus) {
+                    $_SESSION['success'] .= ' Nota: este servidor no soporta estado trial en la columna status.';
+                }
             }
 
             $newId = $db->lastInsertId();
             if ($barbershopId) {
-                $db->query("UPDATE barbershops SET license_id = ? WHERE id = ?", [$newId, $barbershopId]);
+                $assignLicenseToBarbershop($newId, $barbershopId);
             }
 
             header('Location: licenses.php');
@@ -152,6 +237,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $endDate      = isset($_POST['end_date']) ? $_POST['end_date'] : date('Y-m-d');
             $price        = floatval($_POST['price']);
             $status       = isset($_POST['status']) ? $_POST['status'] : 'active';
+            if ($status === 'trial' && !$supportsTrialStatus) {
+                $status = 'active';
+            }
             $maxLocationsRaw = isset($_POST['max_locations_override']) ? trim((string) $_POST['max_locations_override']) : '';
             $maxLocationsOverride = null;
             if ($maxLocationsRaw !== '') {
@@ -162,11 +250,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
             $trialEndDate = !empty($_POST['trial_end_date']) ? $_POST['trial_end_date'] : null;
             $barbershopId = !empty($_POST['barbershop_id']) ? intval($_POST['barbershop_id']) : null;
-            $assignedBarbershop = $db->fetch("SELECT id FROM barbershops WHERE license_id = ?", [$licenseId]);
-
-            if ($barbershopId && $assignedBarbershop && (int) $assignedBarbershop['id'] !== $barbershopId) {
-                throw new Exception('No puedes mover la licencia a otra barbería desde esta pantalla sin reasignar primero la actual.');
-            }
 
             if ($supportsTrialDates && $supportsActivatedAt) {
                 if ($supportsMaxLocationsOverride) {
@@ -181,7 +264,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                              trial_end_date = ?,
                              max_locations_override = ?,
                              activated_at = CASE
-                                 WHEN ? = 'active' AND (activated_at IS NULL OR activated_at = '0000-00-00 00:00:00') THEN NOW()
+                                 WHEN ? = 'active' AND activated_at IS NULL THEN NOW()
                                  ELSE activated_at
                              END
                          WHERE id = ?",
@@ -198,7 +281,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                              status = ?,
                              trial_end_date = ?,
                              activated_at = CASE
-                                 WHEN ? = 'active' AND (activated_at IS NULL OR activated_at = '0000-00-00 00:00:00') THEN NOW()
+                                 WHEN ? = 'active' AND activated_at IS NULL THEN NOW()
                                  ELSE activated_at
                              END
                          WHERE id = ?",
@@ -224,11 +307,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
             }
 
-            if ($barbershopId && !$assignedBarbershop) {
-                $db->query("UPDATE barbershops SET license_id = ? WHERE id = ?", [$licenseId, $barbershopId]);
+            if ($barbershopId) {
+                $assignLicenseToBarbershop($licenseId, $barbershopId);
             }
 
             $_SESSION['success'] = 'Licencia actualizada exitosamente';
+            if (isset($_POST['status']) && $_POST['status'] === 'trial' && !$supportsTrialStatus) {
+                $_SESSION['success'] .= '. Nota: se guardó como activa porque este servidor no soporta estado trial.';
+            }
             header('Location: licenses.php');
             exit;
         }
@@ -244,7 +330,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $newEnd = date('Y-m-d', strtotime($baseDate . ' +' . $extra . ' months'));
 
             if ($supportsActivatedAt) {
-                $db->query("UPDATE licenses SET end_date = ?, status = 'active', activated_at = COALESCE(activated_at, NOW()) WHERE id = ?", [$newEnd, $licenseId]);
+                $db->query(
+                    "UPDATE licenses
+                     SET end_date = ?,
+                         status = 'active',
+                         activated_at = CASE
+                             WHEN activated_at IS NULL THEN NOW()
+                             ELSE activated_at
+                         END
+                     WHERE id = ?",
+                    [$newEnd, $licenseId]
+                );
             } else {
                 $db->query("UPDATE licenses SET end_date = ?, status = 'active' WHERE id = ?", [$newEnd, $licenseId]);
             }
@@ -262,7 +358,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     "UPDATE licenses
                      SET status = ?,
                          activated_at = CASE
-                             WHEN ? = 'active' AND (activated_at IS NULL OR activated_at = '0000-00-00 00:00:00') THEN NOW()
+                             WHEN ? = 'active' AND activated_at IS NULL THEN NOW()
                              ELSE activated_at
                          END
                      WHERE id = ?",
@@ -286,7 +382,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $db->query(
                         "UPDATE licenses
                          SET status = 'active',
-                             activated_at = COALESCE(activated_at, NOW())
+                             activated_at = CASE
+                                 WHEN activated_at IS NULL THEN NOW()
+                                 ELSE activated_at
+                             END
                          WHERE id = ? AND status = 'trial'",
                         [$licenseId]
                     );
@@ -322,9 +421,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     } catch (Exception $e) {
         error_log('Licenses page error: ' . $e->getMessage());
-        $_SESSION['error'] = ENVIRONMENT === 'development'
-            ? $e->getMessage()
-            : 'No se pudo procesar la operación de licencias en este servidor.';
+        $isBusinessError = !($e instanceof PDOException);
+        if ($isBusinessError) {
+            $_SESSION['error'] = $e->getMessage();
+        } else {
+            $pdoMessage = strtolower((string) $e->getMessage());
+            if (strpos($pdoMessage, 'foreign key constraint fails') !== false) {
+                $_SESSION['error'] = 'No se pudo guardar por integridad referencial. Verifica que la barbería y la licencia existan y estén activas.';
+            } elseif (strpos($pdoMessage, 'duplicate entry') !== false) {
+                $_SESSION['error'] = 'No se pudo guardar porque hay un valor duplicado (clave única).';
+            } elseif (strpos($pdoMessage, 'data too long') !== false) {
+                $_SESSION['error'] = 'No se pudo guardar porque uno de los campos excede la longitud permitida.';
+            } else {
+                $_SESSION['error'] = 'No se pudo procesar la operación de licencias en este servidor.';
+            }
+
+            if (Auth::hasRole('superadmin')) {
+                $_SESSION['error'] .= ' Detalle técnico: ' . $e->getMessage();
+            }
+        }
         header('Location: licenses.php');
         exit;
     }
@@ -367,16 +482,16 @@ try {
         ORDER BY l.created_at DESC
     ", [DEMO_BARBERSHOP_SLUG, $demoLicenseId]);
 
-    $freeBarbershops = $db->fetchAll("
-        SELECT bs.id, bs.business_name, u.full_name AS owner_name
+    $assignableBarbershops = $db->fetchAll(" 
+        SELECT bs.id,
+               bs.business_name,
+               u.full_name AS owner_name,
+               l.id AS current_license_id,
+               l.type AS current_license_type
         FROM barbershops bs
         LEFT JOIN users u ON bs.owner_id = u.id
+        LEFT JOIN licenses l ON l.id = bs.license_id
         WHERE bs.slug != ?
-        AND NOT EXISTS (
-            SELECT 1
-            FROM licenses l2
-            WHERE l2.id = bs.license_id
-        )
         ORDER BY bs.business_name
     ", [DEMO_BARBERSHOP_SLUG]);
 
@@ -803,14 +918,18 @@ include BASE_PATH . '/includes/header.php';
                         <div class="md:col-span-2">
                             <label class="block text-sm font-medium text-gray-700 mb-1">Barbería Asignada</label>
                             <select name="barbershop_id" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500">
-                                <option value="">— Sin asignar —</option>
+                                <option value="">— Mantener asignación actual —</option>
                                 <template x-if="activeLicense?.barbershop_id">
                                     <option :value="activeLicense?.barbershop_id" selected
                                             x-text="(activeLicense?.business_name || '') + ' (actual)'"></option>
                                 </template>
-                                <?php foreach ($freeBarbershops as $bs): ?>
+                                <?php foreach ($assignableBarbershops as $bs): ?>
                                 <option value="<?php echo $bs['id']; ?>">
-                                    <?php echo htmlspecialchars($bs['business_name']); ?> — <?php echo htmlspecialchars((string)(isset($bs['owner_name']) ? $bs['owner_name'] : '')); ?>
+                                    <?php echo htmlspecialchars($bs['business_name']); ?>
+                                    — <?php echo htmlspecialchars((string)(isset($bs['owner_name']) ? $bs['owner_name'] : '')); ?>
+                                    <?php if (!empty($bs['current_license_id'])): ?>
+                                    — Lic. actual #<?php echo (int) $bs['current_license_id']; ?> (<?php echo htmlspecialchars(ucfirst((string) ($bs['current_license_type'] ?? 'n/a'))); ?>)
+                                    <?php endif; ?>
                                 </option>
                                 <?php endforeach; ?>
                             </select>
@@ -916,9 +1035,13 @@ include BASE_PATH . '/includes/header.php';
                             <label class="block text-sm font-medium text-gray-700 mb-1">Asignar a Barbería</label>
                             <select name="barbershop_id" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500">
                                 <option value="">— Sin asignar ahora —</option>
-                                <?php foreach ($freeBarbershops as $bs): ?>
+                                <?php foreach ($assignableBarbershops as $bs): ?>
                                 <option value="<?php echo $bs['id']; ?>">
-                                    <?php echo htmlspecialchars($bs['business_name']); ?> — <?php echo htmlspecialchars((string)(isset($bs['owner_name']) ? $bs['owner_name'] : '')); ?>
+                                    <?php echo htmlspecialchars($bs['business_name']); ?>
+                                    — <?php echo htmlspecialchars((string)(isset($bs['owner_name']) ? $bs['owner_name'] : '')); ?>
+                                    <?php if (!empty($bs['current_license_id'])): ?>
+                                    — Lic. actual #<?php echo (int) $bs['current_license_id']; ?> (<?php echo htmlspecialchars(ucfirst((string) ($bs['current_license_type'] ?? 'n/a'))); ?>)
+                                    <?php endif; ?>
                                 </option>
                                 <?php endforeach; ?>
                             </select>

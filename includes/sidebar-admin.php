@@ -68,6 +68,13 @@ if (!function_exists('_nav_link')) {
             Licencias
         </a>
 
+        <a href="<?php echo BASE_URL; ?>/admin/license-modules" <?php echo _nav_link('license-modules', $_activePage); ?>>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 3v18"/><path d="M3 12h18"/><circle cx="12" cy="12" r="9"/>
+            </svg>
+            Modulos Licencia
+        </a>
+
         <a href="<?php echo BASE_URL; ?>/admin/coupons" <?php echo _nav_link('coupons', $_activePage); ?>>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/>
